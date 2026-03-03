@@ -1,46 +1,70 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import authService from "../services/authService";
+import "../styles/signIn.css"; // We reuse the same CSS file for consistency
 
 function SignUp() {
+  const [username, setUsername] = useState(""); // Added username state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
     try {
-      await authService.register(email, password);
-      navigate("/");
+      // Note: your authService.register expects (username, email, password)
+      await authService.register(username, email, password);
+      alert("Registration successful! Please login.");
+      navigate("/"); // Redirect to login page
     } catch (error) {
-      alert("Registration failed");
+      alert("Registration failed. Try a different email or username.");
     }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="auth-title">Create Account</h2>
 
-      <form onSubmit={handleRegister}>
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form className="auth-form" onSubmit={handleRegister}>
+          {/* Added Username Input since your service likely needs it */}
+          <input
+            className="auth-input"
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            className="auth-input"
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <button type="submit">Register</button>
-      </form>
+          <input
+            className="auth-input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-      <p>
-        Already have an account? <Link to="/">Login</Link>
-      </p>
+          <button className="auth-button" type="submit">
+            Register
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          Already have an account?{" "}
+          <Link to="/" className="auth-link">Login</Link>
+        </p>
+      </div>
     </div>
   );
 }

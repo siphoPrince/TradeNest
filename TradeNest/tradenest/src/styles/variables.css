@@ -1,0 +1,59 @@
+
+
+:root {
+
+  /* === Core Colors === */
+
+  --color-primary: #1E3A8A;
+
+  --color-accent: #2563EB;
+
+  --color-bg: #F1F5F9;
+
+  --color-card: #FFFFFF;
+
+  --color-text-dark: #0F172A;
+
+  --color-text-muted: #64748B;
+
+
+
+  /* === State Colors === */
+
+  --color-success: #16A34A;
+
+  --color-danger: #DC2626;
+
+  --color-warning: #F59E0B;
+
+
+
+  /* === Borders === */
+
+  --color-border: #E2E8F0;
+
+
+
+  /* === Radius === */
+
+  --radius-sm: 8px;
+
+  --radius-md: 12px;
+
+  --radius-lg: 16px;
+
+
+
+  /* === Shadows === */
+
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.05);
+
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
+
+
+
+  /* === Transition === */
+
+  --transition: all 150ms ease-in-out;
+
+}
