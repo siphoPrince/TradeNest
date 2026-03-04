@@ -11,7 +11,6 @@ body, html {
   min-height: 100vh;
   background-color: var(--color-bg);
 
-  background-image: url("../assets/Background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -34,7 +33,36 @@ body, html {
 }
 
 
+.auth-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding-top: 60px; /* pushes everything down from very top */
+  
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
+/* This keeps logo + card stacked vertically */
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-container {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.auth-logo {
+  max-width: 120px;  /* hard limit */
+  width: 100%;
+  height: auto;
+  display: block;
+}
 
 
 
