@@ -332,3 +332,158 @@ body{
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 }
+
+/* ============================= */
+/* Product Card Details Feed     */
+/* ============================= */
+
+/* PRODUCT INFO CONTAINER */
+.productInfo {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 80px; /* leave space for engagement icons */
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    color: white;
+
+    z-index: 10;
+
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+
+/* ============================= */
+/* PROFILE SECTION */
+/* ============================= */
+
+.profileInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* PROFILE IMAGE */
+
+.profile-pic {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.9);
+
+    object-fit: cover;
+}
+
+
+/* ============================= */
+/* DESCRIPTION */
+/* ============================= */
+
+.description p {
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.5;
+
+    max-width: 85%;
+}
+
+
+/* ============================= */
+/* PRODUCT ACTIONS ROW */
+/* ============================= */
+
+.product-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+}
+
+
+/* ============================= */
+/* PRICE BADGE */
+/* ============================= */
+
+.price{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:8px 16px;
+
+    font-size:16px;
+    font-weight:700;
+
+    color:white;
+
+    background:rgba(0,0,0,0.65);
+    backdrop-filter:blur(6px);
+
+    border-radius:var(--radius-md);
+
+    border:1px solid rgba(255,255,255,0.35);
+
+    letter-spacing:0.3px;
+}
+
+
+/* ============================= */
+/* BUY BUTTON */
+/* ============================= */
+
+.buynow {
+    padding: 10px 22px;
+
+    background: var(--color-accent);
+    color: white;
+
+    text-decoration: none;
+
+    border-radius: 8px;
+
+    font-weight: 600;
+    font-size: 14px;
+
+    transition: all 0.2s ease;
+}
+
+
+/* HOVER EFFECT */
+
+.buynow:hover {
+    background: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+
+/* ============================= */
+/* VIDEO GRADIENT FOR TEXT */
+/* ============================= */
+
+.main-screen::after{
+    content:"";
+    position:absolute;
+
+    bottom:0;
+    left:0;
+    right:0;
+
+    height:160px;
+
+    background:linear-gradient(
+        to top,
+        rgba(0,0,0,0.6),
+        rgba(0,0,0,0)
+    );
+
+    border-radius: var(--radius-lg);
+}

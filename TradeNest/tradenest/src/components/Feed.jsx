@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Engagement from "./Engagement";
+import ProductCard from "./ProductCard";
 
 const Feed = () =>{
 
@@ -12,6 +13,7 @@ const Feed = () =>{
                 <div className="main-screen">
                 video feed
                 <Engagement />
+                <ProductCard/>
                 </div>
 
                 {/* RIGHT COMMENT PANEL */}
@@ -23,7 +25,7 @@ const Feed = () =>{
 
                         comments will go here
                     </div>
-                )}
+                )}                
 
             </div>
 
