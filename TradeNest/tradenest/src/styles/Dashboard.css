@@ -1,0 +1,104 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins', sans-serif;
+    background:var(--color-bg);
+}
+
+
+/* MAIN LAYOUT */
+
+.container{
+    display:flex;
+    min-height:100vh;
+}
+
+
+/* SIDEBAR */
+
+.sidebar{
+    width:260px;
+
+    display:flex;
+    flex-direction:column;
+    gap:25px;
+    padding:20px;
+    border-right:1px solid var(--color-border);
+}
+
+
+/* LOGO */
+
+.logo{
+    color:var(--color-primary);
+    font-size:24px;
+    font-weight:700;
+}
+
+
+/* SEARCH */
+
+.search-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:10px;
+
+    background:var(--color-bg);
+
+    border-radius:var(--radius-md);
+
+    border:1px solid var(--color-border);
+}
+
+.search-bar input{
+    border:none;
+    outline:none;
+    width:100%;
+    background:transparent;
+}
+
+
+/* NAV LINKS */
+
+.nav-links{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.nav-links a{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    text-decoration:none;
+
+    color:var(--color-text-dark);
+
+    font-weight:500;
+
+    padding:8px;
+
+    border-radius:var(--radius-sm);
+
+    transition:var(--transition);
+}
+
+.nav-links a:hover{
+    background:var(--color-bg);
+    color:var(--color-accent);
+}
+
+
+/* FEED */
+
+.feed{
+    flex:1;
+    padding:40px;
+}
