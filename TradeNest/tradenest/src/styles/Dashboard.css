@@ -22,12 +22,16 @@ body{
 
 .sidebar{
     width:260px;
-
+    position: sticky;
+    top: 0;
+    height: 100vh;
     display:flex;
     flex-direction:column;
     gap:25px;
     padding:20px;
     border-right:1px solid var(--color-border);
+
+    overflow-y: auto;
 }
 
 
@@ -112,6 +116,7 @@ body{
     /* change main layout to vertical */
     .container{
         flex-direction:column;
+        position: relative;
     }
 
     /* hide logo and search */
@@ -125,17 +130,20 @@ body{
 
     /* turn sidebar into bottom navbar */
     .sidebar{
-        position:fixed;
-        bottom:0;
+        position:fixed !important;
+        bottom:0 !important;
+        top: auto !important;
         left:0;
+        z-index: 1000;
 
         width:100%;
         height:70px;
 
         flex-direction:row;
-        justify-content:center;
+        justify-content:space-around;
         align-items:center;
 
+        background: var(--color-card);
         border-right:none;
         border-top:1px solid var(--color-border);
 
@@ -199,6 +207,7 @@ body{
 .feed{
     flex:1;
     padding:30px;
+    padding-bottom: 100px;
 }
 
 
@@ -208,6 +217,9 @@ body{
     font-size:14px;
     color:var(--color-text-muted);
     margin-bottom:5px;
+    position: sticky;
+    top: 0;
+    
 }
 
 
@@ -260,10 +272,9 @@ body{
 
 .engagement{
     position:absolute;
-
     right:-60px;
     bottom:40px;
-
+    bottom:120px;
     display:flex;
     flex-direction:column;
     gap:18px;
@@ -291,4 +302,33 @@ body{
 .engagement a:hover{
     color:var(--color-accent);
     transform:scale(1.08);
+}
+
+/* ============================= */
+/* MOBILE Engagement RESPONSIVE  */
+/* ============================= */
+
+
+@media (max-width: 768px){
+/* 3. ENGAGEMENT SECTION (The Fix) */
+    .engagement {
+        /* Move buttons inside the screen view */
+        position: absolute;
+        right: 15px !important; 
+        
+        /* Lift them so they don't overlap the bottom bar (70px bar + padding) */
+        bottom: 90px !important; 
+        
+        flex-direction: column;
+        gap: 15px;
+        z-index: 10;
+    }
+
+    .engagement a {
+        width: 40px;
+        height: 40px;
+        /* Make them stand out against video/content */
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 }

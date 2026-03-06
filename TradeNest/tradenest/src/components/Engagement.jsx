@@ -1,6 +1,6 @@
 import { Heart, MessageCircleMore,ExternalLink,Bookmark,UserPen  } from 'lucide-react';
 
-const Engagement = () => {
+const Engagement = ( ) => {
     return(
         <div className="engagement">
                 <a href="" className="Profile"><UserPen/></a>
