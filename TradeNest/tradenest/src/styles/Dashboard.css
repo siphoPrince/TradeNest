@@ -168,3 +168,91 @@ body{
     }
 
 }
+
+/* ============================= */
+/* MOBILE FEED RESPONSIVE COMMENTS     */
+/* ============================= */
+
+@media (max-width: 768px){
+
+    .feed-layout{
+        flex-direction:column;
+        align-items:center;
+        gap:20px;
+    }
+
+    .main-screen{
+        width:100%;
+        min-height:70vh;
+    }
+
+    .comment-panel{
+        width:100%;
+        min-height:auto;
+    }
+
+}
+
+
+/* FEED AREA */
+
+.feed{
+    flex:1;
+    padding:30px;
+}
+
+
+/* TITLE */
+
+.feed-title{
+    font-size:14px;
+    color:var(--color-text-muted);
+    margin-bottom:5px;
+}
+
+
+/* MAIN FEED LAYOUT */
+
+.feed-layout{
+    display:flex;
+    justify-content:center;
+    gap:40px;
+}
+
+
+/* CENTER VIDEO SCREEN */
+
+.main-screen{
+    width:520px;
+    height:848px;
+
+    background:var(--color-card);
+
+    border-radius:var(--radius-lg);
+
+    border:1px solid var(--color-border);
+
+    box-shadow:var(--shadow-sm);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+
+/* RIGHT COMMENTS */
+
+.comment-panel{
+    width:320px;
+    min-height:600px;
+
+    background:var(--color-card);
+
+    border-radius:var(--radius-lg);
+
+    border:1px solid var(--color-border);
+
+    box-shadow:var(--shadow-sm);
+
+    padding:20px;
+}
