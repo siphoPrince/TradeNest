@@ -117,7 +117,9 @@ body{
     .container{
         flex-direction:column;
         position: relative;
+         
     }
+
 
     /* hide logo and search */
     .logo{
@@ -148,6 +150,7 @@ body{
         border-top:1px solid var(--color-border);
 
         padding:0;
+        margin-top:50px;
     }
 
     /* nav links layout */

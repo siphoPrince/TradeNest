@@ -1,8 +1,9 @@
+import Navigation from "../components/Navigation";
+
 const Explore = () => {
     return(
         <div className="explore-page">
-            <h1>Explore Page</h1>
-            <p>This is the explore page.</p>
+            <Navigation />
         </div>
     );
 }
