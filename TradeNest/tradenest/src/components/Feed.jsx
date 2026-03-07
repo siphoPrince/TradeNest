@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Engagement from "./Engagement";
 import ProductCard from "./ProductCard";
-import Picture from "../assets/hoddie2.jpg";
+import Picture from "../assets/hoddie.jpg";
 
 const Feed = () =>{
 
