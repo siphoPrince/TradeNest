@@ -1,10 +1,12 @@
+import Messege from "../components/Messege";
+import Navigation from "../components/Navigation";
+
 const Inbox = () => {
     return(
         <div className="inbox-page">
-            <h1>Inbox Page</h1>
-            <p>This is the inbox page.</p>
+            <Messege />
         </div>
     );
-}
+};
 
 export default Inbox;

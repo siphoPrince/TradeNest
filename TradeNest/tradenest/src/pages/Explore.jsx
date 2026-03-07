@@ -6,7 +6,7 @@ const Explore = () => {
         <div className="explore-page">
             <Navigation />
 
-            <div className="container">
+            <div className="Explore-container">
 
                 <div className="header">
                     <h2>Explore</h2>
@@ -31,7 +31,7 @@ const Explore = () => {
                         <img src="https://picsum.photos/200" alt="listing" className="listing-img"/>
                         <div className="listing-info">
                             <span className="listing-title">Vintage Camera</span>
-                            <span className="listing-price">$150</span>
+                            <span className="listing-price">R150</span>
                         </div>
                     </div>
 
@@ -39,7 +39,7 @@ const Explore = () => {
                         <img src="https://picsum.photos/200" alt="listing" className="listing-img"/>
                         <div className="listing-info">
                             <span className="listing-title">Nike Sneakers</span>
-                            <span className="listing-price">$80</span>
+                            <span className="listing-price"><Ri:viewport></Ri:viewport>80</span>
                         </div>
                     </div>
 
@@ -47,7 +47,21 @@ const Explore = () => {
                         <img src="https://picsum.photos/200" alt="listing" className="listing-img"/>
                         <div className="listing-info">
                             <span className="listing-title">Gaming Keyboard</span>
-                            <span className="listing-price">$60</span>
+                            <span className="listing-price">R60</span>
+                        </div>
+                    </div>
+                    <div className="listing-card">
+                        <img src="https://picsum.photos/200" alt="listing" className="listing-img"/>
+                        <div className="listing-info">
+                            <span className="listing-title">Gaming Keyboard</span>
+                            <span className="listing-price">R60</span>
+                        </div>
+                    </div>
+                    <div className="listing-card">
+                        <img src="https://picsum.photos/200" alt="listing" className="listing-img"/>
+                        <div className="listing-info">
+                            <span className="listing-title">Gaming Keyboard</span>
+                            <span className="listing-price">R60</span>
                         </div>
                     </div>
 
