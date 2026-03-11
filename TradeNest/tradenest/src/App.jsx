@@ -6,6 +6,8 @@ import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
 import Upload from "./pages/Upload";
 import Inbox from "./pages/Inbox";
+import BuyNow from "./pages/BuyNow";
+import EditProfile from "./pages/EditProfile";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/explore" element={<Explore />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/inbox" element={<Inbox />} />
+        <Route path="/buyNow" element={<BuyNow />} />
+        <Route path="/editProfile" element={<EditProfile />} />
       </Routes>
     </BrowserRouter>
   );

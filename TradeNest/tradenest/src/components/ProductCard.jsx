@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import BuyNow from "../pages/BuyNow";
+
 const ProductCard = () =>{
     return(
         <div className="productInfo">
@@ -17,9 +20,8 @@ const ProductCard = () =>{
                 R450
             </div>
 
-            <a href="#" className="buynow">
-                Buy Now
-            </a>
+            <Link to="/BuyNow" className="buynow">BuyNow</Link>
+            
 
         </div>
 

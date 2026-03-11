@@ -1,0 +1,121 @@
+/* ========================= */
+/* EDIT PROFILE STYLES */
+/* ========================= */
+
+.edit-section{
+    margin-top:28px;
+
+    background:var(--color-card);
+    border:1px solid var(--color-border);
+    border-radius:var(--radius-md);
+
+    padding:20px;
+
+    box-shadow:var(--shadow-sm);
+}
+
+.edit-section h3{
+    margin-bottom:14px;
+    font-size:16px;
+    color:var(--color-text-dark);
+}
+
+
+/* INPUT FIELDS */
+
+.edit-input{
+    width:100%;
+    padding:10px 12px;
+
+    border-radius:var(--radius-sm);
+    border:1px solid var(--color-border);
+
+    background:var(--color-bg);
+
+    font-size:14px;
+    margin-bottom:12px;
+
+    transition:var(--transition);
+}
+
+.edit-input:focus{
+    outline:none;
+    border-color:var(--color-accent);
+
+    box-shadow:0 0 0 2px rgba(0,0,0,0.04);
+}
+
+
+/* NAME INPUTS */
+
+.name-input{
+    font-size:18px;
+    font-weight:600;
+
+    border:none;
+    background:transparent;
+
+    padding:4px 0;
+}
+
+.name-input:focus{
+    border-bottom:2px solid var(--color-accent);
+}
+
+
+/* BIO FIELD */
+
+.edit-bio{
+    width:100%;
+    margin-top:6px;
+
+    border:1px solid var(--color-border);
+    border-radius:var(--radius-sm);
+
+    padding:10px;
+
+    resize:none;
+
+    background:var(--color-bg);
+
+    font-size:14px;
+
+    transition:var(--transition);
+}
+
+.edit-bio:focus{
+    outline:none;
+    border-color:var(--color-accent);
+}
+
+
+/* SAVE BUTTON */
+
+.saveBut{
+    padding:10px 20px;
+
+    background:var(--color-accent);
+    color:white;
+
+    border:none;
+    border-radius:var(--radius-sm);
+
+    font-weight:600;
+    cursor:pointer;
+
+    transition:var(--transition);
+}
+
+.saveBut:hover{
+    background:var(--color-primary);
+    transform:translateY(-2px);
+}
+
+
+/* IMAGE UPLOAD PREVIEW */
+
+.profileImg:hover{
+    opacity:0.85;
+    cursor:pointer;
+    transition:var(--transition);
+}

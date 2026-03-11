@@ -1,9 +1,57 @@
 import "../styles/Profile.css";
 import Navigation from "../components/Navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
     const [showMenu, setShowMenu] = useState(false);
+    const [profile, setProfile] = useState(null); // 1. Start with null to check for data
+    const navigate = useNavigate();
+
+    // 2. Get userId at the top level
+    const userId = localStorage.getItem("userId");
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const token = localStorage.getItem("token");
+            const storedUserId = localStorage.getItem("userId");
+
+            // Check if we have our "keys"
+            if (!token || !storedUserId) {
+                console.warn("User is not authenticated. Redirecting...");
+                navigate("/signIn");
+                return;
+            } 
+
+            try {
+                const response = await fetch(`https://localhost:7124/api/profile/${storedUserId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setProfile(data);
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+            }
+        };
+
+        fetchProfile();
+    }, [navigate]); // navigate is a stable dependency
+
+    // 3. Show a loading state until the profile data arrives
+    if (!profile) {
+        return <div className="loading">Loading Profile... ⏳</div>;
+    }
+
+
 
     return(
         <div className="profile-layout">
@@ -13,14 +61,13 @@ const Profile = () => {
                     {/* PROFILE HEADER */}
                     <div className="profile-header">
                         <img 
-                            src="https://picsum.photos/120" 
-                            alt="profile" 
+                            src={profile.imageUrl || "https://picsum.photos/120"}
                             className="profileImg" 
                         />
                         <div className="profile-info">
-                            <span className="userName">Sipho Mabirimise</span>
+                            <span className="userName">{profile.name} {profile.surName}</span>
                             <small className="userHandle">@mabirimise</small>
-                            <small className="bio">Software Engineer</small>
+                            <small className="bio">{profile.bio}</small>
                         </div>
                     </div>
 
@@ -54,8 +101,11 @@ const Profile = () => {
                     {/* ACTION BUTTONS */}
                     <div className="profile-actions">
 
-                        <button className="editBut">
+                        <button
+                        className="editBut"
+                        onClick={() => navigate("/editProfile")}>
                             Edit Profile
+
                         </button>
 
                         <button className="shareBut">

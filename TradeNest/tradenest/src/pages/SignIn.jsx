@@ -14,6 +14,8 @@ function SignIn() {
     try {
       const response = await authService.login(email, password);
       localStorage.setItem("token", response.token);
+      localStorage.setItem("userId", response.userId);
+      
       navigate("/dashboard");
     } catch (error) {
       alert("Login failed. Please check your credentials.");
