@@ -2,14 +2,14 @@ import "../styles/Profile.css";
 import Navigation from "../components/Navigation";
 import { useState, useEffect, useRef } from "react";
 import "../styles/EditProfile.css"
+import { useNavigate } from "react-router-dom";
 
 const EditProfile = () => {
-
     const fileInputRef = useRef(null);
-    const userId = 1002;
+    const navigate = useNavigate();
 
     const [profile, setProfile] = useState({
-        id: "",
+        id: 0,
         name: "",
         surName: "",
         bio: "",
@@ -17,15 +17,35 @@ const EditProfile = () => {
         imageUrl: ""
     });
 
+    // 1. Load the profile when the page opens
     useEffect(() => {
         const fetchProfile = async () => {
-            const res = await fetch("https://localhost:7124/api/profile/1");
-            const data = await res.json();
-            setProfile(data);
+            const storedUserId = localStorage.getItem("userId");
+            const token = localStorage.getItem("token");
+
+            if (!storedUserId || !token) {
+                navigate("/signIn");
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://localhost:7124/api/profile/${storedUserId}`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfile(data);
+                }
+            } catch (error) {
+                console.error("Error loading profile:", error);
+            }
         };
 
         fetchProfile();
-    }, []);
+    }, [navigate]);
 
     const handleChange = (e) => {
         setProfile({
@@ -34,38 +54,62 @@ const EditProfile = () => {
         });
     };
 
-    /* OPEN FILE PICKER WHEN IMAGE CLICKED */
     const openFilePicker = () => {
         fileInputRef.current.click();
     };
 
-    /* HANDLE IMAGE SELECTION */
     const handleImageUpload = (e) => {
-
         const file = e.target.files[0];
-
         if(!file) return;
-
         const preview = URL.createObjectURL(file);
-
         setProfile({
             ...profile,
             imageUrl: preview
         });
     };
 
+    // 2. The Updated "Smart Save" function
     const updateProfile = async () => {
+        const token = localStorage.getItem("token");
 
-        await fetch(`https://localhost:7124/api/profile/${userId}}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(profile)
-        });
+        if (!token) {
+            alert("Please log in again.");
+            navigate("/signIn");
+            return;
+        }
 
-        alert("Profile updated!");
+        try {
+            // We hit the NEW /save endpoint we just made in C#
+            const response = await fetch(`https://localhost:7124/api/profile/save`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                // We send the whole profile. The C# backend will ignore the 
+                // empty "id" string and use the token to set the UserId.
+                body: JSON.stringify(profile)
+            });
+
+            if (response.ok) {
+                alert("Profile saved successfully! 🚀");
+                navigate("/profile");
+            } else if (response.status === 401) {
+                alert("Session expired. Please log in again.");
+                navigate("/signIn");
+            } else {
+                const errorData = await response.json();
+                console.error("Server Error:", errorData);
+                alert("Failed to save profile. Check console for details.");
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+            alert("Could not connect to the server.");
+        }
     };
+    
+    
+
 
     return(
         <div className="profile-layout">

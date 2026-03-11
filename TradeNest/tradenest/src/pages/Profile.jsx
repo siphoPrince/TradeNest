@@ -32,6 +32,14 @@ const Profile = () => {
                     }
                 });
 
+                // 1. Check for the specific "Not Found" status
+                if (response.status === 404) {
+                    console.info("New user detected. Redirecting to onboarding...");
+                    navigate("/editProfile"); // Redirect to the form
+                    return; 
+                }
+
+                // 2. Handle other errors (like 500 or 401)
                 if (!response.ok) {
                     throw new Error(`Error: ${response.status}`);
                 }
