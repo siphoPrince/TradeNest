@@ -5,6 +5,44 @@ import "../styles/Upload.css";
 
 const Upload = () => {
   const [files, setFiles] = useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState(0)
+  const [categoryId, setCategoryId] = useState(1);
+
+  const handleUpload = async () => {
+  // 1. Get token from storage
+  const token = localStorage.getItem("token"); 
+
+  // 2. Prepare the data object
+  const postData = {
+    title: title,
+    description: description,
+    price: parseFloat(price),
+    categoryId: parseInt(categoryId)
+  };
+
+  try {
+    const response = await fetch("https://localhost:7124/api/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(postData),
+    });
+
+    if (response.ok) {
+      alert("Post created successfully! 🎉");
+      // Optional: redirect or clear form
+    } else {
+      const error = await response.text();
+      alert("Upload failed: " + error);
+    }
+  } catch (err) {
+    console.error("Network error:", err);
+  }
+};
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles((prev) => [
@@ -71,13 +109,20 @@ const Upload = () => {
           <div className="form-content">
             <div className="inputs">
               <label>Title</label>
-              <input type="text" className="title-input" placeholder="What are you selling..." />
+              <input 
+                type="text"
+                className="title-input"
+                value={title}
+                onChange={(e)=> setTitle(e.target.value)}
+                placeholder="What are you selling..." />
             </div>
 
             <div className="inputs">
               <label>Description</label>
               <textarea
                 className="Description-input"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe in details..."
                 rows="4"
               />
@@ -85,10 +130,27 @@ const Upload = () => {
 
             <div className="inputs">
               <label>Price</label>
-              <input type="text" className="Price-input" placeholder="R 0.00" />
+              <input 
+                type="number"
+                className="Price-input"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="R 0.00" />
             </div>
 
-            <button className="uploadBut">Upload Item</button>
+            <div className="inputs">
+              <label>Category</label>
+              <select 
+                className="category-input"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}>
+                <option value="1">Electronics</option>
+                <option value="2">Clothing</option>
+                <option value="3">Home</option>
+              </select>
+            </div>
+
+            <button className="uploadBut" onClick={handleUpload}>Upload Item</button>
           </div>
         </div>
       </div>
