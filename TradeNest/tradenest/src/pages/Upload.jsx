@@ -11,30 +11,40 @@ const Upload = () => {
   const [categoryId, setCategoryId] = useState(1);
 
   const handleUpload = async () => {
-  // 1. Get token from storage
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
+  if (!token) return alert("Please log in first!");
 
-  // 2. Prepare the data object
-  const postData = {
-    title: title,
-    description: description,
-    price: parseFloat(price),
-    categoryId: parseInt(categoryId)
-  };
+  // Decode token to get the real User ID 🆔
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  const currentUserId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+  console.log("Extracted User ID:", currentUserId);
+
+  const formData = new FormData();
+  
+  // Pack the envelope ✉️
+  formData.append("title", title);
+  formData.append("description", description);
+  formData.append("price", price);
+  formData.append("categoryId", categoryId);
+  formData.append("userId", currentUserId);
+  
+  if (files.length > 0) {
+    formData.append("file", files[0]); 
+  }
 
   try {
-    const response = await fetch("https://localhost:7124/api/posts", {
+    const response = await fetch("https://localhost:7124/api/uploads/create-post", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
+        // No Content-Type header! The browser handles it for FormData.
       },
-      body: JSON.stringify(postData),
+      body: formData,
     });
 
     if (response.ok) {
-      alert("Post created successfully! 🎉");
-      // Optional: redirect or clear form
+      alert("Product uploaded to feed! 🚀");
+      // You could redirect to the feed here
     } else {
       const error = await response.text();
       alert("Upload failed: " + error);
