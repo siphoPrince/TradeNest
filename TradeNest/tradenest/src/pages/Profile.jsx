@@ -1,20 +1,29 @@
 import "../styles/Profile.css";
 import Navigation from "../components/Navigation";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+
 
 const Profile = () => {
     const [showMenu, setShowMenu] = useState(false);
     const [profile, setProfile] = useState(null); // 1. Start with null to check for data
     const navigate = useNavigate();
+    const { id } = useParams();
+    console.log("Type of ID:", typeof id)
 
     // 2. Get userId at the top level
     const userId = localStorage.getItem("userId");
+    const isOwnProfile = !id || id === userId;
 
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem("token");
             const storedUserId = localStorage.getItem("userId");
+
+            const targetUserId = id || storedUserId;
+            console.log("ID from URL:", id);
+            console.log("ID from LocalStorage:", storedUserId);
+            console.log("Final Target ID:", targetUserId);
 
             // Check if we have our "keys"
             if (!token || !storedUserId) {
@@ -24,7 +33,7 @@ const Profile = () => {
             } 
 
             try {
-                const response = await fetch(`https://localhost:7124/api/profile/${storedUserId}`, {
+                const response = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -52,7 +61,7 @@ const Profile = () => {
         };
 
         fetchProfile();
-    }, [navigate]); // navigate is a stable dependency
+    }, [id, navigate]); // navigate is a stable dependency
 
     // 3. Show a loading state until the profile data arrives
     if (!profile) {
@@ -73,6 +82,7 @@ const Profile = () => {
                             className="profileImg" 
                         />
                         <div className="profile-info">
+                            <h1>Profile of User {id}</h1>
                             <span className="userName">{profile.name} {profile.surName}</span>
                             <small className="userHandle">@mabirimise</small>
                             <small className="bio">{profile.bio}</small>
@@ -109,47 +119,41 @@ const Profile = () => {
                     {/* ACTION BUTTONS */}
                     <div className="profile-actions">
 
-                        <button
-                        className="editBut"
-                        onClick={() => navigate("/editProfile")}>
-                            Edit Profile
-
-                        </button>
-
-                        <button className="shareBut">
-                            Share Profile
-                        </button>
-
-                        {/* SETTINGS MENU */}
-                    <div className="accountMenu">
-
-                        <button 
-                            className="accountBtn"
-                            onClick={() => setShowMenu(!showMenu)}
-                        >
-                            Account
-                        </button>
-
-                        {showMenu && (
-                            <div className="dropdownMenu">
-
-                                <div className="menuItem">My Orders</div>
-                                <div className="menuItem">My Wishlist</div>
-                                <div className="menuItem">My Reviews</div>
-                                <div className="menuItem">Settings</div>
-
-                                <hr />
-
-                                <button className="logout">
-                                    Logout
-                                </button>
-
-                            </div>
+                        {isOwnProfile && (
+                            <button
+                                className="editBut"
+                                onClick={() => navigate("/editProfile")}>
+                                Edit Profile
+                            </button>
                         )}
 
-                    </div>
+                        {isOwnProfile && (
+                            <button className="shareBut">
+                                Share Profile
+                            </button>
+                        )}
+
+                        {/* SETTINGS MENU */}
+                        {isOwnProfile && (
+                            <div className="accountMenu">
+                                <button 
+                                    className="accountBtn"
+                                    onClick={() => setShowMenu(!showMenu)}
+                                >
+                                    Account
+                                </button>
+
+                                {showMenu && (
+                                    <div className="dropdownMenu">
+                                        {/* ... your menu items ... */}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
 
                     </div>
+
                     {/* USER LISTINGS */}
                     <div className="user-listings">
 

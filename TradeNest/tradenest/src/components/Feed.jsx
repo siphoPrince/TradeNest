@@ -39,7 +39,7 @@ const Feed = () => {
                         <div key={post.id} className="post-container">
                             {/* We'll pass the whole post object to the card */}
                             <ProductCard post={post} />
-                            <Engagement postId={post.id} />
+                            <Engagement postId={post.id} userId={post.userId} />
                         </div>
                     ))}
                 </div>

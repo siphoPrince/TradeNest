@@ -17,10 +17,12 @@ function App() {
         <Route path="/SignUp" element={<SignUp />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:id" element={<Profile />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/buyNow" element={<BuyNow />} />
+        <Route path="/buyNow/:id" element={<BuyNow />} />
         <Route path="/editProfile" element={<EditProfile />} />
       </Routes>
     </BrowserRouter>
