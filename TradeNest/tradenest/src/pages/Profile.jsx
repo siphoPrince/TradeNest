@@ -1,4 +1,5 @@
 import "../styles/Profile.css";
+import "../styles/Follow.css"
 import Navigation from "../components/Navigation";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom";
 const Profile = () => {
     const [showPosts, setShowPosts] = useState(false);
     const [userPosts, setUserPosts] = useState([]);
+    const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [showMenu, setShowMenu] = useState(false);
     const [profile, setProfile] = useState(null); // 1. Start with null to check for data
@@ -93,8 +95,36 @@ const Profile = () => {
         return <div className="loading">Loading Profile... ⏳</div>;
     }
 
+    console.log("Follow button clicked for ID:", id);
+const handleFollow = async () => {
+    const token = localStorage.getItem("token");
+    const currentUserId = localStorage.getItem("userId");
 
-console.log(userPosts[0])
+    try {
+        const response = await fetch(`https://localhost:7124/api/follow/${id}`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'UserId': currentUserId // Matches your controller's manual header check
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Update the UI state based on the backend response
+            setIsFollowing(data.isFollowing);
+            
+            setProfile(prev => ({
+                    ...prev,
+                    followersCount: data.isFollowing 
+                        ? prev.followersCount + 1 
+                        : prev.followersCount - 1
+                }));
+        }
+    } catch (error) {
+        console.error("Follow failed:", error);
+    }
+};
     return(
         <div className="profile-layout">
             <Navigation />
@@ -109,9 +139,52 @@ console.log(userPosts[0])
                         />
                         <div className="profile-info">
                             <h1>Profile of User {id}</h1>
-                            <span className="userName">{profile.name} {profile.surName}</span>
+                            <span className="userName">{profile.profile?.name} {profile.surName}</span>
                             <small className="userHandle">@mabirimise</small>
                             <small className="bio">{profile.bio}</small>
+
+                            {/* ACTION BUTTONS */}
+                   <div className="profile-actions">
+
+                        {/* 1. Use a Ternary (?) for the Edit vs Follow choice */}
+                        {isOwnProfile ? (
+                            <button
+                                className="editBut"
+                                onClick={() => navigate("/editProfile")}>
+                                Edit Profile
+                            </button>
+                        ) : (
+                            <button 
+                                className={isFollowing ? "followingBut" : "followBut"} 
+                                onClick={handleFollow}
+                            >
+                                {isFollowing ? "Following" : "Follow"}
+                            </button>
+                        )}
+
+                        {/* 2. Use Logical AND (&&) for things that only show for you */}
+                        {isOwnProfile && (
+                            <>
+                                <button className="shareBut">
+                                    Share Profile
+                                </button>
+
+                                <div className="accountMenu">
+                                    <button 
+                                        className="accountBtn"
+                                        onClick={() => setShowMenu(!showMenu)}
+                                    >
+                                        Account
+                                    </button>
+                                    {showMenu && (
+                                        <div className="dropdownMenu">
+                                            {/* Menu items */}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                         </div>
                     </div>
 
@@ -120,62 +193,29 @@ console.log(userPosts[0])
                     <div className="profile-stats">
 
                         <div className="stat">
-                            <span className="stat-number">24</span>
+                            <span className="stat-number">{userPosts.length}</span>
                             <span className="stat-label">Listings</span>
                         </div>
 
                         <div className="stat">
-                            <span className="stat-number">500</span>
+                            <span className="stat-number">{profile.followersCount || 0}</span>
                             <span className="stat-label">Followers</span>
                         </div>
 
                         <div className="stat">
-                            <span className="stat-number">4000</span>
+                            <span className="stat-number">{profile.followingCount || 0}</span>
                             <span className="stat-label">Following</span>
                         </div>
 
                         <div className="stat">
-                            <span className="stat-number">85</span>
+                            <span className="stat-number">0</span>
                             <span className="stat-label">Sold</span>
                         </div>
 
                     </div>
 
 
-                    {/* ACTION BUTTONS */}
-                    <div className="profile-actions">
-
-                        {isOwnProfile && (
-                            <button
-                                className="editBut"
-                                onClick={() => navigate("/editProfile")}>
-                                Edit Profile
-                            </button>
-                        )}
-
-                        {isOwnProfile && (
-                            <button className="shareBut">
-                                Share Profile
-                            </button>
-                        )}
-
-                        {/* SETTINGS MENU */}
-                        {isOwnProfile && (
-                            <div className="accountMenu">
-                                <button 
-                                    className="accountBtn"
-                                    onClick={() => setShowMenu(!showMenu)}
-                                >
-                                    Account
-                                </button>
-
-                                {showMenu && (
-                                    <div className="dropdownMenu">
-                                        {/* ... your menu items ... */}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                    
                         
 
                     </div>
@@ -210,13 +250,7 @@ console.log(userPosts[0])
                     </div>
 
                 </div>
-
-                    
-
-
             </div>
-
-        </div>
     
     );
 }

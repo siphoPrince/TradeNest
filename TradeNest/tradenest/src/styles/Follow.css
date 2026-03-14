@@ -1,0 +1,31 @@
+/* Change the space to a comma to target both independently */
+.followingBut, .followBut {
+    padding: 10px 18px;
+    border-radius: var(--radius-md); /* Added this to use your variables! */
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+    font-size: 14px;
+}
+
+.followBut {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.followBut:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.followingBut {
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+    border-color: var(--color-border);
+}
+
+.followingBut:hover {
+    background-color: var(--color-border);
+    color: var(--color-text-dark);
+}
