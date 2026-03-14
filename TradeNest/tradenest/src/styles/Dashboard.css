@@ -229,8 +229,8 @@ body{
 .feed{
     flex:1;
     width:100%;
-    padding:30px;
-    padding-bottom:100px;
+    padding:0 30px 40px;
+   
     box-sizing:border-box;
 }
 
@@ -539,7 +539,7 @@ body{
 /* VIDEO GRADIENT FOR TEXT */
 /* ============================= */
 
-.main-screen::after{
+.post-container::after{
     content:"";
     position:absolute;
 
@@ -547,7 +547,7 @@ body{
     left:0;
     right:0;
 
-    height:160px;
+    height:150px;
 
     background:linear-gradient(
         to top,

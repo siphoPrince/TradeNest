@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Engagement from "./Engagement";
 import ProductCard from "./ProductCard";
-// Remove static Picture import once using live data
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+
 
 const Feed = () => {
     const [posts, setPosts] = useState([]);
@@ -27,32 +29,58 @@ const Feed = () => {
         fetchPosts();
     }, []);
 
-    if (loading) return <div className="loader">Loading FlipFeed... 🚀</div>;
-
-    return (
-        <div className="feed">
-            <h6 className="feed-title">FlipFeed</h6>
-            <div className="feed-layout">
-                <div className="main-screen">
-                    {/* Map through the posts from the database */}
-                    {posts.map((post) => (
-                        <div key={post.id} className="post-container">
-                            {/* We'll pass the whole post object to the card */}
-                            <ProductCard post={post} />
-                            <Engagement postId={post.id} userId={post.userId} />
-                        </div>
-                    ))}
-                </div>
-
-                {showComments && (
-                    <div className="comment-panel">
-                        <button onClick={() => setShowComments(false)}>Close</button>
-                        <p>Comments for this post...</p>
+    if (loading){
+        return (
+            <div className="feed">
+                <h6 className="feed-title"><Skeleton width={100} /></h6>
+                <div className="feed-layout">
+                    <div className="main-screen">
+                        {/* We render 3 skeleton "ghost" posts */}
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} className="post-container" style={{ marginBottom: '20px' }}>
+                                {/* Skeleton for ProductCard */}
+                                <Skeleton height={250} borderRadius={15} /> 
+                                <div style={{ marginTop: '10px' }}>
+                                    <Skeleton width="60%" height={20} />
+                                    <Skeleton width="40%" height={15} />
+                                </div>
+                                {/* Skeleton for Engagement buttons */}
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                                    <Skeleton circle width={40} height={40} />
+                                    <Skeleton circle width={40} height={40} />
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                )}
+                </div>
             </div>
-        </div>
-    );
+        );}
+
+        return (
+            <div className="feed">
+                <h6 className="feed-title">FlipFeed</h6>
+                <div className="feed-layout">
+                    <div className="main-screen">
+                        {/* Map through the posts from the database */}
+                        {posts.map((post) => (
+                            <div key={post.id} className="post-container">
+                                {/* We'll pass the whole post object to the card */}
+                                <ProductCard post={post} />
+                                <Engagement postId={post.id} userId={post.userId} />
+                            </div>
+                        ))}
+                    </div>
+
+                    {showComments && (
+                        <div className="comment-panel">
+                            <button onClick={() => setShowComments(false)}>Close</button>
+                            <p>Comments for this post...</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    
 };
 
 export default Feed;
