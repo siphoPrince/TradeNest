@@ -3,12 +3,19 @@ import Engagement from "./Engagement";
 import ProductCard from "./ProductCard";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import CommentSection from "./CommentSection";
 
 
 const Feed = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showComments, setShowComments] = useState(false);
+    const [activePostId, setActivePostId] = useState(null);
+
+    const toggleComments = (postId) => {
+    setActivePostId(postId);
+    setShowComments(true);
+};
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -57,29 +64,35 @@ const Feed = () => {
         );}
 
         return (
-            <div className="feed">
-                <h6 className="feed-title">FlipFeed</h6>
-                <div className="feed-layout">
-                    <div className="main-screen">
-                        {/* Map through the posts from the database */}
-                        {posts.map((post) => (
-                            <div key={post.id} className="post-container">
-                                {/* We'll pass the whole post object to the card */}
-                                <ProductCard post={post} />
-                                <Engagement postId={post.id} userId={post.userId} />
-                            </div>
-                        ))}
-                    </div>
-
-                    {showComments && (
-                        <div className="comment-panel">
-                            <button onClick={() => setShowComments(false)}>Close</button>
-                            <p>Comments for this post...</p>
+                <div className="feed">
+                    <h6 className="feed-title">FlipFeed</h6>
+                    {/* We add the dynamic class here so the CSS knows to shift the layout */}
+                    <div className={`feed-layout ${showComments ? 'comments-active' : ''}`}>
+                        <div className="main-screen">
+                            {posts.map((post) => (
+                                <div key={post.id} className="post-container">
+                                    <ProductCard post={post} />
+                                    {/* We pass toggleComments here so Engagement can trigger it */}
+                                    <Engagement 
+                                        postId={post.id} 
+                                        userId={post.userId} 
+                                        onToggleComments={toggleComments} 
+                                    />
+                                </div>
+                            ))}
                         </div>
-                    )}
+
+                        {/* This is your right-side panel that slides in */}
+                        {showComments && (
+                            <div className="comment-panel">
+                                <CommentSection 
+                                postId={activePostId}
+                                onClose={() => setShowComments(false)}/>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        );
+            );
     
 };
 

@@ -212,13 +212,9 @@ const handleFollow = async () => {
                             <span className="stat-label">Sold</span>
                         </div>
 
-                    </div>
+                    </div>                        
 
-
-                    
-                        
-
-                    </div>
+                </div>
 
                     {/* USER LISTINGS */}
                     <div className="user-listings">
