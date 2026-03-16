@@ -1,19 +1,36 @@
-import { useState } from "react";
-import "../styles/BuyNow.css";
-import Hoddie from "../assets/hoddie.jpg";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { Heart, MessageCircle } from 'lucide-react';
-// Import the new component
 import PaymentModal from "../components/PaymentModel"; 
+import "../styles/BuyNow.css";
 
 const BuyNow = () => {
-    // 1. Control the visibility of the popup
+    const { id } = useParams(); // 🎣 Grabs the ID from the URL (/buyNow/12)
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const productData = {
-        name: "iPhone 16",
-        price: 205
-    };
+    useEffect(() => {
+        // Fetch the specific post details from your C# Backend
+        const fetchProduct = async () => {
+            try {
+                const response = await fetch(`https://localhost:7124/api/Posts/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setProduct(data);
+                }
+            } catch (error) {
+                console.error("Error fetching product:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [id]);
+
+    if (loading) return <div className="loader">Loading item details... 📦</div>;
+    if (!product) return <div>Product not found. ❌</div>;
 
     return (
         <div className="buy-page">
@@ -21,31 +38,31 @@ const BuyNow = () => {
                 <Link to="/dashboard" className="back-link">← Back</Link>
 
                 <div className="product-image">
-                    <img src={Hoddie} alt="product" />
+                    {/* Use the dynamic image URL from your backend */}
+                    <img src={`https://localhost:7124/uploads/${product.mediaUrl}`} alt={product.title} />
                 </div>
 
                 <div className="product-info">
-                    <h2 className="product-name">{productData.name}</h2>
-                    <span className="product-price">R{productData.price}</span>
+                    <h2 className="product-name">{product.title}</h2>
+                    <span className="product-price">R{product.price}</span>
 
                     <div className="actions">
                         <div className="action-btn"><Heart/><span>Like</span></div>
                         <div className="action-btn"><MessageCircle /><span>Comment</span></div>
                     </div>
 
-                    {/* 2. Click to Open the Modal */}
                     <button className="buy-btn" onClick={() => setIsModalOpen(true)}>
                         Buy Now
                     </button>
                 </div>
             </div>
 
-            {/* 3. The Modal Component */}
             <PaymentModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 
-                productName={productData.name}
-                productPrice={productData.price}
+                productName={product.title}
+                productPrice={product.price}
+                postId={id} // 🔑 Pass the real ID to the modal for the Escrow!
             />
         </div>
     );
