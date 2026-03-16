@@ -96,7 +96,7 @@ const Profile = () => {
     }
 
     console.log("Follow button clicked for ID:", id);
-const handleFollow = async () => {
+    const handleFollow = async () => {
     const token = localStorage.getItem("token");
     const currentUserId = localStorage.getItem("userId");
 
@@ -133,12 +133,11 @@ const handleFollow = async () => {
                     {/* PROFILE HEADER */}
                     <div className="profile-header">
                         <img 
-                            src={profile.imageUrl || "https://picsum.photos/120"}
+                            src={profile.profile?.imageUrl || "https://picsum.photos/120"}
                             className="profileImg"
                             alt="Profile"
                         />
                         <div className="profile-info">
-                            <h1>Profile of User {id}</h1>
                             <span className="userName">{profile.profile?.name} {profile.surName}</span>
                             <small className="userHandle">@mabirimise</small>
                             <small className="bio">{profile.bio}</small>

@@ -267,6 +267,17 @@ body{
 .feed-layout.comments-active {
     transform: translateX(-180px);
 }
+@media (min-width: 769px) {
+    .feed-layout.comments-active {
+        transform: translateX(-180px);
+    }
+}
+
+@media (max-width: 768px) {
+    .feed-layout.comments-active {
+        transform: translateX(0); 
+    }
+}
 
 
 /* ============================= */
@@ -337,7 +348,8 @@ body{
     gap:18px;
 }
 
-.engagement a{
+.engagement a,
+.engagement button{
     display:flex;
     align-items:center;
     justify-content:center;
@@ -354,6 +366,15 @@ body{
     color:var(--color-text-dark);
 
     transition:var(--transition);
+    cursor: pointer;
+}
+
+.LikeAction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px; 
+    color: white;
 }
 
 .engagement a:hover{

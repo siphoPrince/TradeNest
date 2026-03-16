@@ -24,11 +24,11 @@ const ProductCard = ({ post }) => {
         
         <div className="profileInfo">
           <img 
-            src={post.userProfilePic || "/profile.jpg"} 
+            src={post.ProfilePictureUrl || "/profile.jpg"} 
             className="profile-pic" 
             alt="User" 
           />
-          <span>@User_{post.userId}</span>
+          <span>@{post.Username}</span>
         </div>
 
         <div className="description">
