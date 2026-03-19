@@ -24,11 +24,8 @@ const Profile = () => {
         const fetchProfile = async () => {
             const token = localStorage.getItem("token");
             const storedUserId = localStorage.getItem("userId");
-
             const targetUserId = id || storedUserId;
-            console.log("ID from URL:", id);
-            console.log("ID from LocalStorage:", storedUserId);
-            console.log("Final Target ID:", targetUserId);
+            
 
             // Check if we have our "keys"
             if (!token || !storedUserId) {
@@ -37,12 +34,15 @@ const Profile = () => {
                 return;
             } 
 
-            
-
-            try {
+                try {
                     const profileResponse = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
                         headers: { 'Authorization': `Bearer ${token}` } 
                 });
+
+                if (profileResponse.status === 404 && isOwnProfile) {
+                navigate("/editProfile");
+                return;
+            }
 
                 const profileData = await profileResponse.json();
                 setProfile(profileData);
@@ -88,7 +88,7 @@ const Profile = () => {
         };
 
         fetchProfile();
-    }, [id, navigate]); // navigate is a stable dependency
+    }, [id, navigate, isOwnProfile]); // navigate is a stable dependency
 
     // 3. Show a loading state until the profile data arrives
     if (!profile) {
@@ -138,9 +138,9 @@ const Profile = () => {
                             alt="Profile"
                         />
                         <div className="profile-info">
-                            <span className="userName">{profile.profile?.name} {profile.surName}</span>
-                            <small className="userHandle">@mabirimise</small>
-                            <small className="bio">{profile.bio}</small>
+                            <span className="userName">{profile.profile?.name} {profile.profile?.surName}</span>
+                            <small className="userHandle">{profile.profile?.handleName}</small>
+                            <small className="bio">{profile.profile?.bio}</small>
 
                             {/* ACTION BUTTONS */}
                    <div className="profile-actions">

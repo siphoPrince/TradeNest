@@ -9,6 +9,10 @@ const ProductCard = ({ post }) => {
   const backendBaseUrl = "https://localhost:7124/uploads/";
   const imageUrl = post.mediaUrl ? `${backendBaseUrl}${post.mediaUrl}` : "/placeholder-product.jpg";
 
+  const profileUrl = post.profilePictureUrl 
+    ? `${backendBaseUrl}${post.profilePictureUrl}` 
+    : "/profile.jpg";
+
   return (
     <div className="post-container"> 
       {/* 1. Main Media - This acts as the background for the text overlay */}
@@ -24,11 +28,11 @@ const ProductCard = ({ post }) => {
         
         <div className="profileInfo">
           <img 
-            src={post.ProfilePictureUrl || "/profile.jpg"} 
+            src={profileUrl || "/profile.jpg"} 
             className="profile-pic" 
             alt="User" 
           />
-          <span>@{post.Username}</span>
+          <span>@{post.name || "User"}</span>
         </div>
 
         <div className="description">

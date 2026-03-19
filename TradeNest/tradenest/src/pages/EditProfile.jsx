@@ -12,6 +12,7 @@ const EditProfile = () => {
         id: 0,
         name: "",
         surName: "",
+        handleName:"",
         bio: "",
         phone: "",
         imageUrl: ""
@@ -150,6 +151,13 @@ const EditProfile = () => {
                                 value={profile.name}
                                 onChange={handleChange}
                                 placeholder="First name"
+                            />
+                            <input
+                                className="edit-input name-input"
+                                name="handleName"
+                                value={profile.handleName}
+                                onChange={handleChange}
+                                placeholder="@ Name"
                             />
 
                             <input
