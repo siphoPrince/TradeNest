@@ -11,12 +11,10 @@ const Profile = () => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [showMenu, setShowMenu] = useState(false);
-    const [profile, setProfile] = useState(null); // 1. Start with null to check for data
+    const [profile, setProfile] = useState(null); 
     const navigate = useNavigate();
     const { id } = useParams();
-    console.log("Type of ID:", typeof id)
 
-    // 2. Get userId at the top level
     const userId = localStorage.getItem("userId");
     const isOwnProfile = !id || id === userId;
 
@@ -125,6 +123,27 @@ const Profile = () => {
         console.error("Follow failed:", error);
     }
 };
+
+const handleDelete = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this listing?")) return;
+
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`https://localhost:7124/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            // Remove the deleted post from the UI state immediately
+            setUserPosts(userPosts.filter(post => post.id !== postId));
+        } else {
+            alert("Failed to delete post.");
+        }
+    } catch (error) {
+        console.error("Delete error:", error);
+    }
+};
     return(
         <div className="profile-layout">
             <Navigation />
@@ -171,15 +190,10 @@ const Profile = () => {
                                 <div className="accountMenu">
                                     <button 
                                         className="accountBtn"
-                                        onClick={() => setShowMenu(!showMenu)}
+                                        onClick={() => navigate("/account")}
                                     >
-                                        Account
+                                        Account & Banking
                                     </button>
-                                    {showMenu && (
-                                        <div className="dropdownMenu">
-                                            {/* Menu items */}
-                                        </div>
-                                    )}
                                 </div>
                             </>
                         )}
@@ -232,6 +246,15 @@ const Profile = () => {
                                         onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }}
                                     />
                                     <small className="price">R{post.price}</small>
+
+                                    {isOwnProfile && (
+                                        <button 
+                                            className="delete-btn" 
+                                            onClick={() => handleDelete(post.id)}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             ))
                         ) : (

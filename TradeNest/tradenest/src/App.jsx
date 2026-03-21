@@ -8,6 +8,9 @@ import Upload from "./pages/Upload";
 import Inbox from "./pages/Inbox";
 import BuyNow from "./pages/BuyNow";
 import EditProfile from "./pages/EditProfile";
+import SellerSetup from "./pages/SellerSetup";
+import ManageListings from "./pages/ManageListings";
+import EditListing from "./pages/EditListing";
 
 function App() {
   return (
@@ -22,6 +25,9 @@ function App() {
         <Route path="/upload" element={<Upload />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/buyNow" element={<BuyNow />} />
+        <Route path="/Manage" element={<ManageListings />} />
+        <Route path="/edit-post:id" element={<EditListing />} />
+        <Route path="/account" element={<SellerSetup />} />
         <Route path="/buyNow/:id" element={<BuyNow />} />
         <Route path="/editProfile" element={<EditProfile />} />
       </Routes>
