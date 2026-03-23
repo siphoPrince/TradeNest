@@ -1,0 +1,22 @@
+.inbox-page-container {
+    display: flex;
+    height: 100vh; /* Full screen height */
+    width: 100vw;
+    overflow: hidden;
+    background-color: #000; /* Matching Cylo's dark theme */
+}
+
+.inbox-main-content {
+    flex: 1; /* Takes up the remaining space next to Navigation */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .inbox-page-container {
+        flex-direction: column-reverse; /* Put nav at bottom for mobile */
+    }
+}

@@ -1,55 +1,74 @@
 import "../styles/Messege.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as signalR from '@microsoft/signalr';
 
-const Message = ({ orderId }) => { // receiverId will come from the selected activeChat
+const Message = ({ orderId }) => {
     const [activeChat, setActiveChat] = useState(null);
     const [connection, setConnection] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [messageInput, setMessageInput] = useState(""); // ✍️ Track what the user types
+    const [messageInput, setMessageInput] = useState("");
+    const chatEndRef = useRef(null);
 
+    // Get your ID from storage (1004)
+    const loggedInUserId = localStorage.getItem("userId");
+
+    // 1. Auto-scroll to bottom when new messages arrive
     useEffect(() => {
-    const newConnection = new signalR.HubConnectionBuilder()
-        .withUrl("https://localhost:7124/chatHub", { 
-            accessTokenFactory: () => localStorage.getItem("token")
-        })
-        .withAutomaticReconnect()
-        .build();
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
-    const start = async () => {
-        try {
-            await newConnection.start();
-            console.log("Connected to SignalR! 🚀");
-            
-            // Register the listener
-            newConnection.on("ReceiveMessage", (message) => {
-                setMessages(prev => [...prev, message]);
-            });
+    // 2. SignalR Lifecycle Management
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-            setConnection(newConnection);
-        } catch (err) {
-            console.error("Connection failed: ", err);
-        }
-    };
+        const newConnection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7124/chatHub", { 
+                accessTokenFactory: () => token
+            })
+            .withAutomaticReconnect()
+            .build();
 
-    start();
+        const start = async () => {
+            try {
+                await newConnection.start();
+                console.log("Connected to SignalR! 🚀");
+                
+                // Listen for messages from the Hub
+                newConnection.on("ReceiveMessage", (message) => {
+                    setMessages(prev => [...prev, message]);
+                });
 
-    return () => {
-        if (newConnection) {
-            newConnection.off("ReceiveMessage");
-            newConnection.stop();
-        }
-    };
-}, []);
+                setConnection(newConnection);
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        };
 
-    // 📤 Function to send message to the backend Hub
+        start();
+
+        // CLEANUP: Prevents "The connection was stopped during negotiation"
+        return () => {
+            if (newConnection) {
+                newConnection.off("ReceiveMessage");
+                newConnection.stop();
+            }
+        };
+    }, []);
+
+    // 3. Send Message Logic (Types matched to C# Hub)
     const sendMessage = async () => {
         if (connection && messageInput.trim() !== "" && activeChat) {
             try {
-                // Call the C# method: SendPrivateMessage(receiverId, orderId, content)
-                await connection.invoke("SendPrivateMessage", activeChat.id, orderId, messageInput);
+                // FORCE TYPES: C# Hub expects 'int' and 'int?'
+                const rId = parseInt(activeChat.id); 
+                const oId = orderId ? parseInt(orderId) : null; 
+                const content = messageInput.trim();
+
+                // Invoke the C# Method
+                await connection.invoke("SendPrivateMessage", rId, oId, content);
                 
-                // Clear the input after sending
+                // Clear the input on success
                 setMessageInput(""); 
             } catch (e) {
                 console.error("Sending failed: ", e);
@@ -57,8 +76,9 @@ const Message = ({ orderId }) => { // receiverId will come from the selected act
         }
     };
 
+    // Mock data for the sidebar
     const chats = [
-        { id: 1, username: "Jessica", avatar: "https://i.pravatar.cc/150?img=5", lastMessage: "Hey...", time: "2m", online: true },
+        { id: 1004, username: "Jessica", avatar: "https://i.pravatar.cc/150?img=5", lastMessage: "Hey...", time: "2m", online: true },
         { id: 2, username: "Michael", avatar: "https://i.pravatar.cc/150?img=8", lastMessage: "Project...", time: "1h", online: false }
     ];
 
@@ -69,7 +89,9 @@ const Message = ({ orderId }) => { // receiverId will come from the selected act
                 <div className="sidebar-header"><h2>Messages</h2></div>
                 <div className="message-list">
                     {chats.map(chat => (
-                        <div key={chat.id} className="message-card" onClick={() => setActiveChat(chat)}>
+                        <div key={chat.id} 
+                             className={`message-card ${activeChat?.id === chat.id ? "active" : ""}`} 
+                             onClick={() => setActiveChat(chat)}>
                             <div className="avatar-wrapper">
                                 <img src={chat.avatar} alt={chat.username} className="avatar" />
                                 {chat.online && <span className="online-dot"></span>}
@@ -88,7 +110,7 @@ const Message = ({ orderId }) => { // receiverId will come from the selected act
 
             {/* CHAT DISPLAY */}
             <div className={`message-display-container ${!activeChat ? "hide-mobile" : ""}`}>
-                {activeChat && (
+                {activeChat ? (
                     <>
                         <div className="display-header">
                             <button className="back-btn" onClick={() => setActiveChat(null)}>←</button>
@@ -97,24 +119,29 @@ const Message = ({ orderId }) => { // receiverId will come from the selected act
                         </div>
 
                         <div className="chat-content">
-                            {/* 🔄 Loop through our real messages state */}
                             {messages.map((msg, index) => (
-                                <div key={index} className={`message-bubble ${msg.senderId === activeChat.id ? 'received' : 'sent'}`}>
+                                <div key={index} 
+                                     className={`message-bubble ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
                                     <p>{msg.content}</p>
                                 </div>
                             ))}
+                            <div ref={chatEndRef} />
                         </div>
 
                         <div className="message-input-area">
                             <input 
                                 value={messageInput}
                                 onChange={(e) => setMessageInput(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && sendMessage()} // Send on Enter key
-                                placeholder="Send a message..." 
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
+                                placeholder="Type a message..." 
                             />
-                            <button onClick={sendMessage}>Send</button>
+                            <button onClick={sendMessage} disabled={!messageInput.trim()}>Send</button>
                         </div>
                     </>
+                ) : (
+                    <div className="no-chat-selected">
+                        <p>Select a conversation to start chatting on Cylo</p>
+                    </div>
                 )}
             </div>
         </div>

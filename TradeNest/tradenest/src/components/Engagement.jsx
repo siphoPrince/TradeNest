@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Likes from '../pages/Likes';
 
 const Engagement = ( {userId, postId, onToggleComments,IsLikedByCurrentUser, LikeCount} ) => {
-    
+    console.log("Engagement received userId:", userId);
     const toggleComments = (e) => {
         e.preventDefault();
         onToggleComments(postId); 

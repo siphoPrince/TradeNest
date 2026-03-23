@@ -9,10 +9,27 @@ const ProductCard = ({ post }) => {
 
   if (!post) return null;
 
-  const isVideo = post.mediaUrl?.match(/\.(mp4|webm|mov|ogg)$/i);
   const backendBaseUrl = "https://localhost:7124/uploads/";
-  const mediaUrl = post.mediaUrl ? `${backendBaseUrl}${post.mediaUrl}` : "/placeholder-product.jpg";
-  const profileUrl = post.profilePictureUrl ? `${backendBaseUrl}${post.profilePictureUrl}` : "/profile.jpg";
+
+  // --- FIX: Helper to handle Blob URLs and DB Filenames ---
+  const formatUrl = (url, fallback) => {
+    if (!url) return fallback;
+    // If it's a blob from a fresh upload or already a full link, don't touch it
+    if (url.startsWith("blob:") || url.startsWith("http")) return url;
+    // If it's just a filename, add the backend path
+    return `${backendBaseUrl}${url}`;
+  };
+
+  const isVideo = post.mediaUrl?.match(/\.(mp4|webm|mov|ogg)$/i);
+  
+  // Apply the fix to both Media and Profile URLs
+  const mediaUrl = formatUrl(post.mediaUrl, "/placeholder-product.jpg");
+  
+  // Check both the flat property and the nested profile object from your DTO
+  const profileImgName = post.profilePictureUrl || post.profile?.imageUrl;
+  const profileUrl = formatUrl(profileImgName, "/profile.jpg");
+
+  const displayName = post.handleName || post.name || "User";
 
   // 1. TikTok Auto-Play/Pause Logic
   useEffect(() => {
@@ -70,12 +87,10 @@ const ProductCard = ({ post }) => {
             onTimeUpdate={handleTimeUpdate}
           />
           
-          {/* Progress Bar Line */}
           <div className="video-progress-container">
             <div className="video-progress-bar" style={{ width: `${progress}%` }}></div>
           </div>
 
-          {/* Centered Play Icon if paused */}
           {isPaused && (
             <div className="play-overlay">
                 <Play size={64} fill="white" color="white" style={{ opacity: 0.7 }} />
@@ -91,15 +106,16 @@ const ProductCard = ({ post }) => {
         />
       )}
 
-      {/* --- UI OVERLAY SECTION (The stuff that went missing!) --- */}
+      {/* --- UI OVERLAY SECTION --- */}
       <div className="productInfo">
         <div className="profileInfo">
           <img 
             src={profileUrl} 
             className="profile-pic" 
             alt="User" 
+            onError={(e) => { e.target.src = "/profile.jpg"; }}
           />
-          <span>@{post.handleName || post.name || "User"}</span>
+          <span>@{displayName}</span>
         </div>
 
         <div className="description">
