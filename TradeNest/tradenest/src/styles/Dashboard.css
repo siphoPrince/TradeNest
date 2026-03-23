@@ -552,21 +552,15 @@ body{
 /* VIDEO GRADIENT FOR TEXT */
 /* ============================= */
 
-.post-container::after{
-    content:"";
-    position:absolute;
-
-    bottom:0;
-    left:0;
-    right:0;
-
-    height:150px;
-
-    background:linear-gradient(
-        to top,
-        rgba(0,0,0,0.6),
-        rgba(0,0,0,0)
-    );
-
-    border-radius: var(--radius-lg);
+.post-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 180px; /* Slightly taller for better readability */
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    border-radius: inherit;
+    pointer-events: none; /* 🔥 CRITICAL: Allows clicks to pass through to buttons */
+    z-index: 1; 
 }

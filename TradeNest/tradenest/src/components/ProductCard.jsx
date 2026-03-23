@@ -1,39 +1,67 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { BaggageClaim } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
-  // 1. Guard clause: Ensure we have post data before rendering 🛡️
+  const videoRef = useRef(null);
   if (!post) return null;
 
-  // 2. Base URL for your C# Media 🌐
-  // This points to the wwwroot/uploads folder we set up earlier
+  // 1. Setup URLs
+  const isVideo = post.mediaUrl?.match(/\.(mp4|webm|mov|ogg)$/i);
   const backendBaseUrl = "https://localhost:7124/uploads/";
-  const imageUrl = post.mediaUrl ? `${backendBaseUrl}${post.mediaUrl}` : "/placeholder-product.jpg";
+  const mediaUrl = post.mediaUrl ? `${backendBaseUrl}${post.mediaUrl}` : "/placeholder-product.jpg";
+  const profileUrl = post.profilePictureUrl ? `${backendBaseUrl}${post.profilePictureUrl}` : "/profile.jpg";
 
-  const profileUrl = post.profilePictureUrl 
-    ? `${backendBaseUrl}${post.profilePictureUrl}` 
-    : "/profile.jpg";
+  // 2. TikTok Auto-play Logic
+  useEffect(() => {
+    if (!isVideo || !videoRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          videoRef.current.play().catch(() => {}); // Play when visible
+        } else {
+          videoRef.current.pause(); // Pause when scrolled away
+        }
+      },
+      { threshold: 0.6 } // Plays when 60% of the card is on screen
+    );
+
+    observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, [isVideo]);
 
   return (
     <div className="post-container"> 
-      {/* 1. Main Media - This acts as the background for the text overlay */}
-      <img 
-        src={imageUrl} 
-        alt={post.title} 
-        className="feed-media"
-        onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
-      />
+      {/* 1. Dynamic Media - Switches between Video and Image */}
+      {isVideo ? (
+        <video 
+          ref={videoRef}
+          src={mediaUrl} 
+          className="feed-media"
+          loop 
+          muted 
+          playsInline
+          onClick={(e) => e.target.paused ? e.target.play() : e.target.pause()}
+        />
+      ) : (
+        <img 
+          src={mediaUrl} 
+          alt={post.title} 
+          className="feed-media"
+          onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
+        />
+      )}
 
-      {/* 2. Product Info Overlay - Matches .productInfo in your CSS */}
+      {/* 2. Info Overlay */}
       <div className="productInfo">
-        
         <div className="profileInfo">
           <img 
-            src={profileUrl || "/profile.jpg"} 
+            src={profileUrl} 
             className="profile-pic" 
             alt="User" 
           />
-          <span>@{post.name || "User"}</span>
+          <span>@{post.handleName || post.name || "User"}</span>
         </div>
 
         <div className="description">
@@ -47,7 +75,7 @@ const ProductCard = ({ post }) => {
           </div>
           
           <Link to={`/BuyNow/${post.id}`} className="buynow">
-            Buy Now<BaggageClaim/>
+            Buy Now <BaggageClaim size={18}/>
           </Link>
         </div>
       </div>
