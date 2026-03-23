@@ -1,49 +1,87 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BaggageClaim } from 'lucide-react';
+import { BaggageClaim, Play } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
   const videoRef = useRef(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   if (!post) return null;
 
-  // 1. Setup URLs
   const isVideo = post.mediaUrl?.match(/\.(mp4|webm|mov|ogg)$/i);
   const backendBaseUrl = "https://localhost:7124/uploads/";
   const mediaUrl = post.mediaUrl ? `${backendBaseUrl}${post.mediaUrl}` : "/placeholder-product.jpg";
   const profileUrl = post.profilePictureUrl ? `${backendBaseUrl}${post.profilePictureUrl}` : "/profile.jpg";
 
-  // 2. TikTok Auto-play Logic
+  // 1. TikTok Auto-Play/Pause Logic
   useEffect(() => {
     if (!isVideo || !videoRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          videoRef.current.play().catch(() => {}); // Play when visible
+          videoRef.current.play().catch(() => {});
+          setIsPaused(false);
         } else {
-          videoRef.current.pause(); // Pause when scrolled away
+          videoRef.current.pause();
+          setIsPaused(true);
         }
       },
-      { threshold: 0.6 } // Plays when 60% of the card is on screen
+      { threshold: 0.8 } 
     );
 
     observer.observe(videoRef.current);
     return () => observer.disconnect();
   }, [isVideo]);
 
+  // 2. Video Progress Tracking
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setProgress(currentProgress);
+    }
+  };
+
+  // 3. Manual Play/Pause Toggle
+  const togglePlay = (e) => {
+    if (!isVideo) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPaused(false);
+    } else {
+      videoRef.current.pause();
+      setIsPaused(true);
+    }
+  };
+
   return (
     <div className="post-container"> 
-      {/* 1. Dynamic Media - Switches between Video and Image */}
+      {/* --- MEDIA SECTION --- */}
       {isVideo ? (
-        <video 
-          ref={videoRef}
-          src={mediaUrl} 
-          className="feed-media"
-          loop 
-          muted 
-          playsInline
-          onClick={(e) => e.target.paused ? e.target.play() : e.target.pause()}
-        />
+        <div className="video-wrapper" onClick={togglePlay}>
+          <video 
+            ref={videoRef}
+            src={mediaUrl} 
+            className="feed-media"
+            loop 
+            muted 
+            playsInline
+            onTimeUpdate={handleTimeUpdate}
+          />
+          
+          {/* Progress Bar Line */}
+          <div className="video-progress-container">
+            <div className="video-progress-bar" style={{ width: `${progress}%` }}></div>
+          </div>
+
+          {/* Centered Play Icon if paused */}
+          {isPaused && (
+            <div className="play-overlay">
+                <Play size={64} fill="white" color="white" style={{ opacity: 0.7 }} />
+            </div>
+          )}
+        </div>
       ) : (
         <img 
           src={mediaUrl} 
@@ -53,7 +91,7 @@ const ProductCard = ({ post }) => {
         />
       )}
 
-      {/* 2. Info Overlay */}
+      {/* --- UI OVERLAY SECTION (The stuff that went missing!) --- */}
       <div className="productInfo">
         <div className="profileInfo">
           <img 
