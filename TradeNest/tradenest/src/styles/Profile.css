@@ -151,6 +151,11 @@ html{
 .editBut{
     background:var(--color-accent);
     color:white;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .editBut:hover{
@@ -164,6 +169,11 @@ html{
 .accountBtn{
     background:var(--color-card);
     border:1px solid var(--color-border);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .shareBut:hover,

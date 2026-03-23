@@ -11,6 +11,7 @@ import EditProfile from "./pages/EditProfile";
 import SellerSetup from "./pages/SellerSetup";
 import ManageListings from "./pages/ManageListings";
 import EditListing from "./pages/EditListing";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -23,10 +24,11 @@ function App() {
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/upload" element={<Upload />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/buyNow" element={<BuyNow />} />
         <Route path="/Manage" element={<ManageListings />} />
-        <Route path="/edit-post:id" element={<EditListing />} />
+        <Route path="/edit-post/:id" element={<EditListing />} />
         <Route path="/account" element={<SellerSetup />} />
         <Route path="/buyNow/:id" element={<BuyNow />} />
         <Route path="/editProfile" element={<EditProfile />} />

@@ -15,8 +15,9 @@ const EditListing = () => {
         categoryId: ""
     });
     const [loading, setLoading] = useState(true);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
-    // 1. Fetch existing data
     useEffect(() => {
         const fetchPost = async () => {
             const response = await fetch(`https://localhost:7124/api/posts/${id}`);
@@ -28,23 +29,47 @@ const EditListing = () => {
                     price: data.price,
                     categoryId: data.categoryId || "1"
                 });
+                // Shows existing image from your server
+                setPreviewUrl(`https://localhost:7124/uploads/${data.mediaUrl}`);
                 setLoading(false);
             }
         };
         fetchPost();
     }, [id]);
 
-    // 2. Handle Update
+    // Function to handle the image selection and preview
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file)); // This shows the new image instantly
+        }
+    };
+
     const handleUpdate = async (e) => {
         e.preventDefault();
+
+        // 1. We switch to FormData because JSON can't carry image files
+        const data = new FormData();
+        data.append("title", formData.title);
+        data.append("description", formData.description);
+        data.append("price", formData.price);
+        data.append("categoryId", formData.categoryId);
+
+        // 2. Only add the image if the user actually picked a new one
+        if (selectedFile) {
+            data.append("image", selectedFile); 
+        }
+
         try {
             const response = await fetch(`https://localhost:7124/api/posts/${id}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // DO NOT set 'Content-Type': 'application/json' here! 
+                    // Let the browser set it automatically for FormData.
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: data
             });
 
             if (response.ok) {
@@ -69,6 +94,23 @@ const EditListing = () => {
                 </div>
 
                 <form className="settings-card" onSubmit={handleUpdate}>
+                    
+                    {/* --- Image Section --- */}
+                    <div className="form-group">
+                        <label>Listing Image</label>
+                        <div className="image-preview-wrapper">
+                            {previewUrl && (
+                                <img src={previewUrl} alt="Preview" className="edit-image-preview" />
+                            )}
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                                className="file-input-custom"
+                            />
+                        </div>
+                    </div>
+
                     <div className="form-group">
                         <label>Listing Title</label>
                         <input 

@@ -1,8 +1,10 @@
 import React from 'react';
+import Navigation from '../components/Navigation';
 
 const AccountPage = () => {
   return (
     <div className="account-wrapper">
+      <Navigation/>
       <div className="account-grid">
         
         {/* Sidebar */}

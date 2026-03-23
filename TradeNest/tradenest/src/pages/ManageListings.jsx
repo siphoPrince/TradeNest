@@ -65,7 +65,7 @@ const ManageListings = () => {
             <div className="dashboard-section">
                 <div className="dashboard-header">
                     <h3>Inventory & Analytics</h3>
-                    <button className="btn-save" onClick={() => navigate('/create-post')}>
+                    <button className="btn-save" onClick={() => navigate('/upload')}>
                         + Add New Video
                     </button>
                 </div>

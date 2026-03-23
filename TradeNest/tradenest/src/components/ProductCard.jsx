@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { BaggageClaim } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
   // 1. Guard clause: Ensure we have post data before rendering 🛡️
@@ -46,7 +47,7 @@ const ProductCard = ({ post }) => {
           </div>
           
           <Link to={`/BuyNow/${post.id}`} className="buynow">
-            Buy Now
+            Buy Now<BaggageClaim/>
           </Link>
         </div>
       </div>

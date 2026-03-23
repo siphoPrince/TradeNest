@@ -3,6 +3,7 @@ import "../styles/Follow.css"
 import Navigation from "../components/Navigation";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Settings, UserRoundPen  } from 'lucide-react';
 
 
 const Profile = () => {
@@ -169,7 +170,7 @@ const handleDelete = async (postId) => {
                             <button
                                 className="editBut"
                                 onClick={() => navigate("/editProfile")}>
-                                Edit Profile
+                                Edit Profile<UserRoundPen />
                             </button>
                         ) : (
                             <button 
@@ -190,9 +191,9 @@ const handleDelete = async (postId) => {
                                 <div className="accountMenu">
                                     <button 
                                         className="accountBtn"
-                                        onClick={() => navigate("/account")}
+                                        onClick={() => navigate("/settings")}
                                     >
-                                        Account & Banking
+                                        Settings<Settings/>
                                     </button>
                                 </div>
                             </>

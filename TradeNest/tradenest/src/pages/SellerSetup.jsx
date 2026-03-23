@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import '../styles/SellerSetup.css';
+import Navigation from '../components/Navigation';
 
 const SellerSetup = () => {
     const [loading, setLoading] = useState(false);
@@ -30,7 +31,10 @@ const SellerSetup = () => {
     };
 
     return (
+        <div className="setup-layout-container">
+        <Navigation/>
         <div className="setup-page-wrapper">
+            
             <div className="setup-card">
                 <header className="setup-header">
                     <h3>Seller Verification</h3>
@@ -76,6 +80,7 @@ const SellerSetup = () => {
                     </button>
                 </form>
             </div>
+        </div>
         </div>
     );
 };

@@ -1,0 +1,75 @@
+/* Layout Wrapper */
+.settings-page {
+    display: flex;
+    flex-direction: row;
+    min-height: 100vh;
+    background-color: var(--color-bg); /* Use Cylo background color */
+}
+
+/* Centered content container */
+.settings-view {
+    flex: 1; 
+    max-width: 900px; /* Slightly wider for settings forms */
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Header Section */
+.settings-header h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--color-text-dark);
+}
+
+/* Tab Navigation */
+.settings-tabs {
+    display: flex;
+    gap: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tab-link {
+    text-decoration: none;
+    padding: 10px 22px;
+    border-radius: 50px; /* Pill shape */
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-dark);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.25s ease;
+
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-link:hover {
+    background-color: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+}
+
+.tab-link.active {
+    background: var(--color-text-dark);
+    color: #fff;
+    border-color: var(--color-text-dark);
+}
+
+/* Content Area */
+.settings-display {
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
