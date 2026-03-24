@@ -1,30 +1,32 @@
 import "../styles/Messege.css";
 import { useState, useEffect, useRef } from "react";
 import * as signalR from '@microsoft/signalr';
+import { useSearchParams } from "react-router-dom"; // Essential for catching the IDs
 
-const Message = ({ orderId }) => {
+const Message = ({ orderId: propOrderId }) => {
+    const [searchParams] = useSearchParams();
+    const [chats, setChats] = useState([]); 
     const [activeChat, setActiveChat] = useState(null);
-    const [connection, setConnection] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [messageInput, setMessageInput] = useState("");
+    const [messageInput, setMessageInput] = useState(""); // Added missing state
+    const [connection, setConnection] = useState(null);
+    
+    const loggedInUserId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
     const chatEndRef = useRef(null);
 
-    // Get your ID from storage (1004)
-    const loggedInUserId = localStorage.getItem("userId");
+    // Get IDs from the URL (/inbox?userId=1005&orderId=50)
+    const urlUserId = searchParams.get("userId");
+    const urlOrderId = searchParams.get("orderId") || propOrderId;
 
-    // 1. Auto-scroll to bottom when new messages arrive
+    // 1. Initialize SignalR Connection
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
-
-    // 2. SignalR Lifecycle Management
-    useEffect(() => {
-        const token = localStorage.getItem("token");
         if (!token) return;
+        let isMounted = true;
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl("https://localhost:7124/chatHub", { 
-                accessTokenFactory: () => token
+                accessTokenFactory: () => token 
             })
             .withAutomaticReconnect()
             .build();
@@ -32,116 +34,143 @@ const Message = ({ orderId }) => {
         const start = async () => {
             try {
                 await newConnection.start();
-                console.log("Connected to SignalR! 🚀");
-                
-                // Listen for messages from the Hub
-                newConnection.on("ReceiveMessage", (message) => {
-                    setMessages(prev => [...prev, message]);
-                });
-
-                setConnection(newConnection);
+                if (isMounted) {
+                    setConnection(newConnection);
+                    newConnection.on("ReceiveMessage", (msg) => {
+                        setMessages(prev => {
+                            // Only show message if it belongs to the person we are currently looking at
+                            const isRelevant = activeChat && 
+                                (String(msg.senderId) === String(activeChat.id) || 
+                                 String(msg.receiverId) === String(activeChat.id));
+                            return isRelevant ? [...prev, msg] : prev;
+                        });
+                        // Refresh sidebar to show the latest message
+                        fetchConversations();
+                    });
+                }
             } catch (err) {
-                console.error("SignalR Connection Error: ", err);
+                console.error("SignalR Error:", err);
             }
         };
 
         start();
-
-        // CLEANUP: Prevents "The connection was stopped during negotiation"
         return () => {
-            if (newConnection) {
-                newConnection.off("ReceiveMessage");
+            isMounted = false;
+            if (newConnection.state === signalR.HubConnectionState.Connected) {
                 newConnection.stop();
             }
         };
-    }, []);
+    }, [activeChat?.id]); // Update listener scope when changing chats
 
-    // 3. Send Message Logic (Types matched to C# Hub)
-    const sendMessage = async () => {
-        if (connection && messageInput.trim() !== "" && activeChat) {
-            try {
-                // FORCE TYPES: C# Hub expects 'int' and 'int?'
-                const rId = parseInt(activeChat.id); 
-                const oId = orderId ? parseInt(orderId) : null; 
-                const content = messageInput.trim();
+    // 2. Load Conversations (Sidebar)
+    const fetchConversations = async () => {
+        try {
+            const res = await fetch("https://localhost:7124/api/messages/conversations", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setChats(data);
+        } catch (e) { console.error("Sidebar load failed", e); }
+    };
 
-                // Invoke the C# Method
-                await connection.invoke("SendPrivateMessage", rId, oId, content);
-                
-                // Clear the input on success
-                setMessageInput(""); 
-            } catch (e) {
-                console.error("Sending failed: ", e);
+    useEffect(() => { fetchConversations(); }, []);
+
+    // 3. Logic to "Force Open" chat from URL if it's not in the sidebar
+    useEffect(() => {
+        const handleUrlUser = async () => {
+            if (urlUserId) {
+                // Is this person already in our sidebar?
+                const existing = chats.find(c => String(c.userId) === String(urlUserId));
+                if (existing) {
+                    setActiveChat({ id: existing.userId, username: existing.username || `User ${existing.userId}` });
+                } else {
+                    // Start a fresh chat with someone new
+                    setActiveChat({ id: urlUserId, username: "New Conversation" });
+                    setMessages([]);
+                }
             }
+        };
+        handleUrlUser();
+    }, [urlUserId, chats.length]);
+
+    // 4. Fetch history when activeChat changes
+    useEffect(() => {
+        if (activeChat?.id) {
+            const fetchHistory = async () => {
+                const res = await fetch(`https://localhost:7124/api/messages/${activeChat.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                setMessages(data);
+            };
+            fetchHistory();
+        }
+    }, [activeChat?.id]);
+
+    // 5. Auto-scroll
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    const sendMessage = async () => {
+        if (connection && messageInput.trim() && activeChat) {
+            try {
+                await connection.invoke("SendPrivateMessage", 
+                    parseInt(activeChat.id), 
+                    urlOrderId ? parseInt(urlOrderId) : null, 
+                    messageInput
+                );
+                setMessageInput("");
+                // Force a sidebar refresh after sending first message
+                fetchConversations();
+            } catch (e) { console.error("Send failed", e); }
         }
     };
 
-    // Mock data for the sidebar
-    const chats = [
-        { id: 1004, username: "Jessica", avatar: "https://i.pravatar.cc/150?img=5", lastMessage: "Hey...", time: "2m", online: true },
-        { id: 2, username: "Michael", avatar: "https://i.pravatar.cc/150?img=8", lastMessage: "Project...", time: "1h", online: false }
-    ];
-
     return (
         <div className="message-wrapper">
-            {/* SIDEBAR */}
-            <div className={`message-sidebar ${activeChat ? "hide-mobile" : ""}`}>
+            <div className="message-sidebar">
                 <div className="sidebar-header"><h2>Messages</h2></div>
                 <div className="message-list">
-                    {chats.map(chat => (
-                        <div key={chat.id} 
-                             className={`message-card ${activeChat?.id === chat.id ? "active" : ""}`} 
-                             onClick={() => setActiveChat(chat)}>
-                            <div className="avatar-wrapper">
-                                <img src={chat.avatar} alt={chat.username} className="avatar" />
-                                {chat.online && <span className="online-dot"></span>}
-                            </div>
+                    {chats.length > 0 ? chats.map(chat => (
+                        <div key={chat.userId} 
+                             className={`message-card ${String(activeChat?.id) === String(chat.userId) ? "active" : ""}`}
+                             onClick={() => setActiveChat({id: chat.userId, username: chat.username || `User ${chat.userId}`})}>
                             <div className="chat-info">
-                                <div className="chat-top">
-                                    <p className="username">{chat.username}</p>
-                                    <span className="time">{chat.time}</span>
-                                </div>
+                                <p className="username">{chat.username || `User ${chat.userId}`}</p>
                                 <span className="last-message">{chat.lastMessage}</span>
                             </div>
                         </div>
-                    ))}
+                    )) : <p className="no-chats">No active conversations</p>}
                 </div>
             </div>
 
-            {/* CHAT DISPLAY */}
-            <div className={`message-display-container ${!activeChat ? "hide-mobile" : ""}`}>
+            <div className="message-display-container">
                 {activeChat ? (
                     <>
                         <div className="display-header">
-                            <button className="back-btn" onClick={() => setActiveChat(null)}>←</button>
-                            <img src={activeChat.avatar} className="avatar small" alt="" />
                             <h3>{activeChat.username}</h3>
                         </div>
-
                         <div className="chat-content">
-                            {messages.map((msg, index) => (
-                                <div key={index} 
-                                     className={`message-bubble ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
-                                    <p>{msg.content}</p>
+                            {messages.map((m, i) => (
+                                <div key={i} className={`message-bubble ${String(m.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
+                                    <p>{m.content}</p>
                                 </div>
                             ))}
                             <div ref={chatEndRef} />
                         </div>
-
                         <div className="message-input-area">
                             <input 
-                                value={messageInput}
-                                onChange={(e) => setMessageInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
-                                placeholder="Type a message..." 
+                                value={messageInput} 
+                                onChange={e => setMessageInput(e.target.value)} 
+                                onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                                placeholder="Write a message..."
                             />
                             <button onClick={sendMessage} disabled={!messageInput.trim()}>Send</button>
                         </div>
                     </>
                 ) : (
-                    <div className="no-chat-selected">
-                        <p>Select a conversation to start chatting on Cylo</p>
-                    </div>
+                    <div className="no-chat-selected">Select a person to start chatting</div>
                 )}
             </div>
         </div>

@@ -5,27 +5,27 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import CommentSection from "./CommentSection";
 
-
 const Feed = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showComments, setShowComments] = useState(false);
     const [activePostId, setActivePostId] = useState(null);
 
+    // Triggered when the comment icon in Engagement is clicked
     const toggleComments = (postId) => {
-    setActivePostId(postId);
-    setShowComments(true);
-};
+        setActivePostId(postId);
+        setShowComments(true);
+    };
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                // Adjust the URL/Port to match your running C# Backend
+                // Fetching from your C# Backend
                 const response = await fetch("https://localhost:7124/api/posts?pageNumber=1&pageSize=10");
                 const result = await response.json();
                 
-                // result.data contains the list of posts from your PagedResponse
-                setPosts(result.data);
+                // Assuming your Backend uses a PagedResponse structure where 'data' is the list
+                setPosts(result.data || []);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching feed:", error);
@@ -36,64 +36,75 @@ const Feed = () => {
         fetchPosts();
     }, []);
 
-    if (loading){
+    // --- LOADING STATE (SKELETONS) ---
+    if (loading) {
         return (
             <div className="feed">
                 <h6 className="feed-title"><Skeleton width={100} /></h6>
                 <div className="feed-layout">
                     <div className="main-screen">
-                        {/* We render 3 skeleton "ghost" posts */}
                         {[1, 2, 3].map((n) => (
-                            <div key={n} className="post-container" style={{ marginBottom: '20px' }}>
-                                {/* Skeleton for ProductCard */}
-                                <Skeleton height={250} borderRadius={15} /> 
-                                <div style={{ marginTop: '10px' }}>
-                                    <Skeleton width="60%" height={20} />
-                                    <Skeleton width="40%" height={15} />
-                                </div>
-                                {/* Skeleton for Engagement buttons */}
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                                    <Skeleton circle width={40} height={40} />
-                                    <Skeleton circle width={40} height={40} />
+                            <div key={n} className="post-container" style={{ marginBottom: '40px' }}>
+                                <Skeleton height={400} borderRadius={20} /> 
+                                <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <div style={{ width: '70%' }}>
+                                        <Skeleton width="80%" height={24} />
+                                        <Skeleton width="40%" height={15} style={{ marginTop: '8px' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <Skeleton circle width={45} height={45} />
+                                        <Skeleton circle width={45} height={45} />
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
-        );}
+        );
+    }
 
-        return (
-                <div className="feed">
-                    <h6 className="feed-title">FlipFeed</h6>
-                    {/* We add the dynamic class here so the CSS knows to shift the layout */}
-                    <div className={`feed-layout ${showComments ? 'comments-active' : ''}`}>
-                        <div className="main-screen">
-                            {posts.map((post) => (
-                                <div key={post.id} className="post-container">
-                                    <ProductCard post={post} />
-                                    {/* We pass toggleComments here so Engagement can trigger it */}
-                                    <Engagement 
-                                        postId={post.id} 
-                                        userId={post.userId} 
-                                        onToggleComments={toggleComments} 
-                                    />
-                                </div>
-                            ))}
+    // --- ACTUAL FEED RENDER ---
+    return (
+        <div className="feed">
+            <h6 className="feed-title">FlipFeed</h6>
+            
+            {/* 'comments-active' class can be used in CSS to shrink the main-screen when panel opens */}
+            <div className={`feed-layout ${showComments ? 'comments-active' : ''}`}>
+                
+                <div className="main-screen">
+                    {posts.map((post) => (
+                        <div key={post.id} className="post-container">
+                            {/* The Visual Content */}
+                            <ProductCard post={post} />
+                            
+                            {/* The Action Buttons & Counters */}
+                            <Engagement 
+                                postId={post.id} 
+                                userId={post.userId} 
+                                onToggleComments={toggleComments}
+                                // Passing engagement data from the post DTO
+                                IsLikedByCurrentUser={post.isLikedByCurrentUser} 
+                                LikeCount={post.likeCount || 0}
+                                // Fallback: try commentCount, then comments array length, then 0
+                                CommentCount={post.commentCount ?? post.comments?.length ?? 0}
+                            />
                         </div>
-
-                        {/* This is your right-side panel that slides in */}
-                        {showComments && (
-                            <div className="comment-panel">
-                                <CommentSection 
-                                postId={activePostId}
-                                onClose={() => setShowComments(false)}/>
-                            </div>
-                        )}
-                    </div>
+                    ))}
                 </div>
-            );
-    
+
+                {/* The Slide-in Comment Panel */}
+                {showComments && (
+                    <div className="comment-panel">
+                        <CommentSection 
+                            postId={activePostId}
+                            onClose={() => setShowComments(false)}
+                        />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default Feed;

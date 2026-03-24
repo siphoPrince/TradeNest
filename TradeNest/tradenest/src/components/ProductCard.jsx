@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { BaggageClaim, Play } from 'lucide-react';
+import { Link, useNavigate } from "react-router-dom";
+import { BaggageClaim,MessageCircle, Play } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
   const videoRef = useRef(null);
+  const navigate = useNavigate();
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -11,6 +12,11 @@ const ProductCard = ({ post }) => {
 
   const backendBaseUrl = "https://localhost:7124/uploads/";
 
+  const handleNegotiate = () => {
+    // 3. Navigate to Inbox with the Seller's ID and the Post's ID
+    // We use post.userId (the seller) and post.id (the specific item)
+    navigate(`/inbox?userId=${post.userId}&orderId=${post.id}`);
+  };
   // --- FIX: Helper to handle Blob URLs and DB Filenames ---
   const formatUrl = (url, fallback) => {
     if (!url) return fallback;
@@ -127,6 +133,13 @@ const ProductCard = ({ post }) => {
           <div className="price">
             R{post.price ? post.price.toLocaleString() : "0.00"}
           </div>
+
+          <div className="action-buttons-row" style={{ display: 'flex', gap: '8px' }}>
+             {/* NEW: Negotiate / Chat Button */}
+             <button onClick={handleNegotiate} className="negotiate-btn">
+               Chat <MessageCircle size={18}/>
+             </button>
+             </div> 
           
           <Link to={`/BuyNow/${post.id}`} className="buynow">
             Buy Now <BaggageClaim size={18}/>
