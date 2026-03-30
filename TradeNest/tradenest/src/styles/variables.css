@@ -57,3 +57,132 @@
   --transition: all 150ms ease-in-out;
 
 }
+
+/* === Dark Mode Overrides === */
+.dark {
+  --color-bg: oklch(0.145 0 0);          /* Deep Matte Black */
+  --color-card: oklch(0.19 0 0);         /* Elevated Surface */
+  --color-text-dark: oklch(0.985 0 0);   /* Near White */
+  --color-text-muted: oklch(0.708 0 0);  /* Muted Grey */
+  
+  --color-primary: oklch(0.488 0.243 264.376); /* Vibrant Indigo/Blue */
+  --color-accent: oklch(0.269 0 0);
+  
+  --color-success: oklch(0.696 0.17 162.48);
+  --color-danger: oklch(0.396 0.141 25.723);
+  --color-warning: oklch(0.769 0.188 70.08);
+  --color-border: oklch(0.269 0 0);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* =============================================================
+   BASE STYLES
+   ============================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-dark);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =============================================================
+   UTILITY COMPONENTS
+   ============================================================= */
+
+/* Card Styling */
+.cylo-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: var(--transition);
+}
+
+.cylo-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Button Styling */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dark);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-border);
+}
+
+/* Input Fields */
+.cylo-input {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dark);
+  transition: var(--transition);
+}
+
+.cylo-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Text Utilities */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-gradient {
+  background: linear-gradient(45deg, var(--color-primary), var(--color-accent));
+  
+  /* Standard property (add this) */
+  background-clip: text; 
+  
+  /* Vendor prefix (keep this for Chrome/Safari/Edge) */
+  -webkit-background-clip: text; 
+  
+  /* Makes the actual text transparent so the background shows through */
+  color: transparent; 
+  -webkit-text-fill-color: transparent; 
+  
+  /* Optional: ensures the gradient doesn't wrap weirdly */
+  display: inline-block;
+}

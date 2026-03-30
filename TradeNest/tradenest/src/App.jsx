@@ -14,6 +14,11 @@ import EditListing from "./pages/EditListing";
 import SettingsPage from "./pages/SettingsPage";
 
 function App() {
+  // Run this as early as possible to prevent "flashing" white on load
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.documentElement.classList.add('dark');
+}
   return (
     <BrowserRouter>
       <Routes>

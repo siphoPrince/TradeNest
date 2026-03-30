@@ -86,7 +86,7 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, postId, onSe
           className={`pay-btn ${isProcessing ? 'loading' : ''}`}
           disabled={isProcessing}
         >
-          {isProcessing ? "Connecting to Bank..." : "Proceed to Paystack"}
+          {isProcessing ? "Securing Funds..." : "Confirm & Pay"}
         </button>
       </div>
     </div>
