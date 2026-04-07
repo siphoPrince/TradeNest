@@ -37,7 +37,7 @@ const CommentSection = ({ userId, postId, onClose }) => {
 
     const handlePostComment = async () => {
         const token = localStorage.getItem("token");
-        const newComment = { content: commentText, postId: postId };
+        const newComment = { content: commentText, postId: parseInt(postId) };
 
         try {
             const response = await fetch("https://localhost:7124/api/comments", {

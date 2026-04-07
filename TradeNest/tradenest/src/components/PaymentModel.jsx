@@ -13,13 +13,8 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, postId, onSe
       const response = await fetch(`https://localhost:7124/api/Escrow/create/${postId}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          postId: postId,
-          amount: productPrice
-        })
+        }
       });
 
       // --- START OF FIXED LOGIC ---

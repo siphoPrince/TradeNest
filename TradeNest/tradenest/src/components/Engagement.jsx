@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Likes from '../pages/Likes';
 
 const Engagement = ({ userId, postId, onToggleComments, IsLikedByCurrentUser, LikeCount, CommentCount }) => {
+    console.log("Engagement Props - UserID:", userId, "PostID:", postId);
     
     const toggleComments = (e) => {
         e.preventDefault();

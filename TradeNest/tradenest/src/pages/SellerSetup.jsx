@@ -1,38 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Landmark, CreditCard, Fingerprint, User, FileText, Phone, Mail } from 'lucide-react';
+import { ShieldCheck, Landmark, CreditCard, Fingerprint, User, FileText, Phone, Mail, AlertCircle } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import "../styles/SellerSetup.css";
+
+// Updated to use TradeSafe String Identifiers
 const SOUTH_AFRICAN_BANKS = [
-    { name: "First National Bank (FNB)", code: "250655" },
-    { name: "Standard Bank", code: "051001" },
-    { name: "Capitec Bank", code: "470010" },
-    { name: "Absa Bank", code: "632005" },
-    { name: "Nedbank", code: "198765" },
-    { name: "African Bank", code: "430000" },
-    { name: "TymeBank", code: "678910" }
+    { name: "First National Bank (FNB)", code: "FNB" },
+    { name: "Standard Bank", code: "SBSA" },
+    { name: "Capitec Bank", code: "CAP" },
+    { name: "Absa Bank", code: "ABSA" },
+    { name: "Nedbank", code: "NED" },
+    { name: "African Bank", code: "AFB" },
+    { name: "TymeBank", code: "TYME" },
+    { name: "Bank Zero", code: "BZERO" }
 ];
 
 const SellerSetup = ({ onComplete }) => {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
     
-    // Bank and Contact State
     const [bankData, setBankData] = useState({
         accountNumber: '',
         bankCode: '',
         bankName: '',
-        accountType: 'Current',
+        accountType: 'CHEQUE', // Default to TradeSafe 'CHEQUE'
         idNumber: '',
         accountName: '',
-        mobileNumber: '', // Added for TradeSafe requirements
-        email: ''         // Added for TradeSafe requirements
+        mobileNumber: '', 
+        email: ''         
     });
     
-    // File States
     const [idFile, setIdFile] = useState(null);
     const [poaFile, setPoaFile] = useState(null);
 
-    // Mock: Pull user email from local storage or auth context on mount
     useEffect(() => {
         const savedEmail = localStorage.getItem('userEmail') || ""; 
         setBankData(prev => ({ ...prev, email: savedEmail }));
@@ -49,9 +50,10 @@ const SellerSetup = ({ onComplete }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(""); // Clear previous errors
         
         if (!idFile || !poaFile) {
-            alert("Please upload both your ID and Proof of Address.");
+            setError("Please upload both your ID and Proof of Address.");
             return;
         }
 
@@ -61,15 +63,14 @@ const SellerSetup = ({ onComplete }) => {
         // FormData matches the updated BankDetailsDTO.cs exactly
         const formData = new FormData();
         formData.append('AccountNumber', bankData.accountNumber);
-        formData.append('BankCode', bankData.bankCode);
+        formData.append('BankCode', bankData.bankCode); // e.g. "FNB"
         formData.append('BankName', bankData.bankName);
         formData.append('AccountName', bankData.accountName);
         formData.append('IdNumber', bankData.idNumber);
         formData.append('Email', bankData.email);
         formData.append('MobileNumber', bankData.mobileNumber);
-        formData.append('AccountType', bankData.accountType);
+        formData.append('AccountType', bankData.accountType); // "CHEQUE" or "SAVINGS"
         
-        // Files
         formData.append('IdDocument', idFile);
         formData.append('ProofOfAddress', poaFile);
 
@@ -81,13 +82,13 @@ const SellerSetup = ({ onComplete }) => {
                 }
             });
             
+            // On success, we can use a simpler alert or move to a success state
             alert("FICA & Bank details submitted successfully!");
             if (onComplete) onComplete(); 
         } catch (err) {
             console.error("Setup Error:", err);
-            // This captures the 'TradeSafe GraphQL Error' we added in C#
-            const errorMessage = err.response?.data?.message || "Verification failed. Check your details.";
-            alert(errorMessage);
+            const msg = err.response?.data?.message || "Verification failed. Please double-check your bank details and ID.";
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -106,9 +107,15 @@ const SellerSetup = ({ onComplete }) => {
                         <p>Verify your identity to enable secure payouts on Cylo.</p>
                     </header>
 
+                    {error && (
+                        <div className="error-banner">
+                            <AlertCircle size={18} />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="form-layout">
                         
-                        {/* Personal/Contact Info */}
                         <div className="grid-row">
                             <div className="input-group">
                                 <label><User size={16} /> Account Holder Name</label>
@@ -130,18 +137,17 @@ const SellerSetup = ({ onComplete }) => {
                             </div>
                             <div className="input-group">
                                 <label><Phone size={16} /> Mobile Number</label>
-                                <input type="text" required placeholder="e.g. 27821234567" className="input-field" value={bankData.mobileNumber}
+                                <input type="text" required placeholder="e.g. 082 123 4567" className="input-field" value={bankData.mobileNumber}
                                     onChange={e => setBankData({...bankData, mobileNumber: e.target.value})} />
                             </div>
                         </div>
 
                         <hr className="form-divider" />
 
-                        {/* Bank Details */}
                         <div className="input-group">
                             <label><Landmark size={16} /> Select Bank</label>
                             <select className="input-field" required value={bankData.bankName} onChange={handleBankChange}>
-                                <option value="">-- Choose --</option>
+                                <option value="">-- Choose Your Bank --</option>
                                 {SOUTH_AFRICAN_BANKS.map(bank => <option key={bank.code} value={bank.name}>{bank.name}</option>)}
                             </select>
                         </div>
@@ -156,29 +162,30 @@ const SellerSetup = ({ onComplete }) => {
                                 <label>Account Type</label>
                                 <select className="input-field" value={bankData.accountType} 
                                     onChange={e => setBankData({...bankData, accountType: e.target.value})}>
-                                    <option value="Current">Current/Cheque</option>
-                                    <option value="Savings">Savings</option>
+                                    <option value="CHEQUE">Current/Cheque</option>
+                                    <option value="SAVINGS">Savings</option>
                                 </select>
                             </div>
                         </div>
 
-                        {/* Document Uploads */}
                         <div className="document-upload-section">
-                            <div className="input-group">
+                            <div className="file-input-wrapper">
                                 <label><FileText size={16} /> ID Document (PDF/JPG)</label>
                                 <input type="file" accept=".pdf,.jpg,.jpeg,.png" required 
                                     onChange={e => setIdFile(e.target.files[0])} />
+                                {idFile && <span className="file-name">✓ {idFile.name}</span>}
                             </div>
                             
-                            <div className="input-group">
+                            <div className="file-input-wrapper">
                                 <label><FileText size={16} /> Proof of Address</label>
                                 <input type="file" accept=".pdf,.jpg,.jpeg,.png" required 
                                     onChange={e => setPoaFile(e.target.files[0])} />
+                                {poaFile && <span className="file-name">✓ {poaFile.name}</span>}
                             </div>
                         </div>
 
                         <button type="submit" className="submit-btn" disabled={loading}>
-                            {loading ? 'Processing Documents...' : 'Complete Verification'}
+                            {loading ? 'Securing your account...' : 'Complete Verification'}
                         </button>
                     </form>
                 </div>

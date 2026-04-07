@@ -12,13 +12,9 @@ const Profile = () => {
     const [profile, setProfile] = useState(null); 
     const navigate = useNavigate();
     
-    // 🔥 Ensure your App.jsx route uses path="/profile/:id"
     const { id } = useParams();
-
     const backendUrl = "https://localhost:7124/uploads/";
     const loggedInUserId = localStorage.getItem("userId");
-    
-    // If there's no ID in the URL, we assume it's the logged-in user's own profile
     const isOwnProfile = !id || id === loggedInUserId;
 
     useEffect(() => {
@@ -26,19 +22,13 @@ const Profile = () => {
             const token = localStorage.getItem("token");
             const targetUserId = id || loggedInUserId;
 
-            // 🛑 GUARD: If we have no ID at all, don't fetch
-            if (!targetUserId || targetUserId === "undefined") {
-                console.warn("No target user ID found for profile fetch.");
-                return;
-            }
-
+            if (!targetUserId || targetUserId === "undefined") return;
             if (!token) {
                 navigate("/signIn");
                 return;
             }
 
             try {
-                // 1. Fetch Profile Info
                 const profileResponse = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -50,19 +40,14 @@ const Profile = () => {
 
                 if (profileResponse.ok) {
                     const data = await profileResponse.json();
-                    
-                    // structure state properly based on your backend DTO
                     setProfile({
                         ...(data.profile || data), 
                         followersCount: data.followersCount || 0,
                         followingCount: data.followingCount || 0
                     });
-                    
-                    // Set following status if your backend provides it
                     if (data.isFollowing !== undefined) setIsFollowing(data.isFollowing);
                 }
 
-                // 2. Fetch User's Posts
                 setLoadingPosts(true);
                 const postsResponse = await fetch(`https://localhost:7124/api/posts/user/${targetUserId}?pageNumber=1&pageSize=10`);
                 
@@ -78,15 +63,7 @@ const Profile = () => {
         };
 
         fetchProfileData();
-    }, [id, loggedInUserId, navigate, isOwnProfile]); // Re-run when ID changes
-
-    if (!profile && !loadingPosts) {
-        return <div className="loading">Profile not found. 😕</div>;
-    }
-
-    if (!profile) {
-        return <div className="loading">Loading Profile... ⏳</div>;
-    }
+    }, [id, loggedInUserId, navigate, isOwnProfile]);
 
     const handleFollow = async () => {
         const token = localStorage.getItem("token");
@@ -128,22 +105,32 @@ const Profile = () => {
         }
     };
 
+    // --- SAFETY GUARDS ---
+    if (!profile && !loadingPosts) {
+        return <div className="loading">Profile not found. 😕</div>;
+    }
+
+    if (!profile) {
+        return <div className="loading">Loading Profile... ⏳</div>;
+    }
+
     return (
         <div className="profile-layout">
             <Navigation />
             <div className="profile-page">
                 <div className="profile-container">
                     <div className="profile-header">
+                        {/* Fixed with Optional Chaining profile?.imageUrl */}
                         <img 
-                            src={profile.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"}
+                            src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"}
                             className="profileImg"
                             alt="Profile"
                             onError={(e) => { e.target.src = "https://picsum.photos/120"; }}
                         />
                         <div className="profile-info">
-                            <span className="userName">{profile.name} {profile.surName}</span>
-                            <small className="userHandle">@{profile.handleName || "user"}</small>
-                            <small className="bio">{profile.bio || "No bio yet."}</small>
+                            <span className="userName">{profile?.name} {profile?.surName}</span>
+                            <small className="userHandle">@{profile?.handleName || "user"}</small>
+                            <small className="bio">{profile?.bio || "No bio yet."}</small>
 
                             <div className="profile-actions">
                                 {isOwnProfile ? (
@@ -173,11 +160,11 @@ const Profile = () => {
                             <span className="stat-label">Listings</span>
                         </div>
                         <div className="stat">
-                            <span className="stat-number">{profile.followersCount || 0}</span>
+                            <span className="stat-number">{profile?.followersCount || 0}</span>
                             <span className="stat-label">Followers</span>
                         </div>
                         <div className="stat">
-                            <span className="stat-number">{profile.followingCount || 0}</span>
+                            <span className="stat-number">{profile?.followingCount || 0}</span>
                             <span className="stat-label">Following</span>
                         </div>
                         <div className="stat">
@@ -192,22 +179,48 @@ const Profile = () => {
                     <div className="listingContainer">
                         {loadingPosts ? <p>Loading listings...</p> : 
                         userPosts.length > 0 ? (
-                            userPosts.map((post) => (
-                                <div key={post.id} className="card">
-                                    <img 
-                                        src={post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post?.mediaUrl}`}
-                                        alt={post.title} 
-                                        className="listing-thumb"
-                                        onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }}
-                                    />
-                                    <div className="card-info">
-                                        <small className="price">R{post.price}</small>
-                                        {isOwnProfile && (
-                                            <button className="delete-btn" onClick={() => handleDelete(post.id)}>Delete</button>
+                            userPosts.map((post) => {
+                                const fullUrl = post.mediaUrl?.startsWith("http") 
+                                    ? post.mediaUrl 
+                                    : `${backendUrl}${post?.mediaUrl}`;
+                                
+                                const isVideo = post.mediaUrl?.match(/\.(mp4|webm|ogg|mov)$/i);
+
+                                return (
+                                    <div key={post.id} className="card">
+                                        {isVideo ? (
+                                            <video 
+                                                src={fullUrl}
+                                                className="listing-thumb"
+                                                muted 
+                                                loop 
+                                                playsInline
+                                                onMouseEnter={(e) => e.target.play()}
+                                                onMouseLeave={(e) => {
+                                                    e.target.pause();
+                                                    e.target.currentTime = 0;
+                                                }}
+                                            />
+                                        ) : (
+                                            <img 
+                                                src={fullUrl}
+                                                alt={post.title} 
+                                                className="listing-thumb"
+                                                onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }}
+                                            />
                                         )}
+                                        <div className="card-info">
+                                            <small className="price">R{post.price}</small>
+                                            {isOwnProfile && (
+                                                <button className="delete-btn" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(post.id);
+                                                }}>Delete</button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <p className="no-posts">No listings found.</p>
                         )}

@@ -11,6 +11,8 @@ const Feed = () => {
     const [showComments, setShowComments] = useState(false);
     const [activePostId, setActivePostId] = useState(null);
 
+    
+
     // Triggered when the comment icon in Engagement is clicked
     const toggleComments = (postId) => {
         setActivePostId(postId);
@@ -74,6 +76,7 @@ const Feed = () => {
                 
                 <div className="main-screen">
                     {posts.map((post) => (
+                        
                         <div key={post.id} className="post-container">
                             {/* The Visual Content */}
                             <ProductCard post={post} />
@@ -81,7 +84,7 @@ const Feed = () => {
                             {/* The Action Buttons & Counters */}
                             <Engagement 
                                 postId={post.id} 
-                                userId={post.userId} 
+                               userId={post.userId || post.profile?.userId || post.authorId}
                                 onToggleComments={toggleComments}
                                 // Passing engagement data from the post DTO
                                 IsLikedByCurrentUser={post.isLikedByCurrentUser} 
