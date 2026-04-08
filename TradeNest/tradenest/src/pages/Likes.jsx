@@ -72,7 +72,7 @@ const Likes=({ postId, initialIsLiked = false, initialLikeCount = 0 })=>{
                         color={isLiked ? "red" : "black"} 
                     />
                 </button>
-                <span className="like-count">{likeCount}</span> {/* 3. This sits below */}
+                <span className="like-count" style={{ color: 'black' }}>{likeCount}</span> 
             </div>
         );
 

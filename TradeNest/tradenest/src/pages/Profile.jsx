@@ -41,7 +41,8 @@ const Profile = () => {
                 if (profileResponse.ok) {
                     const data = await profileResponse.json();
                     setProfile({
-                        ...(data.profile || data), 
+                        ...data.profile, 
+                        email: data.profile.user?.email,
                         followersCount: data.followersCount || 0,
                         followingCount: data.followingCount || 0
                     });

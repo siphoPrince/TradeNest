@@ -21,8 +21,8 @@ const Engagement = ({ userId, postId, onToggleComments, IsLikedByCurrentUser, Li
             <div className="engagement-item">
                 <Likes 
                     postId={postId} 
-                    initialIsLiked={IsLikedByCurrentUser} 
-                    initialLikeCount={LikeCount} 
+                    initialIsLiked={IsLikedByCurrentUser ?? false} 
+                    initialLikeCount={LikeCount ?? 0} 
                 />
                 {/* If Likes.jsx doesn't show the number, you can add <small>{LikeCount}</small> here */}
             </div>

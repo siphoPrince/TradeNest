@@ -20,23 +20,29 @@ const Feed = () => {
     };
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            try {
-                // Fetching from your C# Backend
-                const response = await fetch("https://localhost:7124/api/posts?pageNumber=1&pageSize=10");
-                const result = await response.json();
-                
-                // Assuming your Backend uses a PagedResponse structure where 'data' is the list
-                setPosts(result.data || []);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching feed:", error);
-                setLoading(false);
-            }
-        };
+    const fetchPosts = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            
+            // Fixed the syntax: the URL and the options object must both be inside fetch()
+            const response = await fetch("https://localhost:7124/api/posts?pageNumber=1&pageSize=10", {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : "" 
+                }
+            });
 
-        fetchPosts();
-    }, []);
+            const result = await response.json();
+            
+            setPosts(result.data || []);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching feed:", error);
+            setLoading(false);
+        }
+    };
+
+    fetchPosts();
+}, []);
 
     // --- LOADING STATE (SKELETONS) ---
     if (loading) {
@@ -87,8 +93,8 @@ const Feed = () => {
                                userId={post.userId || post.profile?.userId || post.authorId}
                                 onToggleComments={toggleComments}
                                 // Passing engagement data from the post DTO
-                                IsLikedByCurrentUser={post.isLikedByCurrentUser} 
-                                LikeCount={post.likeCount || 0}
+                                IsLikedByCurrentUser={post.isLikedByCurrentUser}
+                                LikeCount={post.likeCount}
                                 // Fallback: try commentCount, then comments array length, then 0
                                 CommentCount={post.commentCount ?? post.comments?.length ?? 0}
                             />

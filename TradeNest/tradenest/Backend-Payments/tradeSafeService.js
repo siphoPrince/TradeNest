@@ -112,7 +112,7 @@ async function createUserToken(user) {
 /**
  * Creates an Escrow Transaction
  */
-async function createTransaction({ buyerTokenId, sellerTokenId, amount, itemDescription }) {
+async function createTransaction({ buyerTokenId, sellerTokenId, amount, itemDescription, successUrl, cancelUrl }) {
     const mutation = `
         mutation transactionCreate($input: CreateTransactionInput!) {
             transactionCreate(input: $input) {
@@ -129,6 +129,11 @@ async function createTransaction({ buyerTokenId, sellerTokenId, amount, itemDesc
             industry: "GENERAL_GOODS_SERVICES",
             currency: "ZAR",
             feeAllocation: "BUYER",
+            // ADD THESE REDIRECTS HERE
+            settings: {
+                redirectUrl: successUrl || "http://localhost:3000/payment-success",
+                backUrl: cancelUrl || "http://localhost:3000/"
+            },
             allocations: {
                 create: [
                     {
@@ -155,12 +160,11 @@ async function createTransaction({ buyerTokenId, sellerTokenId, amount, itemDesc
         }
     };
 
-    console.log('📑 Attempting Transaction Create...');
     const data = await graphqlRequest(mutation, variables);
 
     return {
         transactionId: data.transactionCreate.id,
-        title: data.transactionCreate.title,
+        // This ensures the user goes to the CHECKOUT flow, not the FICA flow
         paymentUrl: `${process.env.TRADESAFE_CHECKOUT_BASE_URL}/${data.transactionCreate.id}`
     };
 }

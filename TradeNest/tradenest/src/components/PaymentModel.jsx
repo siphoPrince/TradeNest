@@ -1,56 +1,53 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck } from 'lucide-react';
+import { X, ShieldCheck, Lock } from 'lucide-react';
 import "../styles/PaymentModel.css";
 
-const PaymentModal = ({ isOpen, onClose, productPrice, productName, postId, onSetupRequired }) => {
+const PaymentModal = ({ isOpen, onClose, productPrice, productName, postId, sellerId, onSetupRequired }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // --- ESCROW PAYMENT LOGIC ---
   const handlePayment = async () => {
     setIsProcessing(true);
-    const token = localStorage.getItem('token');
+
+    // 1. Get the current logged-in user (Buyer) from your Cylo Auth
+    // Assuming you store the user object or ID in localStorage after login
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    const buyerId = savedUser?.id || "user_1"; // Fallback to user_1 for testing
 
     try {
-      const response = await fetch(`https://localhost:7124/api/Escrow/create/${postId}`, {
+      // 2. Call your Node.js Payment Service (running on port 3001)
+      const response = await fetch(`http://localhost:3001/api/create-payment`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyerId: buyerId,
+          sellerId: sellerId || "user_2",
+          amount: productPrice,
+          itemDescription: productName,
+          // Add these so TradeSafe knows where to send the user back to Cylo
+          successUrl: "http://localhost:3000/payment-success",
+          cancelUrl: "http://localhost:3000/buy-now/" + postId
+        })
       });
 
-      // --- START OF FIXED LOGIC ---
-      if (response.ok) {
-        const data = await response.json();
-        // Redirect to Paystack's secure checkout
-        window.location.href = data.checkoutUrl; 
-      } else {
-        // 1. Check for 401 Unauthorized first (usually has no JSON body)
-        if (response.status === 401) {
-          alert("Your session has expired. Please log in again to Cylo.");
-          setIsProcessing(false);
-          return;
-        }
+      const data = await response.json();
 
-        // 2. Check if the response actually contains JSON before parsing
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          
-          if (response.status === 400) {
-            // This triggers the SellerSetup view in BuyNow.jsx
-            onSetupRequired(errorData.message || "Seller setup required");
-          } else {
-            alert(errorData.message || "Failed to start payment.");
-          }
+      if (response.ok && data.paymentUrl) {
+        // 3. SUCCESS: Redirect to TradeSafe's secure sandbox/checkout
+        console.log("Redirecting to TradeSafe:", data.paymentUrl);
+        window.location.href = data.paymentUrl; 
+      } else {
+        // 4. ERROR HANDLING
+        if (response.status === 400) {
+          // Trigger the SellerSetup view if users aren't onboarded
+          onSetupRequired(data.error || "Account setup required before transacting.");
         } else {
-          // Fallback for 500 or 404 errors with no JSON body
-          alert(`Server error: ${response.status}. Please try again later.`);
+          alert(data.error || "TradeSafe service is currently unavailable.");
         }
       }
-      // --- END OF FIXED LOGIC ---
-
     } catch (err) {
-      console.error("Network/Server Error:", err);
-      alert("Could not reach the Cylo server. Check if your backend is running!");
+      console.error("Payment Service Error:", err);
+      alert("Could not connect to Cylo Payments. Please ensure the Node server is running on port 3001.");
     } finally {
       setIsProcessing(false);
     }
@@ -61,28 +58,60 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, postId, onSe
   return (
     <div className="modal-backdrop">
       <div className="payment-modal">
-        <button className="close-btn" onClick={onClose}><X /></button>
+        {/* Close Button */}
+        <button className="close-btn" onClick={onClose}>
+          <X size={24} />
+        </button>
 
-        <h2 style={{ color: 'var(--text-main)' }}>Secure Escrow Payment 🔒</h2>
-        <p className="subtitle">You'll be redirected to Paystack to complete your payment.</p>
-
-        <div className="order-summary">
-          <span>{productName}</span>
-          <strong>R{productPrice}</strong>
+        {/* Header */}
+        <div className="modal-header">
+          <ShieldCheck size={40} color="#22c55e" />
+          <h2 style={{ color: 'var(--text-main)', marginTop: '10px' }}>
+            Secure Escrow Payment
+          </h2>
+          <p className="subtitle">
+            Your funds will be held safely by <strong>TradeSafe</strong> until you receive and inspect your item.
+          </p>
         </div>
 
-        <div className="total-section">
-          <p>Total to be locked in Escrow:</p>
-          <h3 className="final-price">R{productPrice}</h3>
+        {/* Order Summary */}
+        <div className="order-summary-box">
+          <div className="summary-item">
+            <span>Product</span>
+            <span className="value">{productName}</span>
+          </div>
+          <div className="summary-item">
+            <span>Price</span>
+            <span className="value">R{productPrice.toLocaleString()}</span>
+          </div>
+          <div className="summary-item total">
+            <span>Total to Lock</span>
+            <span className="value-total">R{productPrice.toLocaleString()}</span>
+          </div>
         </div>
 
+        {/* Security Notice */}
+        <div className="security-note">
+          <Lock size={14} />
+          <span>Encrypted Handshake via TradeSafe API</span>
+        </div>
+
+        {/* Action Button */}
         <button 
-          onClick={handlePayment} // FIXED: Matched the name to handlePayment
+          onClick={handlePayment} 
           className={`pay-btn ${isProcessing ? 'loading' : ''}`}
           disabled={isProcessing}
         >
-          {isProcessing ? "Securing Funds..." : "Confirm & Pay"}
+          {isProcessing ? (
+            <div className="loader-spinner">Securing Funds...</div>
+          ) : (
+            "Confirm & Pay"
+          )}
         </button>
+
+        <p className="footer-note">
+          By clicking, you agree to the Cylo Escrow Terms of Service.
+        </p>
       </div>
     </div>
   );
