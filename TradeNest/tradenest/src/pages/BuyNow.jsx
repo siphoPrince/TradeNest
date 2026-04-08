@@ -92,7 +92,7 @@ const BuyNow = () => {
                 productName={product.title}
                 productPrice={product.price}
                 postId={id}
-                // Pass the trigger down to the modal
+                sellerId={product.userId}
                 onSetupRequired={handleSetupRequired} 
             />
         </div>

@@ -1,9 +1,9 @@
 import { MessageCircleMore, ExternalLink, Bookmark, UserPen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Likes from '../pages/Likes';
+import { memo } from 'react';
 
 const Engagement = ({ userId, postId, onToggleComments, IsLikedByCurrentUser, LikeCount, CommentCount }) => {
-    console.log("Engagement Props - UserID:", userId, "PostID:", postId);
     
     const toggleComments = (e) => {
         e.preventDefault();
@@ -49,4 +49,4 @@ const Engagement = ({ userId, postId, onToggleComments, IsLikedByCurrentUser, Li
     );
 }
 
-export default Engagement;
+export default memo(Engagement); 
