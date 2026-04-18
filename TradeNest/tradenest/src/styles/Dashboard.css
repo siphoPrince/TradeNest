@@ -7,6 +7,7 @@
 body{
     font-family:'Poppins', sans-serif;
     background:var(--color-bg);
+    overflow-x: hidden;
 }
 
 
@@ -22,7 +23,7 @@ body{
 
 .sidebar{
     width:260px;
-    position: sticky;
+    position: fixed;
     top: 0;
     height: 100vh;
     display:flex;
@@ -102,9 +103,11 @@ body{
 
 /* FEED */
 
-.feed{
-    flex:1;
-    padding:40px;
+.feed {
+    flex: 1;
+    width: 100%;
+    padding: 0 30px 40px;
+    box-sizing: border-box;
 }
 
 /* ============================= */
@@ -114,12 +117,14 @@ body{
 @media (max-width: 768px) {
 
     /* change main layout to vertical */
-    .container{
-        display:flex;
-        flex-direction:column;
-        width:100%;
-        min-height:100vh;
-        position:relative;
+    .container {
+        overflow: hidden; /* Prevent the outer container from scrolling */
+        height: 100vh;
+    }
+
+    .feed {
+        height: calc(100vh - 70px); /* Leave room for bottom nav */
+        overflow: hidden;
     }
 
     /* hide logo and search */
@@ -152,8 +157,8 @@ body{
         border-top:1px solid var(--color-border);
 
         padding:0;
-
-        z-index:1000;
+        pointer-events: auto;
+        z-index:9999;
     }
 
     /* nav links layout */
@@ -198,19 +203,45 @@ body{
   }
 
   /* main post/video screen */
-  .main-screen{
-    
-    width:100%;
-    max-width:500px;
-    height:auto;
-  }
+ .main-screen {
+    width: 100%;
+    height: 100vh; /* This defines the "window" you see the videos through */
+    overflow-y: scroll; /* Enable scrolling here */
+    scroll-snap-type: y mandatory; /* Keeps the TikTok-style snap */
+    scrollbar-width: none; /* Hides scrollbar on Firefox */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
 
   /* comments section */
-  .comment-panel{
-    width:100%;
-    height:auto;
-  }
-
+.comment-panel {
+        /* Ground it in the flex flow */
+        position: sticky;
+        top: 20px; /* Distance from the top of the feed */
+        
+        width: 380px;
+        height: 857px; 
+        max-height: 90vh;
+        
+        /* Ensure it stays to the right of the video */
+        margin-left: 20px; 
+        
+        display: flex;
+        flex-direction: column;
+        background: var(--color-card);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        z-index: 50; /* Lower than engagement icons (100) but higher than video */
+        
+        /* Smooth appearance */
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
   /* prevent navbar from covering feed */
   .feed{
     flex:1;
@@ -227,50 +258,39 @@ body{
 /* FEED AREA */
 /* ============================= */
 
-.feed{
-    flex:1;
-    width:100%;
-    padding:0 30px 40px;
-   
-    box-sizing:border-box;
+.feed {
+    flex: 1;
+    width: calc(100% - 260px);
+    margin-left: 260px;
+    /* Forces top padding to be 0 */
+    padding-top: 0 !important; 
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-bottom: 40px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
-
-
-/* ============================= */
-/* TITLE */
-/* ============================= */
-
-.feed-title{
-    font-size:14px;
-    color:var(--color-text-muted);
-    margin-bottom:5px;
-
-    position:sticky;
-    top:0;
-    background:var(--color-bg);
-    padding:5px 0;
-}
-
 
 /* ============================= */
 /* MAIN FEED LAYOUT */
 /* ============================= */
-
-.feed-layout{
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    width:100%;
-    gap:0;
-    transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+.feed-layout {
+    display: flex;
+    justify-content: center;
+    /* This allows the sticky comment panel to stay within the layout's height */
+    align-items: flex-start; 
+    width: 100%;
+    gap: 20px;
+    transition: transform 0.4s ease;
+    position: relative;
 }
 
 .feed-layout.comments-active {
-    transform: translateX(-180px);
+    transform: translateX(-100px);
 }
 @media (min-width: 769px) {
     .feed-layout.comments-active {
-        transform: translateX(-180px);
+        transform: translateX(-100px);
     }
 }
 
@@ -285,69 +305,68 @@ body{
 /* CENTER VIDEO SCREEN */
 /* ============================= */
 
-.main-screen{
-    width:100%;
-    max-width:520px;
-    height: 90vh;
-
+.main-screen {
+    width: 100%;
+    /* Remove max-width: 520px from here; we will put it on the container instead */
+    height: 100vh;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
-
-    aspect-ratio:9 / 16;
-    background:var(--color-card);
-    border-radius:var(--radius-lg);
-    border:1px solid var(--color-border);
-    box-shadow:var(--shadow-sm);
-
-    display:flex;
-    align-items:center;
-    flex: start;
+    
+    display: flex;
     flex-direction: column;
-
-    position:relative;
+    align-items: center; /* Centers the post-wrappers */
+    position: relative;
 }
 
 .main-screen::-webkit-scrollbar {
     display: none;
 }
 
+/* THE TIKTOK BOX */
 .post-container {
-    width: 100%;
-    height: 100%; 
+    width: 482px;
+    height: 857px;
+    max-height: 85vh;
+    max-width: calc(90vh * (482 / 857));
     flex-shrink: 0;
+    background: #000;
+    border-radius: 12px;
     
-    scroll-snap-align: start; /* 📍 Tells the browser "stop exactly here" */
+    /* CRITICAL: Keeps absolute children (video) trapped inside */
+    position: relative; 
+    overflow: hidden; 
     
-    position: relative; /* 🔗 Keeps ProductInfo & Engagement positioned correctly inside */
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: var(--color-card);
+    align-items: center;
 }
-
 
 /* ============================= */
 /* MEDIA */
 /* ============================= */
 
-.feed-media{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-
-    border-radius:inherit;
+.feed-media {
+    width: 100%;
+    height: 100%;
+    
+    /* THE MAGIC: Like background-size: cover, but for video */
+    object-fit: cover; 
+    
+    /* Ensure it doesn't move around */
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
-.engagement{
-    position:absolute;
-    right:20px;
-    bottom:40px;
-    bottom:120px;
-    display:flex;
-    flex-direction:column;
-    align-items: center;
-    gap:18px;
+/* DESKTOP ENGAGEMENT */
+.engagement {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 5;
+    /* Remove padding-bottom: 30px if it's interfering with alignment */
 }
 
 .engagement-item {
@@ -596,7 +615,16 @@ body{
 }
 
 .video-wrapper {
-    overflow: hidden; /* Keeps the bar inside the radius */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Important for border-radius */
+    z-index: 1;
 }
 
 /* Center the play button perfectly */
@@ -627,4 +655,97 @@ body{
 .negotiate-btn:hover {
   background-color: white;
   color: black;
+}
+
+
+.post-wrapper {
+    display: flex;
+    /* CHANGE THIS: from flex-end to center */
+    align-items: center; 
+    
+    justify-content: center;
+    gap: 15px;
+    height: 100vh;
+    
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    
+    /* Ensure the wrapper is the full height of the viewport */
+    min-height: 100vh; 
+    width: 100%;
+    position: relative;
+    
+    /* Remove any top padding that might have been added */
+    padding-top: 0; 
+}
+
+/* MOBILE FIX: Move them back inside */
+@media (max-width: 768px) {
+  .post-wrapper {
+        display: block;
+        width: 100%;
+        /* Subtract the height of your bottom nav (70px) */
+        min-height: calc(100vh - 70px); 
+        padding: 0;
+       position: relative;
+    }
+
+    .post-container {
+        /* Centering the container if it's smaller than the screen width */
+        margin: 0 auto 20px; 
+        max-height: 80vh; /* Shrunk slightly more to ensure it fits */
+    }
+
+    .engagement {
+        position: absolute;
+        /* This places it relative to the wrapper, just to the right of the video */
+        left: calc(50% + 260px); 
+        bottom: 40px;
+        background: transparent;
+        z-index: 5;
+    }
+
+    .main-screen {
+        overflow-x: visible; /* Prevents clipping the buttons */
+    }
+}
+
+
+
+@media (min-width: 769px) {
+    /* 1. The Wrapper (No changes needed, but ensuring center alignment) */
+    .post-wrapper {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center; 
+        width: 100%;
+        height: 100vh;
+        overflow: visible;
+    }
+
+    /* 2. THE FIX: Center the Engagement vertically */
+    .engagement {
+        position: relative; 
+        
+        /* Keeps it perfectly centered vertically relative to the video height */
+        align-self: center; 
+        
+        /* Moves it away from the video edge */
+        margin-left: 20px; 
+        
+        /* Remove that bottom padding that was pushing it up from the floor */
+        padding-bottom: 0; 
+
+        display: flex;
+        flex-direction: column;
+        gap: 22px; 
+        z-index: 100;
+        
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .main-screen {
+        overflow-x: visible !important;
+    }
 }

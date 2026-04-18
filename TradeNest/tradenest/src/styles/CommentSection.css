@@ -171,22 +171,60 @@
     flex: 1;
 }
 
-/* Mobile View & Animation */
-@media (max-width: 768px) {
+/* 1. Main Container (Desktop Grounding) */
+@media (min-width: 769px) {
     .comment-section {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 70vh; 
-        margin-left: 0; 
-        z-index: 1000; 
-        border-radius: 20px 20px 0 0;
-        animation: slideUp 0.3s ease-out;
+        position: sticky; /* Keeps it from "flying" away */
+        top: 20px;       /* Distance from the top of the feed area */
+        
+        width: 380px;    /* Slightly wider for better readability */
+        height: calc(100vh - 40px); /* Fill most of the screen height */
+        
+        margin-left: 20px;
+        background: var(--color-card);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-border);
+        
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        
+        /* Ensure it doesn't get squashed */
+        flex-shrink: 0; 
+        z-index: 50;
     }
 }
 
 @keyframes slideUp {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
+}
+/* Update the container for that high-end flow */
+.comment-section.scrolling-active {
+    position: relative; 
+    height: 850px; /* Adjust to match your Cylo video height */
+    animation: commentSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 1;
+}
+
+/* Subtle fade + slide from the right when post changes */
+@keyframes commentSlideIn {
+    from {
+        opacity: 0.5;
+        transform: translateX(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Hide scrollbar but keep functionality for a cleaner minimalist look */
+.comments-list::-webkit-scrollbar {
+    width: 4px;
+}
+.comments-list::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 10px;
 }

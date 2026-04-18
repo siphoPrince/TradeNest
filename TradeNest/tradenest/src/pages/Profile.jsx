@@ -43,6 +43,7 @@ const Profile = () => {
                     setProfile({
                         ...data.profile, 
                         email: data.profile.user?.email,
+                        tradeSafeId: data.profile.user?.tradeSafeRecipientId,
                         followersCount: data.followersCount || 0,
                         followingCount: data.followingCount || 0
                     });

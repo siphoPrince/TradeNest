@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BaggageClaim,MessageCircle, Play } from 'lucide-react';
+import { BaggageClaim, MessageCircle, Play } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
   const videoRef = useRef(null);
@@ -13,54 +13,59 @@ const ProductCard = ({ post }) => {
   const backendBaseUrl = "https://localhost:7124/uploads/";
 
   const handleNegotiate = () => {
-    // 3. Navigate to Inbox with the Seller's ID and the Post's ID
-    // We use post.userId (the seller) and post.id (the specific item)
     navigate(`/inbox?userId=${post.userId}&orderId=${post.id}`);
   };
-  // --- FIX: Helper to handle Blob URLs and DB Filenames ---
+
   const formatUrl = (url, fallback) => {
     if (!url) return fallback;
-    // If it's a blob from a fresh upload or already a full link, don't touch it
     if (url.startsWith("blob:") || url.startsWith("http")) return url;
-    // If it's just a filename, add the backend path
     return `${backendBaseUrl}${url}`;
   };
 
   const isVideo = post.mediaUrl?.match(/\.(mp4|webm|mov|ogg)$/i);
-  
-  // Apply the fix to both Media and Profile URLs
   const mediaUrl = formatUrl(post.mediaUrl, "/placeholder-product.jpg");
-  
-  // Check both the flat property and the nested profile object from your DTO
   const profileImgName = post.profilePictureUrl || post.profile?.imageUrl;
   const profileUrl = formatUrl(profileImgName, "/profile.jpg");
-
   const displayName = post.handleName || post.name || "User";
 
-  // 1. TikTok Auto-Play/Pause Logic
+  // 1. TikTok Auto-Play/Pause Logic with Safety Guards
   useEffect(() => {
-    if (!isVideo || !videoRef.current) return;
+    const videoElement = videoRef.current;
+    if (!isVideo || !videoElement) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        // Double check the ref still exists when the intersection fires
+        if (!videoRef.current) return;
+
         if (entry.isIntersecting) {
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => {
+            // Silently handle autoplay blocks
+          });
           setIsPaused(false);
         } else {
-          videoRef.current.pause();
+          // Use optional chaining to prevent "reading properties of null"
+          videoRef.current?.pause();
           setIsPaused(true);
         }
       },
       { threshold: 0.8 } 
     );
 
-    observer.observe(videoRef.current);
-    return () => observer.disconnect();
+    observer.observe(videoElement);
+
+    return () => {
+      // Clean up the specific element we were observing
+      if (videoElement) {
+        observer.unobserve(videoElement);
+      }
+      observer.disconnect();
+    };
   }, [isVideo]);
 
-  // 2. Video Progress Tracking
+  // 2. Video Progress Tracking (Safe from null/zero duration)
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
+    if (videoRef.current && videoRef.current.duration) {
       const currentProgress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
       setProgress(currentProgress);
     }
@@ -68,9 +73,12 @@ const ProductCard = ({ post }) => {
 
   // 3. Manual Play/Pause Toggle
   const togglePlay = (e) => {
-    if (!isVideo) return;
+    if (!isVideo || !videoRef.current) return;
+
     if (videoRef.current.paused) {
-      videoRef.current.play();
+      videoRef.current.play().catch(err => {
+        console.warn("Video playback failed:", err);
+      });
       setIsPaused(false);
     } else {
       videoRef.current.pause();
@@ -99,7 +107,7 @@ const ProductCard = ({ post }) => {
 
           {isPaused && (
             <div className="play-overlay">
-                <Play size={64} fill="white" color="white" style={{ opacity: 0.7 }} />
+              <Play size={64} fill="white" color="white" style={{ opacity: 0.7 }} />
             </div>
           )}
         </div>
@@ -135,11 +143,10 @@ const ProductCard = ({ post }) => {
           </div>
 
           <div className="action-buttons-row" style={{ display: 'flex', gap: '8px' }}>
-             {/* NEW: Negotiate / Chat Button */}
              <button onClick={handleNegotiate} className="negotiate-btn">
                Chat <MessageCircle size={18}/>
              </button>
-             </div> 
+          </div> 
           
           <Link to={`/BuyNow/${post.id}`} className="buynow">
             Buy Now <BaggageClaim size={18}/>

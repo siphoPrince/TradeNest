@@ -1,158 +1,218 @@
-/* ============================= */
-/* Main Page Layout */
-/* ============================= */
+/* Container Layout */
 .explore-page {
     display: flex;
-    flex-direction: row;
+    background-color: var(--color-bg, #fafafa);
     min-height: 100vh;
-    background-color: var(--color-bg); /* Cylo background */
 }
 
-.Explore-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 5px;
+.explore-main-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 24px; /* consistent spacing */
+    align-items: center;
 }
 
-/* ============================= */
-/* Header Section */
-/* ============================= */
-.header h2 {
-    font-size: 2rem;
-    margin: 0;
-    color: var(--color-text-dark);
+/* Category Navigation (Instagram Stories Style) */
+.explore-header {
+    width: 100%;
+    max-width: 935px;
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    background: var(--color-bg, #fafafa);
+    z-index: 10;
 }
 
-/* ============================= */
-/* Category Navigation */
-/* ============================= */
-.category-nav {
+.category-scroll-wrapper {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     overflow-x: auto;
-    padding-bottom: 8px;
-    scrollbar-width: none; /* Firefox */
+    padding: 0 20px;
+    scrollbar-width: none;
 }
 
-.category-nav::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+.category-scroll-wrapper::-webkit-scrollbar {
+    display: none;
 }
 
-.cat-btn {
-    padding: 10px 20px;
-    border-radius: var(--radius-pill, 999px); /* fallback if not defined */
-    border: 1px solid var(--color-border);
-    background: var(--color-card);
-    color: var(--color-text-dark);
+.explore-cat-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid #dbdbdb;
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
     white-space: nowrap;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.cat-btn:hover {
-    background-color: var(--color-accent);
-    color: var(--color-card); /* white text on accent */
-    border-color: var(--color-accent);
+.explore-cat-btn.active {
+    background: #262626;
+    color: #fff;
+    border-color: #262626;
 }
 
-.cat-btn.active {
-    background: var(--color-text-dark);
-    color: var(--color-card);
-    border-color: var(--color-text-dark);
-}
-
-/* ============================= */
-/* Listings Grid */
-/* ============================= */
-.listings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 3fr));
-    gap: 20px;
-}
-
-/* ============================= */
-/* Individual Listing Card */
-/* ============================= */
-.listing-card {
-    background: var(--color-card);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.listing-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.listing-img {
+/* The Grid System */
+.explore-container {
     width: 100%;
-    height: 200px;
+    max-width: 935px; /* Standard Instagram width */
+    padding: 0 0 50px 0;
+}
+
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px; /* Desktop gap */
+}
+
+/* The Grid Item (Square) */
+.explore-item {
+    position: relative;
+    aspect-ratio: 1 / 1; /* Makes it a perfect square */
+    background-color: #efefef;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.explore-img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
 }
 
-.listing-info {
-    padding: 15px;
+/* Overlay on Hover */
+.explore-item-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
 }
 
-.listing-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--color-text-dark);
+.explore-item:hover .explore-item-overlay {
+    opacity: 1;
 }
 
-.listing-price {
-    color: var(--color-accent);
-    font-size: 1rem;
-    font-weight: 600;
+.explore-item:hover .explore-img {
+    transform: scale(1.05);
 }
 
-@media (max-width: 900px) {
+.overlay-price {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.overlay-title {
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin-top: 5px;
+}
+
+/* --- Responsive States --- */
+
+@media (max-width: 768px) {
+    .explore-grid {
+        gap: 3px; /* Instagram's signature thin gap on mobile */
+    }
+
     .explore-container {
-        padding: 15px 10px;
-        gap: 18px;
+        padding: 0;
     }
 
-    .category-nav {
-        justify-content: flex-start;
-        gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 10px;
-    }
-
-    .cat-btn {
-        flex: 0 0 auto;
-        padding: 8px 16px;
-        font-size: 0.9rem;
-    }
-
-    .listings-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 12px;
+    .explore-item-overlay {
+        display: none; /* Instagram hides overlays on mobile grid */
     }
 }
 
-/* Extra small screens (phones) */
-@media (max-width: 600px) {
-    .explore-container {
-        padding: 10px 8px;
-        gap: 16px;
+/* Phone Screen (Stay 3x3) */
+@media (max-width: 480px) {
+    .explore-header {
+        padding: 10px 0;
     }
-
-    .listings-grid {
-        grid-template-columns: 1fr; /* single column feed */
-        gap: 12px;
+    
+    .explore-cat-btn {
+        font-size: 0.8rem;
+        padding: 5px 12px;
     }
+}
 
-    .cat-btn {
-        padding: 6px 12px;
-        font-size: 0.85rem;
+/* Loader Styling */
+.explore-loader {
+    padding: 50px;
+    text-align: center;
+    color: #8e8e8e;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #262626;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Existing container and grid styles remain the same... */
+
+.video-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+video.explore-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures video fills the 1:1 square */
+    display: block;
+    background-color: #000;
+}
+
+/* Video Indicator (Top Right) */
+.video-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: white;
+    z-index: 2;
+    pointer-events: none;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Ensure the overlay sits on top of everything */
+.explore-item-overlay {
+    z-index: 5;
+}
+
+/* Smooth zoom transition for videos too */
+.explore-item:hover video.explore-img {
+    transform: scale(1.05);
+}
+
+/* Mobile Adjustments for Video */
+@media (max-width: 768px) {
+    .video-badge {
+        top: 5px;
+        right: 5px;
+        transform: scale(0.8);
     }
 }

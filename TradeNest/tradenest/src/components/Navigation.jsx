@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search, House, Telescope, MessageCircle, Upload, UserPen } from "lucide-react";
+import SearchBar from "./SearchBar";
 
 const Navigation = () => {
     return(
@@ -7,10 +8,7 @@ const Navigation = () => {
 
             <h1 className="logo">CYLO</h1>
 
-            <div className="search-bar">
-                <Search size={18}/>
-                <input type="text" placeholder="Search..." />
-            </div>
+            <SearchBar />
 
             <div className="nav-links">
                 <Link to="/dashboard"><House /> Home</Link>

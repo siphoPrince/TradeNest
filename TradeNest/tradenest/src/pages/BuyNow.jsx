@@ -5,14 +5,11 @@ import PaymentModal from "../components/PaymentModel";
 import SellerSetup from "./SellerSetup";
 import "../styles/BuyNow.css";
 
-
 const BuyNow = () => {
     const { id } = useParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // New states for Option 2
     const [showSellerSetup, setShowSellerSetup] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -33,17 +30,20 @@ const BuyNow = () => {
         fetchProduct();
     }, [id]);
 
-    // This function is passed to the Modal to catch the setup error
+    // Helper to check if file is a video
+    const isVideo = (url) => {
+        return url?.match(/\.(mp4|webm|ogg|mov)$/i);
+    };
+
     const handleSetupRequired = (message) => {
-        setIsModalOpen(false); // Close the payment modal
+        setIsModalOpen(false); 
         setErrorMsg(message);
-        setShowSellerSetup(true); // Show the setup form instead
+        setShowSellerSetup(true); 
     };
 
     if (loading) return <div className="loader">Loading item details... 📦</div>;
     if (!product) return <div>Product not found. ❌</div>;
 
-    // --- RENDER SELLER SETUP VIEW ---
     if (showSellerSetup) {
         return (
             <div className="buy-page">
@@ -54,21 +54,36 @@ const BuyNow = () => {
                         <h2>Action Required</h2>
                         <p>{errorMsg}</p>
                     </div>
-                    {/* Component we made earlier */}
                     <SellerSetup onComplete={() => setShowSellerSetup(false)} />
                 </div>
             </div>
         );
     }
 
-    // --- RENDER NORMAL PRODUCT VIEW ---
     return (
         <div className="buy-page">
             <div className="buy-container">
                 <Link to="/dashboard" className="back-link">← Back</Link>
 
                 <div className="product-image">
-                    <img src={`https://localhost:7124/uploads/${product.mediaUrl}`} alt={product.title} />
+                    {/* 🔥 FIXED: Video Snippet Logic Added Below */}
+                    {isVideo(product.mediaUrl) ? (
+                        <video 
+                            src={`https://localhost:7124/uploads/${product.mediaUrl}`} 
+                            className="buy-now-media"
+                            controls // Better for the "Buy Now" page so users can scrub
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) : (
+                        <img 
+                            src={`https://localhost:7124/uploads/${product.mediaUrl}`} 
+                            alt={product.title} 
+                            className="buy-now-media"
+                        />
+                    )}
                 </div>
 
                 <div className="product-info">
