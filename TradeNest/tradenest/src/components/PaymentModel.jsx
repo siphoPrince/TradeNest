@@ -9,8 +9,6 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
     const handlePayment = async () => {
         setIsProcessing(true);
 
-        // 1. Get IDs from your actual Auth storage
-        // Ensure your login logic saves 'userId' to localStorage
         const buyerId = localStorage.getItem('userId');
 
         if (!buyerId) {
@@ -20,8 +18,7 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
         }
 
         try {
-            // 2. Call your C# Backend (ASP.NET Core)
-            // The object keys match your TransactionRequestDto.cs exactly
+            // 1. Call your C# Backend
             const response = await axios.post(`https://localhost:7124/api/Payments/create-transaction`, {
                 buyerId: parseInt(buyerId),
                 sellerId: parseInt(sellerId),
@@ -29,9 +26,8 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
                 itemDescription: productName
             });
 
-            // 3. TradeSafe returns the checkout URL in the 'siteUrl' field
-            // (Based on the TradeSafeService we built)
-            const checkoutUrl = response.data.siteUrl;
+            // 2. FIX: The C# service returns 'checkoutUrl', not 'siteUrl'
+            const checkoutUrl = response.data.checkoutUrl; 
 
             if (checkoutUrl) {
                 console.log("Redirecting to secure payment...");
@@ -43,12 +39,15 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
         } catch (err) {
             console.error("Payment Error:", err);
             
-            // 4. Handle Unverified Users
-            // If TradeSafe returns an error because a user isn't onboarded
+            // 3. FIX: Check if the response exists and grab the 'message' string
+            // This prevents the "Objects are not valid as a React child" crash
+            const errorMessage = err.response?.data?.message || "Payment system is currently offline.";
+
             if (err.response?.status === 400 || err.response?.status === 404) {
-                onSetupRequired(err.response?.data || "One of the parties is not verified.");
+                // Pass the string message to your parent component (BuyNow.jsx)
+                onSetupRequired(errorMessage); 
             } else {
-                alert("Payment system is currently offline. Please try again later.");
+                alert(errorMessage);
             }
         } finally {
             setIsProcessing(false);
@@ -81,12 +80,12 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
                     </div>
                     <div className="summary-row">
                         <span>Price</span>
-                        <span className="bold">R{productPrice.toLocaleString()}</span>
+                        <span className="bold">R{productPrice?.toLocaleString()}</span>
                     </div>
                     <div className="summary-divider"></div>
                     <div className="summary-row total">
                         <span>Total to Escrow</span>
-                        <span className="total-price">R{productPrice.toLocaleString()}</span>
+                        <span className="total-price">R{productPrice?.toLocaleString()}</span>
                     </div>
                 </div>
 

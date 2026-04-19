@@ -1,24 +1,42 @@
-
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 const PaymentSuccess = () => {
+    const navigate = useNavigate();
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-            <CheckCircle size={80} color="#22c55e" className="mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Payment Secured!</h1>
-            <p className="text-gray-600 max-w-md mb-8">
-                Your funds are now safely held in escrow. The seller has been notified to prepare your item.
+        <div style={{ textAlign: 'center', marginTop: '100px', padding: '20px' }}>
+            <CheckCircle size={80} color="#22c55e" style={{ marginBottom: '20px' }} />
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Payment Secured!</h1>
+            <p style={{ color: '#666', marginBottom: '30px' }}>
+                Your funds are now held safely in **Cylo Escrow**. <br />
+                The seller has been notified to ship your item.
             </p>
-            
-            <div className="flex gap-4">
-                <Link to="/orders" className="flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-lg font-semibold">
-                    View My Orders <Package size={18} />
-                </Link>
-                <Link to="/" className="flex items-center gap-2 text-gray-500 px-6 py-3 font-semibold">
-                    Continue Shopping <ArrowRight size={18} />
-                </Link>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                <button 
+                    onClick={() => navigate('/feed')}
+                    className="secondary-btn"
+                >
+                    Back to Feed
+                </button>
+                <button 
+                    onClick={() => navigate('/my-orders')}
+                    style={{ 
+                        backgroundColor: '#000', 
+                        color: '#fff', 
+                        padding: '10px 20px', 
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <Package size={18} />
+                    View My Orders
+                    <ArrowRight size={18} />
+                </button>
             </div>
         </div>
     );

@@ -206,7 +206,8 @@ body{
  .main-screen {
     width: 100%;
     height: 100vh; /* This defines the "window" you see the videos through */
-    overflow-y: scroll; /* Enable scrolling here */
+    overflow-y: auto; /* Enable scrolling here */
+    -webkit-overflow-scrolling: touch;
     scroll-snap-type: y mandatory; /* Keeps the TikTok-style snap */
     scrollbar-width: none; /* Hides scrollbar on Firefox */
     display: flex;
@@ -681,32 +682,59 @@ body{
 
 /* MOBILE FIX: Move them back inside */
 @media (max-width: 768px) {
-  .post-wrapper {
-        display: block;
-        width: 100%;
-        /* Subtract the height of your bottom nav (70px) */
-        min-height: calc(100vh - 70px); 
-        padding: 0;
-       position: relative;
-    }
-
-    .post-container {
-        /* Centering the container if it's smaller than the screen width */
-        margin: 0 auto 20px; 
-        max-height: 80vh; /* Shrunk slightly more to ensure it fits */
-    }
-
-    .engagement {
-        position: absolute;
-        /* This places it relative to the wrapper, just to the right of the video */
-        left: calc(50% + 260px); 
-        bottom: 40px;
-        background: transparent;
-        z-index: 5;
+    /* 1. Ensure the feed doesn't have extra horizontal padding that squishes the video */
+    .feed {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 0 !important; /* Critical: Full width on mobile */
+        height: calc(100vh - 70px); /* Account for bottom nav */
     }
 
     .main-screen {
-        overflow-x: visible; /* Prevents clipping the buttons */
+        width: 100%;
+        height: 100%;
+    }
+
+    .post-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: calc(100vh - 70px); /* Match the feed height */
+        background: #000; /* Black bars background if video aspect ratio differs */
+    }
+
+    .post-container {
+        /* Reset specific desktop dimensions to be fluid */
+        width: 100% !important; 
+        height: 100% !important;
+        max-width: 100vw !important;
+        max-height: 100% !important;
+        border-radius: 0; /* Modern full-screen look on mobile */
+        margin: 0;
+    }
+
+    /* 2. Adjust Product Info so it doesn't get cut off */
+    .productInfo {
+        bottom: 20px;
+        left: 15px;
+        right: 70px; /* Space for engagement icons */
+    }
+
+    .description p {
+        font-size: 13px;
+        max-width: 100%;
+    }
+
+    /* 3. Fix Engagement Icons position */
+    .engagement {
+        position: absolute;
+        right: 10px !important;
+        bottom: 30px !important; /* Distance from the progress bar */
+        left: auto !important; /* Reset the calc(50% + 260px) desktop logic */
+        margin-left: 0;
+        gap: 12px;
     }
 }
 
@@ -758,6 +786,19 @@ body{
     gap: 10px;
     z-index: 30;
     align-items: center;
+    transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+}
+
+.video-top-controls.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px); /* Slight slide up effect */
+}
+
+.video-top-controls.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .volume-control-wrapper {
@@ -774,6 +815,7 @@ body{
 
 .volume-control-wrapper:hover {
     max-width: 160px; /* Expand to show slider */
+    padding-right: 15px;
     padding-right: 15px;
 }
 

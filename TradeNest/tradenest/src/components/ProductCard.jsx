@@ -5,10 +5,14 @@ import { BaggageClaim, MessageCircle, Play, Pause, Volume2, VolumeX } from 'luci
 const ProductCard = ({ post }) => {
   const videoRef = useRef(null);
   const navigate = useNavigate();
+  const wasManuallyPaused = useRef(false);
+  const controlsTimeoutRef = useRef(null);
+
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [showControls, setShowControls] = useState(false);
 
   if (!post) return null;
 
@@ -25,6 +29,17 @@ const ProductCard = ({ post }) => {
   const profileUrl = formatUrl(post.profilePictureUrl || post.profile?.imageUrl, "/profile.jpg");
   const displayName = post.handleName || post.name || "User";
 
+  // Control Visibility Logic
+  const triggerControls = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    
+    // Hide after 3 seconds of inactivity
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  };
+
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!isVideo || !videoElement) return;
@@ -33,19 +48,22 @@ const ProductCard = ({ post }) => {
       ([entry]) => {
         if (!videoRef.current) return;
         if (entry.isIntersecting) {
-          videoRef.current.play().catch(() => {});
-          setIsPaused(false);
+          if (!wasManuallyPaused.current) {
+            videoRef.current.play().catch(() => {});
+            setIsPaused(false);
+          }
         } else {
-          videoRef.current?.pause();
+          videoRef.current.pause();
           setIsPaused(true);
         }
       },
-      { threshold: 0.8 } 
+      { threshold: 0.6 } 
     );
 
     observer.observe(videoElement);
     return () => {
       if (videoElement) observer.unobserve(videoElement);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
       observer.disconnect();
     };
   }, [isVideo]);
@@ -58,23 +76,27 @@ const ProductCard = ({ post }) => {
 
   const togglePlay = (e) => {
     e.stopPropagation();
+    triggerControls(); // Show UI when interacting
     if (!videoRef.current) return;
+
     if (videoRef.current.paused) {
       videoRef.current.play();
       setIsPaused(false);
+      wasManuallyPaused.current = false;
     } else {
       videoRef.current.pause();
       setIsPaused(true);
+      wasManuallyPaused.current = true;
     }
   };
 
   const toggleMute = (e) => {
     e.stopPropagation();
+    triggerControls();
     if (videoRef.current) {
       const newMutedState = !videoRef.current.muted;
       videoRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
-      // If we unmute and volume was 0, set it to a default 50%
       if (!newMutedState && volume === 0) {
         setVolume(0.5);
         videoRef.current.volume = 0.5;
@@ -82,9 +104,9 @@ const ProductCard = ({ post }) => {
     }
   };
 
-  // --- THE MISSING PIECE ---
   const handleVolumeChange = (e) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
+    triggerControls();
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (videoRef.current) {
@@ -100,7 +122,7 @@ const ProductCard = ({ post }) => {
   };
 
   return (
-    <div className="post-container"> 
+    <div className="post-container" onMouseMove={triggerControls}> 
       {isVideo ? (
         <div className="video-wrapper" onClick={togglePlay}>
           <video 
@@ -113,7 +135,8 @@ const ProductCard = ({ post }) => {
             onTimeUpdate={handleTimeUpdate}
           />
           
-          <div className="video-top-controls">
+          {/* TOP CONTROLS WITH DYNAMIC CLASS */}
+          <div className={`video-top-controls ${showControls || isPaused ? 'visible' : 'hidden'}`}>
             <button className="video-control-btn" onClick={togglePlay}>
               {isPaused ? <Play size={18} fill="white" /> : <Pause size={18} fill="white" />}
             </button>
@@ -130,6 +153,7 @@ const ProductCard = ({ post }) => {
                   step="0.1" 
                   value={isMuted ? 0 : volume} 
                   onChange={handleVolumeChange}
+                  onClick={(e) => e.stopPropagation()} 
                   className="volume-slider"
                 />
               </div>

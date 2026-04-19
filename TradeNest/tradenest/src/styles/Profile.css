@@ -3,17 +3,18 @@ html{
     scroll-behavior:smooth;
 }
 .profile-page{
-    flex:1;
-    padding:40px;
-
-    height: 100vh;
+    flex: 1;
+    padding: 20px;
+    max-width: 935px; /* Standard Instagram/Social width for focus */
+    margin: 0 auto;
    
 }
 /* MAIN PROFILE LAYOUT */
 
 .profile-layout{
-    display:flex;
-    height:100vh;
+    display: flex;
+    background-color: var(--color-bg);
+    min-height: 100vh;
 }
 
 
@@ -27,54 +28,54 @@ html{
 
 /* HEADER */
 
-.profile-header{
-    display:flex;
-    align-items:center;
-    gap:20px;
-
-    position:sticky;
-    top:0;
-
-    background:var(--color-bg);
-    z-index:10;
-
-    padding-bottom:15px;
-    margin-bottom:10px;
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    padding: 30px 0;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 20px;
 }
 
 
 /* PROFILE IMAGE */
 
-.profileImg{
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    object-fit:cover;
-
-    border:3px solid var(--color-border);
+.profileImg {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    padding: 5px;
+    background: white;
 }
 
 
 /* PROFILE INFO */
 
-.profile-info{
-    display:flex;
-    flex-direction:column;
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
 }
 
-.userName{
-    font-size:20px;
-    font-weight:700;
-    color:var(--color-text-dark);
+.userName {
+    font-size: 28px;
+    font-weight: 300; /* Light weight looks more modern */
+    color: var(--color-text-dark);
 }
 
-.userHandle{
-    color:var(--color-text-muted);
+.userHandle {
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 1rem;
 }
 
-.bio{
-    color:var(--color-text-muted);
-    margin-top:4px;
+.bio {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--color-text-dark);
 }
 
 
@@ -123,26 +124,25 @@ html{
 
 /* BUTTONS */
 
-.profile-actions{
-    margin-top:25px;
-    display:flex;
-    gap:12px;
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
 }
 
 /* SHARED BUTTON STYLE */
 
-.editBut,
-.shareBut,
-.accountBtn{
-    padding:10px 18px;
-
-    border:none;
-    border-radius:var(--radius-sm);
-
-    font-weight:600;
-    cursor:pointer;
-
-    transition:var(--transition);
+.editBut, .shareBut, .accountBtn, .followBut, .followingBut {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 
@@ -249,15 +249,17 @@ html{
 }
 
 .delete-btn {
-    pointer-events: auto; /* Re-enables clicking for the button */
-    background: rgba(255, 59, 48, 0.8);
-    color: white;
+    pointer-events: auto;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #ff3b30;
     border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 10px;
+    border-radius: 6px;
     font-size: 0.7rem;
-    cursor: pointer;
-    transition: background 0.2s;
+    font-weight: 700;
 }
 
 .delete-btn:hover {
@@ -298,27 +300,37 @@ html{
 
 /* RESPONSIVE Design*/
 
-@media (max-width:900px){
-
-    .profile-stats{
-        grid-template-columns:repeat(2,1fr);
+@media (max-width: 768px) {
+    .profile-header {
+        padding: 20px;
+        gap: 20px;
+    }
+    
+    .profileImg {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .userName {
+        font-size: 20px;
+    }
+    
+    .profile-stats {
+        justify-content: space-around;
+        gap: 0;
+        border-top: 1px solid var(--color-border);
+        padding: 10px 0;
+    }
+    
+    .stat {
+        flex-direction: column;
+        align-items: center;
     }
 
+    .listingContainer {
+        gap: 1px; /* Even tighter on mobile */
+    }
 }
-
-@media (max-width:600px){
-
-    .profile-layout{
-        flex-direction:column;
-    }
-
-    .profile-header{
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-}
-
 
 /* ACCOUNT MENU */
 
