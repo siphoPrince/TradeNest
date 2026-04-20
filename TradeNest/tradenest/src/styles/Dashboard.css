@@ -867,3 +867,36 @@ body{
     background: rgba(0, 0, 0, 0.6);
     transform: scale(1.1);
 }
+
+.video-top-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between; /* This pushes the groups to the edges */
+  align-items: center;
+  z-index: 10;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+  transition: opacity 0.3s ease;
+}
+
+.stock-counter-ui {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: white;
+  background: rgba(0, 0, 0, 0.4); /* Darker background for contrast */
+  backdrop-filter: blur(5px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stock-counter-ui.urgent {
+  background: rgba(220, 38, 38, 0.7);
+  border-color: rgba(255, 255, 255, 0.4);
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as signalR from '@microsoft/signalr';
 import { useSearchParams } from "react-router-dom"; 
+import { Edit2, Trash2, Check, X, Send, ChevronLeft, MoreVertical } from 'lucide-react';
 import "../styles/Messege.css";
 
 const Message = () => {
@@ -10,55 +11,55 @@ const Message = () => {
     const [messages, setMessages] = useState([]); 
     const [messageInput, setMessageInput] = useState("");
     const [connection, setConnection] = useState(null);
+    const [editingMsgId, setEditingMsgId] = useState(null);
+    const [editValue, setEditValue] = useState("");
 
     const chatEndRef = useRef(null);
     const loggedInUserId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
-
     const urlUserId = searchParams.get("userId");
     const urlOrderId = searchParams.get("orderId");
 
-    // 1. Establish SignalR Connection ONCE on mount
+    // Helper for Avatars
+    const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase() || "?";
+
     useEffect(() => {
         if (!token) return;
-
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:7124/chatHub", {
-                accessTokenFactory: () => token
-            })
+            .withUrl("https://localhost:7124/chatHub", { accessTokenFactory: () => token })
             .withAutomaticReconnect()
             .build();
 
         newConnection.start()
-            .then(() => {
-                console.log("Connected to Cylo Chat 🚀");
-                setConnection(newConnection);
-            })
+            .then(() => setConnection(newConnection))
             .catch(err => console.error("SignalR Connection Error: ", err));
 
-        return () => {
-            if (newConnection) newConnection.stop();
-        };
-    }, []); // Empty dependency array keeps connection stable
+        return () => { if (newConnection) newConnection.stop(); };
+    }, []);
 
-    // 2. Manage Listeners (Update when activeChat changes to filter messages)
     useEffect(() => {
         if (!connection) return;
-
-        // Clean up old listener before adding a new one
         connection.off("ReceiveMessage");
+        connection.off("MessageEdited");
+        connection.off("MessageDeleted");
 
         connection.on("ReceiveMessage", (msg) => {
             setMessages((prev) => {
-                // Ensure we only append if it belongs to the active conversation context
                 const isRelevant = activeChat && String(msg.orderId) === String(activeChat.orderId);
                 return isRelevant ? [...prev, msg] : prev;
             });
             fetchConversations(); 
         });
+
+        connection.on("MessageEdited", ({ messageId, newContent }) => {
+            setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: newContent, isEdited: true } : m));
+        });
+
+        connection.on("MessageDeleted", (messageId) => {
+            setMessages(prev => prev.filter(m => m.id !== messageId));
+        });
     }, [connection, activeChat?.orderId]);
 
-    // 3. Data Fetching Logic
     const fetchConversations = async () => {
         try {
             const res = await fetch("https://localhost:7124/api/messages/conversations", {
@@ -69,11 +70,8 @@ const Message = () => {
             
             if (urlOrderId && !activeChat) {
                 const autoSelect = data.find(c => String(c.orderId) === String(urlOrderId));
-                if (autoSelect) {
-                    setActiveChat(autoSelect);
-                } else if (urlUserId) {
-                    setActiveChat({ orderId: urlOrderId, userId: urlUserId, username: "New Inquiry" });
-                }
+                if (autoSelect) setActiveChat(autoSelect);
+                else if (urlUserId) setActiveChat({ orderId: urlOrderId, userId: urlUserId, username: "New Inquiry" });
             }
         } catch (e) { console.error("Sidebar load failed", e); }
     };
@@ -88,8 +86,6 @@ const Message = () => {
                 });
                 const data = await res.json();
                 setMessages(data);
-                
-                // Mark as read
                 fetch(`https://localhost:7124/api/messages/read/${activeChat.orderId}`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -99,23 +95,43 @@ const Message = () => {
         }
     }, [activeChat?.orderId]);
 
-    // 4. Send Message (Correct Argument Order for C# Hub)
     const sendMessage = async () => {
         if (connection && messageInput.trim() && activeChat) {
             try {
-                // C# Hub: (int receiverId, string content, int? orderId)
                 const targetUserId = parseInt(activeChat.userId || activeChat.otherUser?.userId || urlUserId);
                 const orderId = activeChat.orderId ? parseInt(activeChat.orderId) : null;
-
-                await connection.invoke(
-                    "SendPrivateMessage", 
-                    targetUserId, 
-                    messageInput.trim(),
-                    orderId
-                );
+                await connection.invoke("SendPrivateMessage", targetUserId, messageInput.trim(), orderId);
                 setMessageInput("");
             } catch (e) { console.error("Send failed", e); }
         }
+    };
+
+    const deleteMessage = async (msgId) => {
+        if (!window.confirm("Delete this message?")) return;
+        try {
+            await fetch(`https://localhost:7124/api/messages/${msgId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const targetUserId = parseInt(activeChat.userId || activeChat.otherUser?.userId);
+            await connection.invoke("DeleteMessage", msgId, targetUserId);
+            setMessages(prev => prev.filter(m => m.id !== msgId));
+        } catch (e) { console.error("Delete failed", e); }
+    };
+
+    const saveEdit = async (msgId) => {
+        if (!editValue.trim()) return;
+        try {
+            await fetch(`https://localhost:7124/api/messages/${msgId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(editValue)
+            });
+            const targetUserId = parseInt(activeChat.userId || activeChat.otherUser?.userId);
+            await connection.invoke("EditMessage", msgId, targetUserId, editValue);
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content: editValue, isEdited: true } : m));
+            setEditingMsgId(null);
+        } catch (e) { console.error("Edit failed", e); }
     };
 
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -123,17 +139,26 @@ const Message = () => {
     return (
         <div className="message-wrapper">
             <div className={`message-sidebar ${activeChat ? "hide-mobile" : ""}`}>
-                <div className="sidebar-header"><h2>Orders Chat</h2></div>
+                <div className="sidebar-header">
+                    <h2>Messages</h2>
+                </div>
                 <div className="message-list">
                     {chats.map(chat => (
                         <div key={chat.orderId} 
                              className={`message-card ${activeChat?.orderId === chat.orderId ? "active" : ""}`} 
                              onClick={() => setActiveChat(chat)}>
-                            <div className="chat-info">
-                                <p className="username">{chat.otherUser?.handleName || `Order #${chat.orderId}`}</p>
-                                <span className="last-message">{chat.lastMessage}</span>
-                                {chat.unreadCount > 0 && <span className="unread-badge">{chat.unreadCount}</span>}
+                            <div className="avatar-wrapper">
+                                <div className="avatar">{getInitials(chat.otherUser?.handleName)}</div>
+                                <span className="online-dot"></span>
                             </div>
+                            <div className="chat-info">
+                                <div className="chat-info-top">
+                                    <span className="username">{chat.otherUser?.handleName || `Order #${chat.orderId}`}</span>
+                                    <span className="order-tag">#{chat.orderId}</span>
+                                </div>
+                                <p className="last-message">{chat.lastMessage}</p>
+                            </div>
+                            {chat.unreadCount > 0 && <span className="unread-badge">{chat.unreadCount}</span>}
                         </div>
                     ))}
                 </div>
@@ -143,26 +168,61 @@ const Message = () => {
                 {activeChat ? (
                     <>
                         <div className="display-header">
-                            <button className="back-btn" onClick={() => setActiveChat(null)}>←</button>
-                            <h3>Order #{activeChat.orderId}</h3>
+                            <button className="back-btn" onClick={() => setActiveChat(null)}><ChevronLeft /></button>
+                            <div className="avatar small">{getInitials(activeChat.otherUser?.handleName || "User")}</div>
+                            <div className="header-text">
+                                <h3>{activeChat.otherUser?.handleName || "Order Inquiry"}</h3>
+                                <span className="status-text">Online</span>
+                            </div>
+                            <button className="icon-btn-more"><MoreVertical size={20}/></button>
                         </div>
+                        
                         <div className="chat-content">
-                            {messages.map((msg, i) => (
-                                <div key={i} className={`message-bubble ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
-                                    <p>{msg.content}</p>
+                            {messages.map((msg) => (
+                                <div key={msg.id} className={`message-bubble ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
+                                    {editingMsgId === msg.id ? (
+                                        <div className="edit-mode-container">
+                                            <input className="edit-input" value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus />
+                                            <div className="edit-buttons">
+                                                <button onClick={() => saveEdit(msg.id)}><Check size={14}/></button>
+                                                <button onClick={() => setEditingMsgId(null)}><X size={14}/></button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="message-text-wrapper">
+                                            <p>{msg.content}</p>
+                                            <div className="msg-footer">
+                                                {msg.isEdited && <span className="edited-label">edited</span>}
+                                            </div>
+                                            {String(msg.senderId) === String(loggedInUserId) && (
+                                                <div className="bubble-actions">
+                                                    <button onClick={() => { setEditingMsgId(msg.id); setEditValue(msg.content); }}><Edit2 size={12}/></button>
+                                                    <button onClick={() => deleteMessage(msg.id)}><Trash2 size={12}/></button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             <div ref={chatEndRef} />
                         </div>
+
                         <div className="message-input-area">
                             <input value={messageInput} 
                                    onChange={(e) => setMessageInput(e.target.value)} 
                                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
-                                   placeholder="Type here..." />
-                            <button onClick={sendMessage} disabled={!messageInput.trim()}>Send</button>
+                                   placeholder="Type a message..." />
+                            <button className="send-btn" onClick={sendMessage} disabled={!messageInput.trim()}>
+                                <Send size={18} />
+                            </button>
                         </div>
                     </>
-                ) : <div className="no-chat-selected">Select a purchase to view messages</div>}
+                ) : (
+                    <div className="no-chat-selected">
+                        <div className="empty-state-icon">💬</div>
+                        <p>Select a conversation to start chatting</p>
+                    </div>
+                )}
             </div>
         </div>
     );

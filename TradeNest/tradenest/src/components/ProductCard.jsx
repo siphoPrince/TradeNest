@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BaggageClaim, MessageCircle, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { BaggageClaim, MessageCircle, Play, Pause, Volume2, VolumeX, Package } from 'lucide-react';
 
 const ProductCard = ({ post }) => {
   const videoRef = useRef(null);
@@ -16,6 +16,9 @@ const ProductCard = ({ post }) => {
 
   if (!post) return null;
 
+  // Handle case-sensitivity from Backend (Quantity vs quantity)
+  const stockCount = post.quantity !== undefined ? post.quantity : (post.Quantity || 0);
+
   const backendBaseUrl = "https://localhost:7124/uploads/";
 
   const formatUrl = (url, fallback) => {
@@ -29,15 +32,10 @@ const ProductCard = ({ post }) => {
   const profileUrl = formatUrl(post.profilePictureUrl || post.profile?.imageUrl, "/profile.jpg");
   const displayName = post.handleName || post.name || "User";
 
-  // Control Visibility Logic
   const triggerControls = () => {
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    
-    // Hide after 3 seconds of inactivity
-    controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
+    controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
   };
 
   useEffect(() => {
@@ -76,7 +74,7 @@ const ProductCard = ({ post }) => {
 
   const togglePlay = (e) => {
     e.stopPropagation();
-    triggerControls(); // Show UI when interacting
+    triggerControls(); 
     if (!videoRef.current) return;
 
     if (videoRef.current.paused) {
@@ -111,15 +109,36 @@ const ProductCard = ({ post }) => {
     setVolume(newVolume);
     if (videoRef.current) {
       videoRef.current.volume = newVolume;
-      if (newVolume === 0) {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-      } else {
-        setIsMuted(false);
-        videoRef.current.muted = false;
-      }
+      setIsMuted(newVolume === 0);
+      videoRef.current.muted = newVolume === 0;
     }
   };
+
+  // Reusable Stock Badge Component
+  const StockBadge = () => (
+    <div className={`stock-counter-ui ${stockCount <= 5 ? 'urgent' : ''}`} style={{ position: 'relative' }}>
+      <Package size={20} color="white" />
+      <span style={{
+        position: 'absolute',
+        top: '-5px',
+        right: '-8px',
+        background: stockCount <= 5 ? '#ef4444' : '#3b82f6',
+        color: 'white',
+        fontSize: '10px',
+        fontWeight: 'bold',
+        minWidth: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1.5px solid #000',
+        padding: '2px'
+      }}>
+        {stockCount}
+      </span>
+    </div>
+  );
 
   return (
     <div className="post-container" onMouseMove={triggerControls}> 
@@ -135,27 +154,31 @@ const ProductCard = ({ post }) => {
             onTimeUpdate={handleTimeUpdate}
           />
           
-          {/* TOP CONTROLS WITH DYNAMIC CLASS */}
+          {/* TOP CONTROLS BAR */}
           <div className={`video-top-controls ${showControls || isPaused ? 'visible' : 'hidden'}`}>
-            <button className="video-control-btn" onClick={togglePlay}>
-              {isPaused ? <Play size={18} fill="white" /> : <Pause size={18} fill="white" />}
-            </button>
+            
+            {/* LEFT EDGE: Stock Badge */}
+            <StockBadge />
 
-            <div className="volume-control-wrapper">
-              <button className="video-control-btn" onClick={toggleMute}>
-                {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            {/* RIGHT GROUP: Play/Pause and Volume */}
+            <div className="controls-right-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button className="video-control-btn" onClick={togglePlay}>
+                {isPaused ? <Play size={18} fill="white" /> : <Pause size={18} fill="white" />}
               </button>
-              <div className="volume-slider-container">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="1" 
-                  step="0.1" 
-                  value={isMuted ? 0 : volume} 
-                  onChange={handleVolumeChange}
-                  onClick={(e) => e.stopPropagation()} 
-                  className="volume-slider"
-                />
+
+              <div className="volume-control-wrapper">
+                <button className="video-control-btn" onClick={toggleMute}>
+                  {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                </button>
+                <div className="volume-slider-container">
+                  <input 
+                    type="range" min="0" max="1" step="0.1" 
+                    value={isMuted ? 0 : volume} 
+                    onChange={handleVolumeChange}
+                    onClick={(e) => e.stopPropagation()} 
+                    className="volume-slider"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -171,7 +194,12 @@ const ProductCard = ({ post }) => {
           )}
         </div>
       ) : (
-        <img src={mediaUrl} alt={post.title} className="feed-media" />
+        <div className="image-wrapper" style={{ position: 'relative' }}>
+          <img src={mediaUrl} alt={post.title} className="feed-media" />
+          <div className="stock-counter-ui-image" style={{ position: 'absolute', top: '15px', left: '15px' }}>
+              <StockBadge />
+          </div>
+        </div>
       )}
 
       <div className="productInfo">

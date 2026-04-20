@@ -1,22 +1,43 @@
-import "../styles/Profile.css";
-import "../styles/Follow.css"
-import Navigation from "../components/Navigation";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Settings, UserRoundPen } from 'lucide-react';
+import { 
+    Settings, 
+    UserRoundPen, 
+    X, 
+    Heart, 
+    MessageCircle, 
+    ShoppingBag, 
+    ChevronUp, 
+    ChevronDown, 
+    Share2 
+} from 'lucide-react';
+import Navigation from "../components/Navigation";
+import "../styles/Profile.css";
+import "../styles/Follow.css";
 
 const Profile = () => {
     const [userPosts, setUserPosts] = useState([]);
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
-    const [profile, setProfile] = useState(null); 
+    const [profile, setProfile] = useState(null);
+    const [selectedPostIndex, setSelectedPostIndex] = useState(null); // Track which post is open in TikTok view
+
     const navigate = useNavigate();
-    
     const { id } = useParams();
     const backendUrl = "https://localhost:7124/uploads/";
     const loggedInUserId = localStorage.getItem("userId");
     const isOwnProfile = !id || id === loggedInUserId;
 
+    // --- LOCK BODY SCROLL ---
+    useEffect(() => {
+        if (selectedPostIndex !== null) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [selectedPostIndex]);
+
+    // --- FETCH DATA ---
     useEffect(() => {
         const fetchProfileData = async () => {
             const token = localStorage.getItem("token");
@@ -41,7 +62,7 @@ const Profile = () => {
                 if (profileResponse.ok) {
                     const data = await profileResponse.json();
                     setProfile({
-                        ...data.profile, 
+                        ...data.profile,
                         email: data.profile.user?.email,
                         tradeSafeId: data.profile.user?.tradeSafeRecipientId,
                         followersCount: data.followersCount || 0,
@@ -52,7 +73,7 @@ const Profile = () => {
 
                 setLoadingPosts(true);
                 const postsResponse = await fetch(`https://localhost:7124/api/posts/user/${targetUserId}?pageNumber=1&pageSize=10`);
-                
+
                 if (postsResponse.ok) {
                     const postsData = await postsResponse.json();
                     setUserPosts(postsData.data || []);
@@ -67,14 +88,15 @@ const Profile = () => {
         fetchProfileData();
     }, [id, loggedInUserId, navigate, isOwnProfile]);
 
+    // --- HANDLERS ---
     const handleFollow = async () => {
         const token = localStorage.getItem("token");
         try {
             const response = await fetch(`https://localhost:7124/api/follow/${id}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
-                    'UserId': loggedInUserId 
+                    'UserId': loggedInUserId
                 }
             });
 
@@ -101,20 +123,18 @@ const Profile = () => {
             });
             if (response.ok) {
                 setUserPosts(userPosts.filter(post => post.id !== postId));
+                setSelectedPostIndex(null); // Close viewer if open
             }
         } catch (error) {
             console.error("Delete error:", error);
         }
     };
 
-    // --- SAFETY GUARDS ---
-    if (!profile && !loadingPosts) {
-        return <div className="loading">Profile not found. 😕</div>;
-    }
+    const isVideo = (url) => url?.match(/\.(mp4|webm|ogg|mov)$/i);
 
-    if (!profile) {
-        return <div className="loading">Loading Profile... ⏳</div>;
-    }
+    // --- SAFETY GUARDS ---
+    if (!profile && !loadingPosts) return <div className="loading">Profile not found. 😕</div>;
+    if (!profile) return <div className="loading">Loading Profile... ⏳</div>;
 
     return (
         <div className="profile-layout">
@@ -122,8 +142,7 @@ const Profile = () => {
             <div className="profile-page">
                 <div className="profile-container">
                     <div className="profile-header">
-                        {/* Fixed with Optional Chaining profile?.imageUrl */}
-                        <img 
+                        <img
                             src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"}
                             className="profileImg"
                             alt="Profile"
@@ -137,7 +156,7 @@ const Profile = () => {
                             <div className="profile-actions">
                                 {isOwnProfile ? (
                                     <button className="editBut" onClick={() => navigate("/editProfile")}>
-                                        Edit Profile <UserRoundPen size={16}/>
+                                        Edit Profile <UserRoundPen size={16} />
                                     </button>
                                 ) : (
                                     <button className={isFollowing ? "followingBut" : "followBut"} onClick={handleFollow}>
@@ -148,7 +167,7 @@ const Profile = () => {
                                     <>
                                         <button className="shareBut">Share Profile</button>
                                         <button className="accountBtn" onClick={() => navigate("/settings")}>
-                                            Settings <Settings size={16}/>
+                                            Settings <Settings size={16} />
                                         </button>
                                     </>
                                 )}
@@ -179,56 +198,87 @@ const Profile = () => {
                 <div className="user-listings">
                     <h2 className="listing-title">{isOwnProfile ? "My Listings" : "Listings"}</h2>
                     <div className="listingContainer">
-                        {loadingPosts ? <p>Loading listings...</p> : 
-                        userPosts.length > 0 ? (
-                            userPosts.map((post) => {
-                                const fullUrl = post.mediaUrl?.startsWith("http") 
-                                    ? post.mediaUrl 
-                                    : `${backendUrl}${post?.mediaUrl}`;
-                                
-                                const isVideo = post.mediaUrl?.match(/\.(mp4|webm|ogg|mov)$/i);
-
+                        {loadingPosts ? <p>Loading listings...</p> :
+                            userPosts.map((post, index) => {
+                                const fullUrl = post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post?.mediaUrl}`;
                                 return (
-                                    <div key={post.id} className="card">
-                                        {isVideo ? (
-                                            <video 
-                                                src={fullUrl}
-                                                className="listing-thumb"
-                                                muted 
-                                                loop 
-                                                playsInline
-                                                onMouseEnter={(e) => e.target.play()}
-                                                onMouseLeave={(e) => {
-                                                    e.target.pause();
-                                                    e.target.currentTime = 0;
-                                                }}
-                                            />
+                                    <div key={post.id} className="card" onClick={() => setSelectedPostIndex(index)}>
+                                        {isVideo(post.mediaUrl) ? (
+                                            <video src={fullUrl} className="listing-thumb" muted playsInline />
                                         ) : (
-                                            <img 
-                                                src={fullUrl}
-                                                alt={post.title} 
-                                                className="listing-thumb"
-                                                onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }}
-                                            />
+                                            <img src={fullUrl} alt={post.title} className="listing-thumb" onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }} />
                                         )}
                                         <div className="card-info">
                                             <small className="price">R{post.price}</small>
-                                            {isOwnProfile && (
-                                                <button className="delete-btn" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(post.id);
-                                                }}>Delete</button>
-                                            )}
                                         </div>
                                     </div>
                                 );
                             })
-                        ) : (
-                            <p className="no-posts">No listings found.</p>
-                        )}
+                        }
                     </div>
                 </div>
             </div>
+
+            {/* --- TIKTOK STYLE VIEWER --- */}
+            {selectedPostIndex !== null && (
+                <div className="tt-overlay" onClick={() => setSelectedPostIndex(null)}>
+                    <button className="tt-close" onClick={() => setSelectedPostIndex(null)}>
+                        <X size={30} color="white" />
+                    </button>
+
+                    <div className="tt-feed-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="tt-slide">
+                            <div className="tt-media-wrapper">
+                                {isVideo(userPosts[selectedPostIndex].mediaUrl) ? (
+                                    <video
+                                        src={userPosts[selectedPostIndex].mediaUrl?.startsWith("http") ? userPosts[selectedPostIndex].mediaUrl : `${backendUrl}${userPosts[selectedPostIndex].mediaUrl}`}
+                                        autoPlay
+                                        loop
+                                        controls
+                                        playsInline
+                                    />
+                                ) : (
+                                    <img src={userPosts[selectedPostIndex].mediaUrl?.startsWith("http") ? userPosts[selectedPostIndex].mediaUrl : `${backendUrl}${userPosts[selectedPostIndex].mediaUrl}`} alt="" />
+                                )}
+                            </div>
+
+                            {/* Sidebar UI */}
+                            <div className="tt-side-actions">
+                                <div className="tt-action">
+                                    <div className="tt-avatar-circle">
+                                        <img src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"} alt="" />
+                                        {!isOwnProfile && <div className="tt-plus-icon">+</div>}
+                                    </div>
+                                </div>
+                                <div className="tt-action"><Heart size={28} fill="white" /><small>Like</small></div>
+                                <div className="tt-action" onClick={() => navigate(`/messages/${profile.user?.id}`)}><MessageCircle size={28} fill="white" /><small>Chat</small></div>
+                                <div className="tt-action"><ShoppingBag size={28} color="#00ff88" /><small>Buy</small></div>
+                                <div className="tt-action"><Share2 size={28} fill="white" /><small>Share</small></div>
+                                {isOwnProfile && (
+                                    <div className="tt-action" onClick={() => handleDelete(userPosts[selectedPostIndex].id)}>
+                                        <small style={{color: '#ff4444'}}>Delete</small>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Content Info */}
+                            <div className="tt-bottom-info">
+                                <h3>@{profile?.handleName}</h3>
+                                <p>{userPosts[selectedPostIndex].title}</p>
+                                <span className="tt-price-tag">R{userPosts[selectedPostIndex].price}</span>
+                            </div>
+
+                            {/* Nav Buttons */}
+                            <div className="tt-nav">
+                                {selectedPostIndex > 0 && 
+                                    <button onClick={() => setSelectedPostIndex(selectedPostIndex - 1)}><ChevronUp size={40}/></button>}
+                                {selectedPostIndex < userPosts.length - 1 && 
+                                    <button onClick={() => setSelectedPostIndex(selectedPostIndex + 1)}><ChevronDown size={40}/></button>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

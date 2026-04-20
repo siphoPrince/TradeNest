@@ -28,7 +28,8 @@ const Feed = () => {
                 const token = localStorage.getItem("token");
                 const response = await fetch("https://localhost:7124/api/posts?pageNumber=1&pageSize=10", {
                     headers: {
-                        'Authorization': token ? `Bearer ${token}` : "" 
+                        'Authorization': token ? `Bearer ${token}` : "" ,
+                        'Cache-Control': 'no-cache',
                     }
                 });
 

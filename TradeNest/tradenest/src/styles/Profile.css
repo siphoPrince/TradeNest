@@ -374,3 +374,163 @@ html{
 
     z-index:100;
 }
+
+
+
+/* --- TikTok Immersive Viewer --- */
+.tt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.tt-close {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 10001;
+    transition: transform 0.2s;
+}
+
+.tt-close:hover { transform: scale(1.1); }
+
+.tt-feed-container {
+    width: 100%;
+    max-width: 420px; 
+    height: 90vh;
+    position: relative;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.tt-media-wrapper {
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+.tt-media-wrapper img, 
+.tt-media-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* TikTok uses 'cover', but for products 'contain' is often safer */
+}
+
+/* Side Buttons */
+.tt-side-actions {
+    position: absolute;
+    right: 15px;
+    bottom: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+}
+
+.tt-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    cursor: pointer;
+}
+
+.tt-action small {
+    font-size: 11px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.tt-avatar-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid white;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.tt-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.tt-plus-icon {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fe2c55; /* TikTok Red */
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+/* Bottom Text Overlay */
+.tt-bottom-info {
+    position: absolute;
+    bottom: 30px;
+    left: 20px;
+    right: 80px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.tt-bottom-info h3 { margin: 0; font-size: 1.1rem; }
+.tt-bottom-info p { margin: 5px 0; font-size: 0.9rem; opacity: 0.9; }
+
+.tt-price-tag {
+    background: #00ff88;
+    color: #000;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 800;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+/* Navigation Arrows */
+.tt-nav {
+    position: absolute;
+    right: -70px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.tt-nav button {
+    background: none;
+    border: none;
+    color: white;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.tt-nav button:hover { opacity: 1; }
+
+@media (max-width: 600px) {
+    .tt-nav { display: none; } /* Hide arrows on mobile, users swipe or tap */
+    .tt-feed-container { height: 100vh; max-width: 100%; border-radius: 0; }
+}
