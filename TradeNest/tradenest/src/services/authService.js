@@ -18,7 +18,17 @@ const register = async(name, email, passwordHash)=>{
     return response.data;
 }
 
+const googleLogin = async (idToken) => {
+    const response = await axios.post(API_URL + "google-login", JSON.stringify(idToken), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    return response.data;
+}
+
 export default {
     login,
-    register
+    register,
+    googleLogin
 };

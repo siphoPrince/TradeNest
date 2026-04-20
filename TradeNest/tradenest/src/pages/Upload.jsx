@@ -9,7 +9,7 @@ const Upload = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState(0)
   const [categoryId, setCategoryId] = useState(1);
-
+  const [quantity, setQuantity] = useState(1); // Default to 1
   const handleUpload = async () => {
   const token = localStorage.getItem("token");
   if (!token) return alert("Please log in first!");
@@ -25,8 +25,10 @@ const Upload = () => {
   formData.append("title", title);
   formData.append("description", description);
   formData.append("price", price);
+  formData.append("quantity", quantity);
   formData.append("categoryId", categoryId);
   formData.append("userId", currentUserId);
+
   
   if (files.length > 0) {
     formData.append("file", files[0]); 
@@ -146,6 +148,20 @@ const Upload = () => {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="R 0.00" />
+            </div>
+
+            <div className="inputs">
+              <label>Quantity Available</label>
+              <input 
+                type="number"
+                className="Quantity-input"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="1" />
+              <small style={{ color: '#888', fontSize: '12px' }}>
+                Item will auto-delete from Cylo once sold out.
+              </small>
             </div>
 
             <div className="inputs">
