@@ -101,6 +101,43 @@ body{
 }
 
 
+/* This makes it look like the other links but unclickable */
+.nav-link-disabled {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    color: #999; /* Faded color to show it's disabled */
+    cursor: not-allowed; /* Shows the 'block' circle when hovering */
+    font-weight: 500;
+    position: relative;
+}
+
+/* Optional: A small "Soon" badge */
+.coming-soon {
+    font-size: 0.65rem;
+    background: #eee;
+    color: #666;
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    margin-left: auto; /* Pushes it to the far right of the link */
+    letter-spacing: 0.5px;
+}
+
+/* Ensure icons in disabled links are also faded */
+.nav-link-disabled svg {
+    opacity: 0.6;
+}
+
+/* Hide the Foodie option on mobile devices */
+@media (max-width: 768px) {
+    .nav-link-disabled {
+        display: none !important;
+    }
+}
+
+
 /* FEED */
 
 .feed {

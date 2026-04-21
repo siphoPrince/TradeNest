@@ -13,6 +13,7 @@ import ManageListings from "./pages/ManageListings";
 import EditListing from "./pages/EditListing";
 import SettingsPage from "./pages/SettingsPage";
 import PaymentSuccess from "./pages/payment-success";
+import PaymentHistory from "./pages/PaymentHistory";
 
 function App() {
   // Run this as early as possible to prevent "flashing" white on load
@@ -39,6 +40,7 @@ if (savedTheme === 'dark') {
         <Route path="/buyNow/:id" element={<BuyNow />} />
         <Route path="/editProfile" element={<EditProfile />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/history" element={<PaymentHistory />} />
       </Routes>
     </BrowserRouter>
   );

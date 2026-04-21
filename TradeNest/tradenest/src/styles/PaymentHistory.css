@@ -1,0 +1,104 @@
+/* Stats Cards */
+.payment-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text-dark);
+}
+
+/* Table Header */
+.table-header-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 1rem 1.5rem;
+    background-color: var(--color-bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* The Line Item Row */
+.payment-row {
+    grid-template-columns: 2fr 1fr 1fr 1fr; /* Matching the header */
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tx-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.bg-success { background-color: var(--color-success); }
+.bg-dark { background-color: var(--color-text-dark); }
+
+.tx-date {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+/* Status Pills */
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.status-pill.completed {
+    background-color: rgba(22, 163, 74, 0.1);
+    color: var(--color-success);
+}
+
+.status-pill.pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+}
+
+/* Amount Coloring */
+.tx-amount {
+    text-align: right;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.tx-amount.positive { color: var(--color-success); }
+.tx-amount.negative { color: var(--color-text-dark); }
+
+.text-right { text-align: right; }
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+    .table-header-row { display: none; }
+    .payment-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .tx-amount { grid-column: 2; }
+}
