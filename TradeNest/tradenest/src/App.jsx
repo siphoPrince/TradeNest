@@ -14,6 +14,8 @@ import EditListing from "./pages/EditListing";
 import SettingsPage from "./pages/SettingsPage";
 import PaymentSuccess from "./pages/payment-success";
 import PaymentHistory from "./pages/PaymentHistory";
+import ForgotPassword from "./components/ForgotPassword";
+import MyOrders from "./pages/MyOrders";
 
 function App() {
   // Run this as early as possible to prevent "flashing" white on load
@@ -41,6 +43,8 @@ if (savedTheme === 'dark') {
         <Route path="/editProfile" element={<EditProfile />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/history" element={<PaymentHistory />} />
+        <Route path="/forgot-password" element={<ForgotPassword/>} />
+        <Route path="/my-orders" element={<MyOrders/>} />
       </Routes>
     </BrowserRouter>
   );

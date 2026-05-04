@@ -61,6 +61,10 @@ const CommentSection = ({ userId, postId, onClose }) => {
                 const savedComment = await response.json();
                 setComments([savedComment, ...comments]);
                 setCommentText("");
+
+                if (scrollRef.current) {
+                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            }
             }
         } catch (error) {
             console.error("Error posting comment:", error);

@@ -130,12 +130,7 @@ body{
     opacity: 0.6;
 }
 
-/* Hide the Foodie option on mobile devices */
-@media (max-width: 768px) {
-    .nav-link-disabled {
-        display: none !important;
-    }
-}
+
 
 
 /* FEED */
@@ -150,146 +145,111 @@ body{
 /* ============================= */
 /* MOBILE RESPONSIVE NAVIGATION  */
 /* ============================= */
-
 @media (max-width: 768px) {
-
-    /* change main layout to vertical */
+    /* 1. LAYOUT & CONTAINERS */
     .container {
-        overflow: hidden; /* Prevent the outer container from scrolling */
+        overflow: hidden;
         height: 100vh;
     }
 
     .feed {
-        height: calc(100vh - 70px); /* Leave room for bottom nav */
-        overflow: hidden;
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+        height: calc(100vh - 70px);
+        flex: 1;
     }
 
-    /* hide logo and search */
-    .logo{
-        display:none;
+    /* 2. THE STACK FIX */
+    .post-wrapper {
+        position: relative; /* Becomes the reference for all absolute children */
+        display: block;    /* Stop vertical stacking */
+        width: 100%;
+        height: calc(100vh - 70px); 
+        background: #000;
+        scroll-snap-align: start;
     }
 
-    .search-bar{
-        display:none;
+    .post-container {
+        width: 100vw !important;
+        height: 100vh !important; /* Use 100dvh if possible for mobile browsers */
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0;
     }
 
-    /* turn sidebar into bottom navbar */
-    .sidebar{
-        position:fixed;
-        bottom:0;
-        left:0;
-        top:auto;
-
-        width:100%;
-        height:70px;
-
-        display:flex;
-        flex-direction:row;
-        justify-content:space-around;
-        align-items:center;
-
-        background:var(--color-card);
-
-        border-right:none;
-        border-top:1px solid var(--color-border);
-
-        padding:0;
-        pointer-events: auto;
-        z-index:9999;
+    /* 3. OVERLAYS (Title, Price, Buy Button) */
+   .productInfo {
+        position: absolute;
+        bottom: 85px; /* 70px (nav) + 15px (spacing) */
+        left: 15px;
+        right: 75px; /* Room for the sidebar engagement icons */
+        z-index: 20;
+        /* Add a subtle drop shadow to text for readability over any video color */
+        filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.8));
     }
 
-    /* nav links layout */
-    .nav-links{
-        display:flex;
-        flex-direction:row;
-        justify-content:space-around;
-        align-items:center;
-        width:100%;
-        gap:0;
+    /* 4. ENGAGEMENT ICONS */
+    .engagement {
+        position: absolute;
+        right: 12px !important;
+        bottom: 95px !important; /* Higher than info to look balanced */
+        left: auto !important;
+        gap: 20px;
     }
 
-    /* hide text and show icons only */
-    .nav-links a{
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        font-size:12px;
-        gap:4px;
+    /* 4. Glassmorphism for Engagement Buttons */
+    .engagement a, .engagement button {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        width: 48px;
+        height: 48px;
     }
 
-    .nav-links a span{
-        display:none;
+    /* 5. NAVIGATION (Bottom Bar) */
+    .logo, .search-bar, .nav-link-disabled {
+        display: none !important;
     }
 
-}
-
-/* ============================= */
-/* MOBILE FEED RESPONSIVE */
-/* ============================= */
-
-@media (max-width: 768px){
-
-  /* feed layout stacks vertically */
-  .feed-layout{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    width:100%;
-    gap:20px;
-  }
-
-  /* main post/video screen */
- .main-screen {
-    width: 100%;
-    height: 100vh; /* This defines the "window" you see the videos through */
-    overflow-y: auto; /* Enable scrolling here */
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: y mandatory; /* Keeps the TikTok-style snap */
-    scrollbar-width: none; /* Hides scrollbar on Firefox */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-
-  /* comments section */
-.comment-panel {
-        /* Ground it in the flex flow */
-        position: sticky;
-        top: 20px; /* Distance from the top of the feed */
-        
-        width: 380px;
-        height: 857px; 
-        max-height: 90vh;
-        
-        /* Ensure it stays to the right of the video */
-        margin-left: 20px; 
-        
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        top: auto;
+        width: 100%;
+        height: 70px;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
         background: var(--color-card);
-        border: 1px solid var(--color-border);
-        border-radius: 12px;
-        z-index: 50; /* Lower than engagement icons (100) but higher than video */
-        
-        /* Smooth appearance */
-        box-shadow: var(--shadow-lg);
-        overflow: hidden;
+        border-top: 1px solid var(--color-border);
+        padding: 0;
+        z-index: 9999;
     }
-  /* prevent navbar from covering feed */
-  .feed{
-    flex:1;
-    width:100%;
-    padding:20px;
-    padding-bottom:90px;
-    box-sizing:border-box;
-  }
 
+    .nav-links {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .nav-links a {
+        flex-direction: column;
+        font-size: 11px;
+        gap: 2px;
+    }
+
+    .nav-links a span {
+        display: none;
+    }
 }
+
+
+
 
 
 /* ============================= */
@@ -717,63 +677,7 @@ body{
     padding-top: 0; 
 }
 
-/* MOBILE FIX: Move them back inside */
-@media (max-width: 768px) {
-    /* 1. Ensure the feed doesn't have extra horizontal padding that squishes the video */
-    .feed {
-        width: 100% !important;
-        margin-left: 0 !important;
-        padding: 0 !important; /* Critical: Full width on mobile */
-        height: calc(100vh - 70px); /* Account for bottom nav */
-    }
 
-    .main-screen {
-        width: 100%;
-        height: 100%;
-    }
-
-    .post-wrapper {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: calc(100vh - 70px); /* Match the feed height */
-        background: #000; /* Black bars background if video aspect ratio differs */
-    }
-
-    .post-container {
-        /* Reset specific desktop dimensions to be fluid */
-        width: 100% !important; 
-        height: 100% !important;
-        max-width: 100vw !important;
-        max-height: 100% !important;
-        border-radius: 0; /* Modern full-screen look on mobile */
-        margin: 0;
-    }
-
-    /* 2. Adjust Product Info so it doesn't get cut off */
-    .productInfo {
-        bottom: 20px;
-        left: 15px;
-        right: 70px; /* Space for engagement icons */
-    }
-
-    .description p {
-        font-size: 13px;
-        max-width: 100%;
-    }
-
-    /* 3. Fix Engagement Icons position */
-    .engagement {
-        position: absolute;
-        right: 10px !important;
-        bottom: 30px !important; /* Distance from the progress bar */
-        left: auto !important; /* Reset the calc(50% + 260px) desktop logic */
-        margin-left: 0;
-        gap: 12px;
-    }
-}
 
 
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { X, ShieldCheck, Lock, CreditCard } from 'lucide-react';
 import "../styles/PaymentModel.css";
 
-const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, onSetupRequired }) => {
+const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, productId, onSetupRequired }) => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePayment = async () => {
@@ -22,6 +22,7 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, on
             const response = await axios.post(`https://localhost:7124/api/Payments/create-transaction`, {
                 buyerId: parseInt(buyerId),
                 sellerId: parseInt(sellerId),
+                postId: parseInt(productId),
                 amount: parseFloat(productPrice),
                 itemDescription: productName
             });

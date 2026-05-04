@@ -106,7 +106,8 @@ const BuyNow = () => {
                 onClose={() => setIsModalOpen(false)} 
                 productName={product.title}
                 productPrice={product.price}
-                postId={id}
+                productId={id}
+                
                 sellerId={product.userId}
                 onSetupRequired={handleSetupRequired} 
             />

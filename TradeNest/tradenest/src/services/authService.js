@@ -9,6 +9,11 @@ const login = async(email, passwordHash)=>{
     return response.data;
 }
 
+const forgotPassword = async (email) => {
+    const response = await axios.post(API_URL + "forgot-password", { email });
+    return response.data;
+};
+
 const register = async(name, email, passwordHash)=>{
     const response = await axios.post(API_URL + "register", {
         name,
@@ -17,6 +22,14 @@ const register = async(name, email, passwordHash)=>{
     });
     return response.data;
 }
+
+const resetPassword = async (token, newPassword) => {
+    const response = await axios.post(API_URL + "reset-password", {
+        token,
+        newPassword
+    });
+    return response.data;
+};
 
 const googleLogin = async (idToken) => {
     const response = await axios.post(API_URL + "google-login", JSON.stringify(idToken), {
@@ -30,5 +43,7 @@ const googleLogin = async (idToken) => {
 export default {
     login,
     register,
-    googleLogin
+    googleLogin,
+    forgotPassword,
+    resetPassword
 };

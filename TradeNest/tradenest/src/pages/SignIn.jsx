@@ -67,6 +67,12 @@ function SignIn() {
             </button>
           </form>
 
+          <div className="forgot-link-container">
+            <Link to="/forgot-password" size="small" className="auth-link-secondary">
+              Forgot Password?
+            </Link>
+          </div>
+
           {/* Added a divider and the Google Button */}
           <div className="auth-divider">
             <span>OR</span>

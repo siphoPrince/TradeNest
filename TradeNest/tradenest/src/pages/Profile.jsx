@@ -20,7 +20,9 @@ const Profile = () => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [profile, setProfile] = useState(null);
-    const [selectedPostIndex, setSelectedPostIndex] = useState(null); // Track which post is open in TikTok view
+    const [selectedPostIndex, setSelectedPostIndex] = useState(null);
+    const [activeTab, setActiveTab] = useState("listings");
+    const [savedPosts, setSavedPosts] = useState([]);
 
     const navigate = useNavigate();
     const { id } = useParams();
@@ -36,6 +38,12 @@ const Profile = () => {
             document.body.style.overflow = 'unset';
         }
     }, [selectedPostIndex]);
+
+    useEffect(() => {
+    if (activeTab === "saved" && isOwnProfile) {
+        fetchSavedPosts();
+    }
+}, [activeTab]);
 
     // --- FETCH DATA ---
     useEffect(() => {
