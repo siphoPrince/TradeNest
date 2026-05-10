@@ -298,37 +298,123 @@ html{
     border-radius:6px;
 }
 
-/* RESPONSIVE Design*/
+/* =========================================
+   REVISED RESPONSIVE STYLES (@media only)
+   ========================================= */
 
+/* 1. Target Tablets and Mobile Devices (e.g., <= 768px) */
 @media (max-width: 768px) {
+    /* MAIN LAYOUT */
+    .profile-page {
+        padding: 12px; /* Tighter padding for mobile screens */
+    }
+
+    /* HEADER - Stack and center everything */
     .profile-header {
-        padding: 20px;
-        gap: 20px;
+        flex-direction: column; /* Stack profile image above info */
+        align-items: center; /* Center horizontally */
+        text-align: center; /* Center all text */
+        gap: 16px; /* Reduced gap */
+        padding: 20px 0;
+        margin-bottom: 12px;
     }
-    
+
+    /* PROFILE IMAGE - Scale down */
     .profileImg {
-        width: 80px;
-        height: 80px;
+        width: 96px; /* Mobile size (e.g., 96px or 100px) */
+        height: 96px;
     }
-    
+
+    /* PROFILE INFO & TEXT */
+    .profile-info {
+        gap: 8px; /* Tighter spacing */
+        width: 100%;
+    }
+
     .userName {
-        font-size: 20px;
+        font-size: 20px; /* More legible, bold title for mobile */
+        font-weight: 700; /* Use bold for prominence on mobile */
     }
-    
+
+    .userHandle {
+        font-size: 0.9rem;
+    }
+
+    .bio {
+        font-size: 0.85rem; /* Slightly smaller bio */
+        max-width: 300px; /* Keep bio text in a neat column */
+        margin-left: auto; /* Center the bio block */
+        margin-right: auto;
+    }
+
+    /* STATS - Convert to a simple row without cards */
     .profile-stats {
-        justify-content: space-around;
+        position: static; /* Often better not to be sticky on small screens */
+        display: flex; /* Simple row layout */
+        justify-content: space-around; /* Distribute evenly */
+        grid-template-columns: none; /* Override desktop grid */
         gap: 0;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--color-border);
         border-top: 1px solid var(--color-border);
-        padding: 10px 0;
+        margin-top: 12px;
+        background: transparent;
     }
-    
+
     .stat {
+        background: transparent; /* Remove card style */
+        border: none; /* Remove border */
+        padding: 0;
+        box-shadow: none;
         flex-direction: column;
         align-items: center;
     }
 
+    .stat-number {
+        font-size: 16px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+    }
+
+    /* BUTTONS - Centered row */
+    .profile-actions {
+        justify-content: center;
+        width: 100%;
+        max-width: 320px; /* Constrain button row width */
+        margin-left: auto;
+        margin-right: auto;
+        gap: 8px;
+    }
+
+    .editBut, .shareBut, .accountBtn, .followBut, .followingBut {
+        flex: 1; /* Make buttons equal width to fill row */
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        justify-content: center;
+    }
+
+    /* GRID LISTINGS - 3 columns */
     .listingContainer {
-        gap: 1px; /* Even tighter on mobile */
+        grid-template-columns: repeat(3, 1fr); /* Force 3 columns on mobile */
+        gap: 2px; /* Super tight gap */
+    }
+
+    /* GRID CARDS - Tighten content */
+    .card-info {
+        padding: 6px 4px;
+        justify-content: flex-start; /* Left-align thumb text */
+    }
+
+    .card .price {
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+
+    .delete-btn {
+        font-size: 0.65rem;
+        padding: 4px 8px;
     }
 }
 
@@ -530,7 +616,133 @@ html{
 
 .tt-nav button:hover { opacity: 1; }
 
+
+/* 2. Target Very Small Mobile Screens (e.g., <= 480px) */
+@media (max-width: 480px) {
+    /* Adjust profile image further if needed */
+    .profileImg {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .userName {
+        font-size: 18px;
+    }
+}
+
+
+/* =========================================
+   TIKTOK IMMERSIVE VIEW RESPONSIVENESS
+   ========================================= */
+
+/* Make the viewer full screen and compact on small devices */
 @media (max-width: 600px) {
-    .tt-nav { display: none; } /* Hide arrows on mobile, users swipe or tap */
-    .tt-feed-container { height: 100vh; max-width: 100%; border-radius: 0; }
+    .tt-nav { 
+        display: none; /* Hide navigation arrows (use swipe/tap) */
+    }
+
+    .tt-overlay {
+        background: #000; /* Solid background on mobile */
+    }
+
+    .tt-feed-container {
+        height: 100vh; /* Full screen height */
+        max-width: 100%; /* Full screen width */
+        border-radius: 0; /* Remove rounded corners */
+    }
+
+    .tt-close {
+        top: 20px; /* Adjust close button for mobile */
+        left: 20px;
+    }
+
+    .tt-side-actions {
+        right: 12px; /* Adjust side actions for mobile */
+        bottom: 120px; /* Adjust position for mobile */
+    }
+
+    .tt-bottom-info {
+        bottom: 20px; /* Adjust bottom info for mobile */
+        left: 15px;
+        right: 70px; /* Adjust right margin for side actions */
+    }
+}
+
+/* --- Tabs Navigation Container --- */
+.profile-tabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--color-border); /* Switched to bottom for a cleaner look */
+    margin-top: 2rem;
+    background-color: var(--color-card); /* Keeps it consistent with your UI */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* --- Individual Tab Buttons --- */
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative; /* Needed for the animated indicator */
+    transition: var(--transition);
+}
+
+.tab-btn:hover {
+    color: var(--color-text-dark);
+}
+
+/* --- The Modern Active State --- */
+.tab-btn.active {
+    color: var(--color-primary);
+}
+
+/* Creating a sleek underline indicator using ::after */
+.tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; /* Aligns perfectly with the container border */
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--color-primary);
+    border-radius: 3px 3px 0 0;
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* --- Empty State Messaging --- */
+.empty-msg {
+    text-align: center;
+    grid-column: 1 / -1;
+    color: var(--color-text-muted);
+    padding: 4rem 2rem;
+    background-color: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--color-border); /* Modern "placeholder" feel */
+    margin: 2rem 0;
+    font-size: 1rem;
+}
+
+/* --- Responsive adjustment --- */
+@media (max-width: 480px) {
+    .tab-btn {
+        padding: 1rem;
+        flex: 1;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
 }

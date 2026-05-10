@@ -10,17 +10,19 @@ const Feed = () => {
     const [loading, setLoading] = useState(true);
     // Track which post has its comments expanded
     const [expandedPostId, setExpandedPostId] = useState(null);
+    // Track global search across the feed
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Triggered when the comment icon in Engagement is clicked
     const toggleComments = (postId) => {
-        if (expandedPostId === postId) {
-            // If already open for this post, close it
-            setExpandedPostId(null);
-        } else {
-            // Open for the clicked post
-            setExpandedPostId(postId);
-        }
-    };
+    if (expandedPostId === postId) {
+        setExpandedPostId(null);
+        document.body.style.overflow = "unset"; // Re-enable scroll
+    } else {
+        setExpandedPostId(postId);
+        document.body.style.overflow = "hidden"; // Lock background scroll
+    }
+};
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -36,6 +38,18 @@ const Feed = () => {
                 const result = await response.json();
                 setPosts(result.data || []);
                 setLoading(false);
+
+                const savedScroll = sessionStorage.getItem("feed-scroll");
+            if (savedScroll) {
+                // Use a tiny timeout to ensure React has finished painting the HTML
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: parseInt(savedScroll),
+                        behavior: 'instant' 
+                    });
+                    sessionStorage.removeItem("feed-scroll");
+                }, 250);
+            }
             } catch (error) {
                 console.error("Error fetching feed:", error);
                 setLoading(false);
@@ -44,6 +58,13 @@ const Feed = () => {
 
         fetchPosts();
     }, []);
+
+    // Filter posts dynamically based on the search query
+    const filteredPosts = posts.filter(post => 
+        post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (post.handleName || post.name)?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     // --- LOADING STATE (SKELETONS) ---
     if (loading) {
@@ -65,37 +86,56 @@ const Feed = () => {
     // --- ACTUAL FEED RENDER ---
     return (
         <div className="feed">
-            {/* We use a dynamic class so the whole layout can shift if needed */}
             <div className={`feed-layout ${expandedPostId ? 'comments-active' : ''}`}>
                 
                 <div className="main-screen">
-                    {posts.map((post) => (
-                        <div key={post.id} className="post-wrapper"> 
-                            
-                            {/* 1. The Video Content */}
-                            <div className="post-container">
-                                <ProductCard post={post} />                         
-                            </div>
+                    {filteredPosts.length > 0 ? (
+                        filteredPosts.map((post) => (
+                            <div key={post.id} className="post-wrapper"> 
+                                
+                                {/* 1. The Video Content */}
+                                <div className="post-container">
+                                    <ProductCard 
+                                        post={post} 
+                                        searchQuery={searchQuery}
+                                        setSearchQuery={setSearchQuery}
+                                    />                        
+                                </div>
 
-                            {/* 2. Action Buttons */}
-                            <Engagement 
-                                postId={post.id} 
-                                userId={post.userId || post.profile?.userId || post.authorId}
-                                onToggleComments={() => toggleComments(post.id)}
-                                IsLikedByCurrentUser={post.isLikedByCurrentUser}
-                                LikeCount={post.likeCount}
-                                CommentCount={post.commentCount ?? post.comments?.length ?? 0}
-                            />
-
-                            {/* 3. The Comment Section (Only shows if this specific post is active) */}
-                            {expandedPostId === post.id && (
-                                <CommentSection 
-                                    postId={post.id}
-                                    onClose={() => setExpandedPostId(null)}
+                                {/* 2. Action Buttons */}
+                                <Engagement 
+                                    postId={post.id} 
+                                    postTitle={post.title}
+                                    userId={post.userId || post.profile?.userId || post.authorId}
+                                    onToggleComments={() => toggleComments(post.id)}
+                                    IsLikedByCurrentUser={post.isLikedByCurrentUser}
+                                    LikeCount={post.likeCount}
+                                    CommentCount={post.commentCount ?? post.comments?.length ?? 0}
+                                    initialIsBookmarked={post.isBookmarkedByCurrentUser}
                                 />
-                            )}
+
+                                {/* 3. The Comment Section (Only shows if this specific post is active) */}
+                                {expandedPostId === post.id && (
+                                    <CommentSection 
+                                        key={`comments-${post.id}`}
+                                        postId={post.id}
+                                        onClose={() => setExpandedPostId(null)}
+                                        isOpen={true}
+                                    />
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ color: '#888', textAlign: 'center', marginTop: '50px' }}>
+                            <p>No products found matching "{searchQuery}"</p>
+                            <button 
+                                onClick={() => setSearchQuery("")} 
+                                style={{ padding: '8px 16px', borderRadius: '20px', background: '#333', color: 'white', border: 'none', cursor: 'pointer', marginTop: '10px' }}
+                            >
+                                Clear Search
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
 
             </div>

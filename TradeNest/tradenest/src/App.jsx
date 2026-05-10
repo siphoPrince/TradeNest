@@ -16,6 +16,7 @@ import PaymentSuccess from "./pages/payment-success";
 import PaymentHistory from "./pages/PaymentHistory";
 import ForgotPassword from "./components/ForgotPassword";
 import MyOrders from "./pages/MyOrders";
+import PaymentError from "./pages/PaymentError";
 
 function App() {
   // Run this as early as possible to prevent "flashing" white on load
@@ -42,6 +43,7 @@ if (savedTheme === 'dark') {
         <Route path="/buyNow/:id" element={<BuyNow />} />
         <Route path="/editProfile" element={<EditProfile />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/error" element={<PaymentError />} />
         <Route path="/history" element={<PaymentHistory />} />
         <Route path="/forgot-password" element={<ForgotPassword/>} />
         <Route path="/my-orders" element={<MyOrders/>} />

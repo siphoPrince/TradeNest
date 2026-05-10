@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation"; 
 import PaymentHistory from "./PaymentHistory"; 
+import { Trash2, Edit3, ExternalLink, Plus } from "lucide-react"; 
 import "../styles/ManageListings.css";
 
 const ManageListings = () => {
@@ -13,25 +14,23 @@ const ManageListings = () => {
     const userId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
 
-    useEffect(() => {
-        const fetchUserPosts = async () => {
-            try {
-                // This specific route ensures we only get THIS user's posts
-                const response = await fetch(`https://localhost:7124/api/posts/user/${userId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    // We only set the posts belonging to this specific founder
-                    setPosts(data.data || []);
-                }
-            } catch (error) {
-                console.error("Dashboard Fetch Error:", error);
-            } finally {
-                setLoading(false);
+    const fetchUserPosts = async () => {
+        try {
+            const response = await fetch(`https://localhost:7124/api/posts/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setPosts(data.data || []);
             }
-        };
+        } catch (error) {
+            console.error("Dashboard Fetch Error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (userId && token) {
             fetchUserPosts();
         } else {
@@ -39,65 +38,85 @@ const ManageListings = () => {
         }
     }, [userId, token, navigate]);
 
-    if (loading) return <div className="loading">Syncing your Cylo profile... ⏳</div>;
+    const handleDelete = async (postId) => {
+        if (window.confirm("Remove this listing from Cylo?")) {
+            try {
+                const response = await fetch(`https://localhost:7124/api/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    setPosts(posts.filter(p => p.id !== postId));
+                }
+            } catch (error) {
+                console.error("Delete Error:", error);
+            }
+        }
+    };
+
+    if (loading) return <div className="loading">Syncing Cylo Inventory... ⏳</div>;
 
     return (
         <div className="profile-layout">
             <Navigation />
             <div className="dashboard-section">
                 
-                {/* TAB SYSTEM */}
-                <div className="dashboard-tabs">
-                    <button 
-                        className={view === "inventory" ? "tab-active" : "tab-inactive"} 
-                        onClick={() => setView("inventory")}
-                    >
-                        My Listings ({posts.length})
+                <div className="dashboard-header-main">
+                    <h1>Management</h1>
+                    <button className="btn-create-new" onClick={() => navigate('/upload')}>
+                        <Plus size={18} /> New Listing
                     </button>
-                    <button 
-                        className={view === "payments" ? "tab-active" : "tab-inactive"} 
-                        onClick={() => setView("payments")}
-                    >
-                        My Wallet & Payouts
+                </div>
+
+                <div className="dashboard-tabs">
+                    <button className={view === "inventory" ? "tab-active" : "tab-inactive"} onClick={() => setView("inventory")}>
+                        Inventory ({posts.length})
+                    </button>
+                    <button className={view === "payments" ? "tab-active" : "tab-inactive"} onClick={() => setView("payments")}>
+                        Payouts
                     </button>
                 </div>
 
                 {view === "inventory" ? (
-                    <>
-                        <div className="dashboard-header">
-                            <h3>Active Inventory</h3>
-                            <button className="btn-save" onClick={() => navigate('/upload')}>
-                                + List New Item
-                            </button>
+                    <div className="manage-table">
+                        <div className="table-header">
+                            <span>Listing Details</span>
+                            <span>Reference</span>
+                            <span>Price</span>
+                            <span className="text-right">Actions</span>
                         </div>
+                        {posts.length > 0 ? posts.map((post) => (
+                            <div key={post.id} className="manage-row">
+                                <div className="item-cell">
+                                    <h4 className="listing-title">{post.title}</h4>
+                                </div>
 
-                        <div className="listings-grid">
-                            {posts.length > 0 ? posts.map((post) => (
-                                <div key={post.id} className="manage-card">
-                                    <img 
-                                        src={`https://localhost:7124/uploads/${post.mediaUrl}`} 
-                                        alt={post.title} 
-                                        onError={(e) => e.target.src = "https://picsum.photos/100"}
-                                    />
-                                    <div className="manage-card-info">
-                                        <span className="status-badge">Live</span>
-                                        <h4>{post.title}</h4>
-                                        <span className="price-tag">R {post.price.toLocaleString()}</span>
-                                    </div>
-                                    <div className="manage-actions">
-                                        <button className="btn-icon-edit" onClick={() => navigate(`/edit-post/${post.id}`)}>Edit</button>
-                                    </div>
+                                <div className="ref-cell">
+                                    <span className="ref-id">ID-{post.id.toString().slice(-6).toUpperCase()}</span>
                                 </div>
-                            )) : (
-                                <div className="empty-state">
-                                    <p>You haven't posted any items yet.</p>
-                                    <button onClick={() => navigate('/upload')}>Create your first listing</button>
+
+                                <div className="price-cell">
+                                    R {post.price.toLocaleString()}
                                 </div>
-                            )}
-                        </div>
-                    </>
+
+                                <div className="actions-cell">
+                                    <button className="icon-btn" onClick={() => navigate(`/post/${post.id}`)} title="View">
+                                        <ExternalLink size={16} />
+                                    </button>
+                                    <button className="icon-btn edit" onClick={() => navigate(`/edit-post/${post.id}`)} title="Edit">
+                                        <Edit3 size={16} />
+                                    </button>
+                                    <button className="icon-btn delete" onClick={() => handleDelete(post.id)} title="Delete">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="empty-state">No active listings found.</div>
+                        )}
+                    </div>
                 ) : (
-                    /* The payment component now sits perfectly inside this section */
                     <PaymentHistory userId={userId} token={token} />
                 )}
             </div>

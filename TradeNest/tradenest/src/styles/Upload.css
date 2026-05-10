@@ -1,140 +1,193 @@
-/* Layout: Sidebar + Content */
+/* =============================================================
+   LAYOUT & WRAPPER
+   ============================================================= */
+
 .upload-layout {
   display: flex;
   min-height: 100vh;
   background-color: var(--color-bg);
-  
 }
 
-/* Sidebar navigation */
-.upload-layout > nav,
-.upload-layout > div > nav {
-  flex: 0 0 250px;
-  height: 100vh;
-  background-color: var(--color-card);
-  border-right: 1px solid var(--color-border);
-  transition: var(--transition);
-}
-
-/* Main upload page content */
 .upload-page {
   flex: 1;
-  padding: 40px 30px;
-  padding-bottom: 120px; /* space for bottom navbar */
+  padding: 40px;
   overflow-y: auto;
 }
 
 .upload-container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 24px;
 }
 
-/* Dropzone */
-.dropzone {
-  border: 2px dashed var(--color-border);
+.upload-container h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  letter-spacing: -0.02em;
+}
+
+/* =============================================================
+   UPLOAD OPTIONS (Camera & Dropzone Tiles)
+   ============================================================= */
+
+.upload-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.dropzone-mini, .camera-zone {
   background: var(--color-card);
-  border-radius: var(--radius-md);
-  padding: 50px 20px;
-  text-align: center;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: var(--shadow-sm);
+  color: var(--color-text-muted);
 }
 
-.dropzone.active {
+.dropzone-mini:hover, .camera-zone:hover {
   border-color: var(--color-primary);
-  background: #EFF6FF;
-}
-
-.upload-placeholder span {
+  background: rgba(30, 58, 138, 0.02);
   color: var(--color-primary);
-  font-weight: 600;
-  text-decoration: underline;
+  transform: translateY(-2px);
 }
 
-/* Upload Grid */
-.upload-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+.dropzone-mini.active {
+  border-color: var(--color-success);
+  background: rgba(22, 163, 74, 0.05);
+}
+
+/* =============================================================
+   SPLIT VIEW CONTENT (Form + Preview)
+   ============================================================= */
+
+/* This section wraps both form-content and upload-section on desktop */
+@media (min-width: 900px) {
+  .upload-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr; /* Form left, Video right */
+    align-items: start;
+    gap: 40px;
+  }
+  
+  .upload-container h2, .error-banner {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
-  width: 100%;
-}
-
-.preview-card {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: #F8FAFC;
+  background: var(--color-card);
+  padding: 24px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 
-.preview-card img,
-.preview-card video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* =============================================================
+   VIDEO PREVIEW (The "TikTok" Style)
+   ============================================================= */
+
+.preview-container-single {
+  position: sticky;
+  top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Remove Button */
-.remove-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: rgba(15, 23, 42, 0.75);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
+.video-preview-main {
+  width: 100%;
+  aspect-ratio: 4 / 5; /* Modern social media ratio */
+  background: #000;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+
+.remove-btn-large {
+  width: 100%;
+  padding: 12px;
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-danger);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: var(--radius-md);
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  gap: 8px;
   cursor: pointer;
   transition: var(--transition);
 }
 
-.remove-btn:hover {
+.remove-btn-large:hover {
   background: var(--color-danger);
+  color: white;
 }
 
-/* Form Inputs */
+/* =============================================================
+   FORM INPUTS
+   ============================================================= */
+
 .inputs {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
 }
 
 .inputs label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
   color: var(--color-text-muted);
-  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.inputs input,
-.inputs textarea {
-  background: var(--color-card);
+.inputs input, 
+.inputs textarea, 
+.inputs select {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
-  padding: 14px;
   border-radius: var(--radius-md);
   color: var(--color-text-dark);
-  font-size: 0.95rem;
-  outline: none;
+  font-size: 1rem;
   transition: var(--transition);
 }
 
-.inputs input:focus,
+.inputs input:focus, 
 .inputs textarea:focus {
+  outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  background: var(--color-card);
+  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.08);
 }
 
-/* Upload Button */
+.price-qty-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* =============================================================
+   BUTTONS & OVERLAYS
+   ============================================================= */
+
 .uploadBut {
   width: 100%;
   padding: 16px;
@@ -143,103 +196,146 @@
   border: none;
   border-radius: var(--radius-md);
   font-weight: 700;
-  cursor: pointer;
   font-size: 1rem;
+  cursor: pointer;
   transition: var(--transition);
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
-.uploadBut:hover {
+.uploadBut:hover:not(:disabled) {
   background: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
-/* ===== Responsive Layout ===== */
-@media (max-width: 768px) {
-
-  .upload-layout {
-    flex-direction: column;
-  }
-
-  .upload-layout > nav,
-  .upload-layout > div > nav {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .upload-page {
-  padding: 20px 15px;
-  padding-bottom: 120px;
+.uploadBut:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-  .upload-container {
-    max-width: 100%;
-  }
-
-  .upload-grid {
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  }
-}
-
-
-
-/* Progress Overlay */
+/* Glassmorphism Progress Overlay */
 .upload-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8); /* Dims the background */
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  padding: 20px;
 }
 
 .loader-card {
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  width: 90%;
+  background: var(--color-card);
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  width: 100%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .progress-bar-container {
-  background: #e0e0e0;
-  border-radius: 20px;
-  height: 20px;
-  width: 100%;
+  background: var(--color-bg);
+  height: 8px;
+  border-radius: 10px;
   margin: 20px 0;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background-color: #007bff; /* Cylo Blue */
-  transition: width 0.3s ease-out; /* Makes the movement smooth */
-  border-radius: 4px;
-}
-.upload-status-processing {
-  animation: pulse 1.5s infinite;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 0.3s ease;
 }
 
-.progress-text {
-  font-weight: bold;
-  color: #333;
-  font-size: 1.1rem;
+/* Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
 }
 
-.uploadBut:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+/* Error Banner */
+.error-banner {
+  background: #FEF2F2;
+  border: 1px solid #FEE2E2;
+  color: var(--color-danger);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* =============================================================
+   RESPONSIVE FIXES
+   ============================================================= */
+
+@media (max-width: 768px) {
+  .upload-page {
+    padding: 20px 16px;
+  }
+  
+  .upload-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .video-preview-main {
+    aspect-ratio: 16 / 9; /* Wider for mobile preview */
+  }
+
+  .upload-layout > nav {
+    display: none; /* Hide sidebar on mobile if you use a bottom nav */
+  }
+}
+
+.tag-input-wrapper {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f9f9f9;
+}
+
+.tags-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tag-chip {
+  background: #007bff;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+}
+
+.tag-chip svg {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.tag-chip svg:hover {
+  opacity: 0.7;
+}
+
+.tag-input-wrapper input {
+  border: none !important;
+  background: transparent !important;
+  width: 100%;
+  outline: none;
 }

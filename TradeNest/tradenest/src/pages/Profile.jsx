@@ -9,7 +9,9 @@ import {
     ShoppingBag, 
     ChevronUp, 
     ChevronDown, 
-    Share2 
+    Share2,
+    Bookmark,
+    Grid // Added for the listings icon
 } from 'lucide-react';
 import Navigation from "../components/Navigation";
 import "../styles/Profile.css";
@@ -30,7 +32,22 @@ const Profile = () => {
     const loggedInUserId = localStorage.getItem("userId");
     const isOwnProfile = !id || id === loggedInUserId;
 
-    // --- LOCK BODY SCROLL ---
+    // Determine which data to show in the grid
+    const currentViewPosts = activeTab === "saved" ? savedPosts : userPosts;
+
+    const handleShare = async (title, text, url) => {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text, url });
+            } catch (error) {
+                console.log('Error sharing:', error);
+            }
+        } else {
+            navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+        }
+    };
+
     useEffect(() => {
         if (selectedPostIndex !== null) {
             document.body.style.overflow = 'hidden';
@@ -40,12 +57,11 @@ const Profile = () => {
     }, [selectedPostIndex]);
 
     useEffect(() => {
-    if (activeTab === "saved" && isOwnProfile) {
-        fetchSavedPosts();
-    }
-}, [activeTab]);
+        if (activeTab === "saved" && isOwnProfile) {
+            fetchSavedPosts();
+        }
+    }, [activeTab]);
 
-    // --- FETCH DATA ---
     useEffect(() => {
         const fetchProfileData = async () => {
             const token = localStorage.getItem("token");
@@ -96,7 +112,39 @@ const Profile = () => {
         fetchProfileData();
     }, [id, loggedInUserId, navigate, isOwnProfile]);
 
-    // --- HANDLERS ---
+    const fetchSavedPosts = async () => {
+        const token = localStorage.getItem("token");
+        setLoadingPosts(true);
+        try {
+            const response = await fetch(`https://localhost:7124/api/bookmarks`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setSavedPosts(data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching saved posts:", error);
+        } finally {
+            setLoadingPosts(false);
+        }
+    };
+
+    const toggleSave = async (postId) => {
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`https://localhost:7124/api/bookmarks/${postId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                if (activeTab === "saved") fetchSavedPosts();
+            }
+        } catch (error) {
+            console.error("Save error:", error);
+        }
+    };
+
     const handleFollow = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -131,7 +179,7 @@ const Profile = () => {
             });
             if (response.ok) {
                 setUserPosts(userPosts.filter(post => post.id !== postId));
-                setSelectedPostIndex(null); // Close viewer if open
+                setSelectedPostIndex(null);
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -140,7 +188,6 @@ const Profile = () => {
 
     const isVideo = (url) => url?.match(/\.(mp4|webm|ogg|mov)$/i);
 
-    // --- SAFETY GUARDS ---
     if (!profile && !loadingPosts) return <div className="loading">Profile not found. 😕</div>;
     if (!profile) return <div className="loading">Loading Profile... ⏳</div>;
 
@@ -173,7 +220,14 @@ const Profile = () => {
                                 )}
                                 {isOwnProfile && (
                                     <>
-                                        <button className="shareBut">Share Profile</button>
+                                        <button 
+                                            className="shareBut"
+                                            onClick={() => handleShare(
+                                                `Check out ${profile?.name} on Cylo`, 
+                                                `View ${profile?.name}'s listings and shop securely.`, 
+                                                window.location.href
+                                            )}>Share Profile</button>
+
                                         <button className="accountBtn" onClick={() => navigate("/settings")}>
                                             Settings <Settings size={16} />
                                         </button>
@@ -201,28 +255,52 @@ const Profile = () => {
                             <span className="stat-label">Sold</span>
                         </div>
                     </div>
+
+                    {/* --- UPDATED: TABS NAVIGATION --- */}
+                    {isOwnProfile && (
+                        <div className="profile-tabs-nav">
+                            <button 
+                                className={`tab-btn ${activeTab === "listings" ? "active" : ""}`}
+                                onClick={() => setActiveTab("listings")}
+                            >
+                                <Grid size={16} /> Listings
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === "saved" ? "active" : ""}`}
+                                onClick={() => setActiveTab("saved")}
+                            >
+                                <Bookmark size={16} /> Saved
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="user-listings">
-                    <h2 className="listing-title">{isOwnProfile ? "My Listings" : "Listings"}</h2>
                     <div className="listingContainer">
-                        {loadingPosts ? <p>Loading listings...</p> :
-                            userPosts.map((post, index) => {
-                                const fullUrl = post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post?.mediaUrl}`;
+                        {loadingPosts ? (
+                            <p className="empty-msg">Loading content...</p>
+                        ) : currentViewPosts.length > 0 ? (
+                            currentViewPosts.map((post, index) => {
+                                const postData = activeTab === "saved" ? post.post : post;
+                                const fullUrl = postData.mediaUrl?.startsWith("http") ? postData.mediaUrl : `${backendUrl}${postData?.mediaUrl}`;
                                 return (
-                                    <div key={post.id} className="card" onClick={() => setSelectedPostIndex(index)}>
-                                        {isVideo(post.mediaUrl) ? (
+                                    <div key={postData.id} className="card" onClick={() => setSelectedPostIndex(index)}>
+                                        {isVideo(postData.mediaUrl) ? (
                                             <video src={fullUrl} className="listing-thumb" muted playsInline />
                                         ) : (
-                                            <img src={fullUrl} alt={post.title} className="listing-thumb" onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }} />
+                                            <img src={fullUrl} alt={postData.title} className="listing-thumb" onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }} />
                                         )}
                                         <div className="card-info">
-                                            <small className="price">R{post.price}</small>
+                                            <small className="price">R{postData.price}</small>
                                         </div>
                                     </div>
                                 );
                             })
-                        }
+                        ) : (
+                            <p className="empty-msg">
+                                {activeTab === "saved" ? "No saved listings yet." : "No listings to show."}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -236,51 +314,72 @@ const Profile = () => {
 
                     <div className="tt-feed-container" onClick={(e) => e.stopPropagation()}>
                         <div className="tt-slide">
-                            <div className="tt-media-wrapper">
-                                {isVideo(userPosts[selectedPostIndex].mediaUrl) ? (
-                                    <video
-                                        src={userPosts[selectedPostIndex].mediaUrl?.startsWith("http") ? userPosts[selectedPostIndex].mediaUrl : `${backendUrl}${userPosts[selectedPostIndex].mediaUrl}`}
-                                        autoPlay
-                                        loop
-                                        controls
-                                        playsInline
-                                    />
-                                ) : (
-                                    <img src={userPosts[selectedPostIndex].mediaUrl?.startsWith("http") ? userPosts[selectedPostIndex].mediaUrl : `${backendUrl}${userPosts[selectedPostIndex].mediaUrl}`} alt="" />
-                                )}
-                            </div>
+                            {/* logic to handle post data structure which differs slightly in Bookmarks */}
+                            {(() => {
+                                const post = activeTab === "saved" ? currentViewPosts[selectedPostIndex].post : currentViewPosts[selectedPostIndex];
+                                return (
+                                    <>
+                                        <div className="tt-media-wrapper">
+                                            {isVideo(post.mediaUrl) ? (
+                                                <video
+                                                    src={post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post.mediaUrl}`}
+                                                    autoPlay
+                                                    loop
+                                                    controls
+                                                    playsInline
+                                                />
+                                            ) : (
+                                                <img src={post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post.mediaUrl}`} alt="" />
+                                            )}
+                                        </div>
 
-                            {/* Sidebar UI */}
-                            <div className="tt-side-actions">
-                                <div className="tt-action">
-                                    <div className="tt-avatar-circle">
-                                        <img src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"} alt="" />
-                                        {!isOwnProfile && <div className="tt-plus-icon">+</div>}
-                                    </div>
-                                </div>
-                                <div className="tt-action"><Heart size={28} fill="white" /><small>Like</small></div>
-                                <div className="tt-action" onClick={() => navigate(`/messages/${profile.user?.id}`)}><MessageCircle size={28} fill="white" /><small>Chat</small></div>
-                                <div className="tt-action"><ShoppingBag size={28} color="#00ff88" /><small>Buy</small></div>
-                                <div className="tt-action"><Share2 size={28} fill="white" /><small>Share</small></div>
-                                {isOwnProfile && (
-                                    <div className="tt-action" onClick={() => handleDelete(userPosts[selectedPostIndex].id)}>
-                                        <small style={{color: '#ff4444'}}>Delete</small>
-                                    </div>
-                                )}
-                            </div>
+                                        <div className="tt-side-actions">
+                                            <div className="tt-action">
+                                                <div className="tt-avatar-circle">
+                                                    <img src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"} alt="" />
+                                                    {!isOwnProfile && <div className="tt-plus-icon">+</div>}
+                                                </div>
+                                            </div>
+                                            <div className="tt-action"><Heart size={28} fill="white" /><small>Like</small></div>
+                                            <div className="tt-action" onClick={() => navigate(`/messages/${profile.user?.id}`)}><MessageCircle size={28} fill="white" /><small>Chat</small></div>
+                                            <div className="tt-action"><ShoppingBag size={28} color="#00ff88" /><small>Buy</small></div>
+                                            <div 
+                                                className="tt-action" 
+                                                onClick={() => handleShare(
+                                                    post.title,
+                                                    `Check out this listing for R${post.price} on Cylo!`,
+                                                    `${window.location.origin}/post/${post.id}`
+                                                )}
+                                            >
+                                                <Share2 size={28} fill="white" />
+                                                <small>Share</small>
+                                            </div>
+                                            {isOwnProfile && activeTab === "listings" && (
+                                                <div className="tt-action" onClick={() => handleDelete(post.id)}>
+                                                    <small style={{color: '#ff4444'}}>Delete</small>
+                                                </div>
+                                            )}
+                                            {isOwnProfile && activeTab === "saved" && (
+                                                <div className="tt-action" onClick={() => toggleSave(post.id)}>
+                                                    <Bookmark size={28} fill="#00ff88" />
+                                                    <small>Unsave</small>
+                                                </div>
+                                            )}
+                                        </div>
 
-                            {/* Content Info */}
-                            <div className="tt-bottom-info">
-                                <h3>@{profile?.handleName}</h3>
-                                <p>{userPosts[selectedPostIndex].title}</p>
-                                <span className="tt-price-tag">R{userPosts[selectedPostIndex].price}</span>
-                            </div>
+                                        <div className="tt-bottom-info">
+                                            <h3>@{profile?.handleName}</h3>
+                                            <p>{post.title}</p>
+                                            <span className="tt-price-tag">R{post.price}</span>
+                                        </div>
+                                    </>
+                                );
+                            })()}
 
-                            {/* Nav Buttons */}
                             <div className="tt-nav">
                                 {selectedPostIndex > 0 && 
                                     <button onClick={() => setSelectedPostIndex(selectedPostIndex - 1)}><ChevronUp size={40}/></button>}
-                                {selectedPostIndex < userPosts.length - 1 && 
+                                {selectedPostIndex < currentViewPosts.length - 1 && 
                                     <button onClick={() => setSelectedPostIndex(selectedPostIndex + 1)}><ChevronDown size={40}/></button>}
                             </div>
                         </div>

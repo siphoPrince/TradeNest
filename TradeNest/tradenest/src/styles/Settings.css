@@ -3,13 +3,13 @@
     display: flex;
     flex-direction: row;
     min-height: 100vh;
-    background-color: var(--color-bg); /* Use Cylo background color */
+    background-color: var(--color-bg); 
 }
 
 /* Centered content container */
 .settings-view {
     flex: 1; 
-    max-width: 900px; /* Slightly wider for settings forms */
+    max-width: 1000px; /* Widened slightly to accommodate two columns */
     margin: 0 auto;
     padding: 40px 20px;
     display: flex;
@@ -19,57 +19,154 @@
 
 /* Header Section */
 .settings-header h2 {
-    font-size: 2.2rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 700;
     margin: 0;
     color: var(--color-text-dark);
+    letter-spacing: -0.5px;
 }
 
-/* Tab Navigation */
-.settings-tabs {
+/* Two-Column Layout */
+.settings-layout {
     display: flex;
-    gap: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--color-border);
+    gap: 40px;
+    align-items: flex-start;
 }
 
-.tab-link {
+/* Sidebar Styling */
+.settings-sidebar {
+    flex: 0 0 250px; /* Fixed width for sidebar */
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 40px; /* Keeps sidebar in view when scrolling right-side content */
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Sidebar Links */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     text-decoration: none;
-    padding: 10px 22px;
-    border-radius: 50px; /* Pill shape */
-    border: 1px solid var(--color-border);
-    background: var(--color-card);
+    padding: 12px 16px;
+    border-radius: 8px;
     color: var(--color-text-dark);
     font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover effect */
+}
+
+/* Dark mode specific hover if needed */
+.dark .sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-link.active {
+    background-color: rgba(0, 0, 0, 0.08);
     font-weight: 600;
-    transition: all 0.25s ease;
+}
 
+.dark .sidebar-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
 
-    display: inline-flex;
+/* Divider */
+.sidebar-divider {
+    height: 1px;
+    background-color: var(--color-border);
+    margin: 20px 0;
+}
+
+/* Theme Button in Sidebar */
+.sidebar-theme-btn {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-dark);
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s ease;
 }
 
-.tab-link:hover {
-    background-color: var(--color-accent);
-    color: #fff;
-    border-color: var(--color-accent);
+.sidebar-theme-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
-.tab-link.active {
-    background: var(--color-text-dark);
-    color: #fff;
-    border-color: var(--color-text-dark);
+.dark .sidebar-theme-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Content Area */
-.settings-display {
-    width: 100%;
+.settings-content {
+    flex: 1;
+    background: var(--color-card); /* Optional: gives the form area a card look */
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    padding: 30px;
+    min-height: 400px;
     animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .settings-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .settings-sidebar {
+        flex: none;
+        width: 100%;
+        position: static;
+    }
+
+    .settings-content {
+        padding: 20px;
+        border: none; /* Cleaner look on mobile */
+        background: transparent;
+    }
+}
+
+.sidebar-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    width: 100%;
+    cursor: pointer;
+    margin-top: auto; /* Pushes it to the bottom of the sidebar flexbox */
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.sidebar-logout-btn:hover {
+    background: rgba(255, 77, 77, 0.1); /* Subtle red glow on hover */
+}
+
+.sidebar-logout-btn span {
+    font-weight: 600;
 }

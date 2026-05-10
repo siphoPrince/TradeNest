@@ -20,8 +20,19 @@ const Message = () => {
     const urlUserId = searchParams.get("userId");
     const urlOrderId = searchParams.get("orderId");
 
-    // Helper for Avatars
     const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase() || "?";
+
+    const formatLastSeen = (dateString) => {
+    if (!dateString) return "Offline";
+    const lastSeenDate = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - lastSeenDate) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return lastSeenDate.toLocaleDateString();
+};
 
     useEffect(() => {
         if (!token) return;
@@ -39,10 +50,6 @@ const Message = () => {
 
     useEffect(() => {
         if (!connection) return;
-        connection.off("ReceiveMessage");
-        connection.off("MessageEdited");
-        connection.off("MessageDeleted");
-
         connection.on("ReceiveMessage", (msg) => {
             setMessages((prev) => {
                 const isRelevant = activeChat && String(msg.orderId) === String(activeChat.orderId);
@@ -58,6 +65,29 @@ const Message = () => {
         connection.on("MessageDeleted", (messageId) => {
             setMessages(prev => prev.filter(m => m.id !== messageId));
         });
+
+        connection.on("UserPresenceChanged", (userId, isOnline, lastSeen) => {
+        // 1. Update the sidebar list
+        setChats(prev => prev.map(chat => 
+            String(chat.otherUser?.userId) === String(userId) 
+                ? { ...chat, otherUser: { ...chat.otherUser, isOnline, lastSeen } } 
+                : chat
+        ));
+
+        setActiveChat(prev => {
+            if (prev && String(prev.otherUser?.userId) === String(userId)) {
+                return { ...prev, otherUser: { ...prev.otherUser, isOnline, lastSeen } };
+            }
+            return prev;
+        });
+    });
+
+        return () => {
+            connection.off("ReceiveMessage");
+            connection.off("MessageEdited");
+            connection.off("MessageDeleted");
+            connection.off("UserPresenceChanged");
+        };
     }, [connection, activeChat?.orderId]);
 
     const fetchConversations = async () => {
@@ -138,9 +168,10 @@ const Message = () => {
 
     return (
         <div className="message-wrapper">
+            {/* Sidebar */}
             <div className={`message-sidebar ${activeChat ? "hide-mobile" : ""}`}>
                 <div className="sidebar-header">
-                    <h2>Messages</h2>
+                    <h2>Chats</h2>
                 </div>
                 <div className="message-list">
                     {chats.map(chat => (
@@ -154,16 +185,19 @@ const Message = () => {
                             <div className="chat-info">
                                 <div className="chat-info-top">
                                     <span className="username">{chat.otherUser?.handleName || `Order #${chat.orderId}`}</span>
-                                    <span className="order-tag">#{chat.orderId}</span>
+                                    <span className="timestamp">12:45 PM</span>
                                 </div>
-                                <p className="last-message">{chat.lastMessage}</p>
+                                <div className="chat-info-bottom">
+                                    <p className="last-message">{chat.lastMessage}</p>
+                                    {chat.unreadCount > 0 && <span className="unread-badge">{chat.unreadCount}</span>}
+                                </div>
                             </div>
-                            {chat.unreadCount > 0 && <span className="unread-badge">{chat.unreadCount}</span>}
                         </div>
                     ))}
                 </div>
             </div>
 
+            {/* Main Chat Display */}
             <div className={`message-display-container ${!activeChat ? "hide-mobile" : ""}`}>
                 {activeChat ? (
                     <>
@@ -172,55 +206,71 @@ const Message = () => {
                             <div className="avatar small">{getInitials(activeChat.otherUser?.handleName || "User")}</div>
                             <div className="header-text">
                                 <h3>{activeChat.otherUser?.handleName || "Order Inquiry"}</h3>
-                                <span className="status-text">Online</span>
+                                <div className="status-indicator">
+                                    {/* Toggle dot color and text based on isOnline */}
+                                    <span className={`status-dot ${activeChat.otherUser?.isOnline ? "online" : "offline"}`}></span>
+                                    <span className="status-text">
+                                        {activeChat.otherUser?.isOnline 
+                                            ? "Online" 
+                                            : `Last seen ${formatLastSeen(activeChat.otherUser?.lastSeen)}`}
+                                    </span>
+                                </div>
                             </div>
                             <button className="icon-btn-more"><MoreVertical size={20}/></button>
                         </div>
                         
                         <div className="chat-content">
                             {messages.map((msg) => (
-                                <div key={msg.id} className={`message-bubble ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
-                                    {editingMsgId === msg.id ? (
-                                        <div className="edit-mode-container">
-                                            <input className="edit-input" value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus />
-                                            <div className="edit-buttons">
-                                                <button onClick={() => saveEdit(msg.id)}><Check size={14}/></button>
-                                                <button onClick={() => setEditingMsgId(null)}><X size={14}/></button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="message-text-wrapper">
-                                            <p>{msg.content}</p>
-                                            <div className="msg-footer">
-                                                {msg.isEdited && <span className="edited-label">edited</span>}
-                                            </div>
-                                            {String(msg.senderId) === String(loggedInUserId) && (
-                                                <div className="bubble-actions">
-                                                    <button onClick={() => { setEditingMsgId(msg.id); setEditValue(msg.content); }}><Edit2 size={12}/></button>
-                                                    <button onClick={() => deleteMessage(msg.id)}><Trash2 size={12}/></button>
+                                <div key={msg.id} className={`message-bubble-row ${String(msg.senderId) === String(loggedInUserId) ? 'sent' : 'received'}`}>
+                                    <div className="message-bubble">
+                                        {editingMsgId === msg.id ? (
+                                            <div className="edit-mode-container">
+                                                <input className="edit-input" value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus />
+                                                <div className="edit-buttons">
+                                                    <button onClick={() => saveEdit(msg.id)}><Check size={16}/></button>
+                                                    <button onClick={() => setEditingMsgId(null)}><X size={16}/></button>
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p>{msg.content}</p>
+                                                <div className="msg-footer">
+                                                    {msg.isEdited && <span className="edited-label">edited</span>}
+                                                    <span className="msg-time">12:46</span>
+                                                </div>
+                                                {String(msg.senderId) === String(loggedInUserId) && (
+                                                    <div className="bubble-actions">
+                                                        <button onClick={() => { setEditingMsgId(msg.id); setEditValue(msg.content); }}><Edit2 size={12}/></button>
+                                                        <button onClick={() => deleteMessage(msg.id)}><Trash2 size={12}/></button>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                             <div ref={chatEndRef} />
                         </div>
 
                         <div className="message-input-area">
-                            <input value={messageInput} 
-                                   onChange={(e) => setMessageInput(e.target.value)} 
-                                   onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
-                                   placeholder="Type a message..." />
-                            <button className="send-btn" onClick={sendMessage} disabled={!messageInput.trim()}>
-                                <Send size={18} />
-                            </button>
+                            <div className="input-pill">
+                                <input value={messageInput} 
+                                       onChange={(e) => setMessageInput(e.target.value)} 
+                                       onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
+                                       placeholder="Message..." />
+                                <button className="send-btn" onClick={sendMessage} disabled={!messageInput.trim()}>
+                                    <Send size={18} />
+                                </button>
+                            </div>
                         </div>
                     </>
                 ) : (
                     <div className="no-chat-selected">
-                        <div className="empty-state-icon">💬</div>
-                        <p>Select a conversation to start chatting</p>
+                        <div className="empty-state-card">
+                            <div className="empty-state-icon">💬</div>
+                            <h3>Your Messages</h3>
+                            <p>Select a chat from the sidebar to view the conversation and order details.</p>
+                        </div>
                     </div>
                 )}
             </div>

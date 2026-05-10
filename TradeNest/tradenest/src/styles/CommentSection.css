@@ -1,6 +1,8 @@
-/* 1. Main Container */
+/* =========================================
+   1. MAIN CONTAINER (CYLO THEME)
+   ========================================= */
 .comment-section {
-    width: 350px;
+    width: 380px; /* Slightly wider for better readability */
     height: 90vh; 
     background: var(--color-card);
     border-radius: var(--radius-lg);
@@ -9,40 +11,72 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     position: relative;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 
-/* 2. Scrollable List Area */
+/* =========================================
+   2. HEADER & INFO
+   ========================================= */
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+.header-icon {
+    color: var(--color-accent);
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.close-button:hover {
+    color: var(--color-accent);
+}
+
+/* =========================================
+   3. SCROLLABLE LIST & ITEMS
+   ========================================= */
 .comments-list {
     flex: 1;
     overflow-y: auto;
-    padding: 0 16px;
+    padding: 10px 20px;
     scrollbar-width: thin;
     scrollbar-color: var(--color-border) transparent;
 }
 
-/* 3. Individual Comment Items (Updated for Avatar Layout) */
 .comment-item {
     display: flex;
-    flex-direction: row; 
     gap: 12px;
-    padding: 14px 0;
-    border-bottom: 0.5px solid var(--color-bg);
-    align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-bg);
 }
 
-.comment-avatar {
-    width: 32px;
-    height: 32px;
+.comment-avatar-img {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: var(--color-accent);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
+    object-fit: cover;
+    border: 1.5px solid var(--color-bg);
     flex-shrink: 0;
 }
 
@@ -55,8 +89,8 @@
 
 .comment-meta {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
 }
 
 .comment-author {
@@ -65,166 +99,277 @@
     color: var(--color-text-dark);
 }
 
-.comment-item p {
+.comment-date {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.comment-text-content {
     margin: 0;
     color: var(--color-text-dark);
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-size: 0.92rem;
+    line-height: 1.5;
     word-break: break-word;
 }
 
-.comment-item small {
+/* =========================================
+   4. LOADING & EMPTY STATES
+   ========================================= */
+.status-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
     color: var(--color-text-muted);
-    font-size: 0.7rem;
+    text-align: center;
 }
 
-/* 4. Sticky Bottom Form */
+.empty-state .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.empty-state span {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* Spinners */
+.cylo-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--color-border);
+    border-top: 3px solid var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 15px;
+}
+
+.small-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =========================================
+   5. INPUT FORM
+   ========================================= */
 .comment-form {
-    padding: 16px;
+    padding: 16px 20px;
     background: var(--color-card);
     border-top: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
-.comment-form textarea {
+.input-wrapper textarea {
     width: 100%;
-    min-height: 80px;
+    min-height: 70px;
     padding: 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-bg);
     color: var(--color-text-dark);
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     resize: none;
-    transition: var(--transition);
+    transition: all 0.2s;
 }
 
-.comment-form textarea:focus {
+.input-wrapper textarea:focus {
     outline: none;
     border-color: var(--color-accent);
     background: var(--color-card);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
 }
 
-.comment-form button {
+.post-btn {
     align-self: flex-end;
     display: flex;
     align-items: center;
-    padding: 8px 18px;
-    background-color: var(--color-accent);
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 24px;
+    background-color: var(--color-text-muted); /* Gray when inactive */
     color: white;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: 20px; /* Pill shape */
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+}
+
+.post-btn.active {
+    background-color: var(--color-accent);
     cursor: pointer;
-    transition: var(--transition);
 }
 
-/* Status message for Loading/Empty states */
-.status-message {
-    text-align: center;
-    color: var(--color-text-muted);
-    margin-top: 40px;
-    font-size: 0.9rem;
+.post-btn.active:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.3);
 }
 
-.comment-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid var(--color-border);
-    font-weight: 700;
+.post-btn:disabled {
+    opacity: 0.7;
 }
 
-/* Replace or update the avatar section in your CSS */
-.comment-avatar-img {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    object-fit: cover; /* Keeps the face from stretching */
-    border: 1px solid var(--color-border);
-    flex-shrink: 0;
-}
-
-.comment-author {
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--color-accent); /* Use your accent color for handles! */
-}
-
-.comment-text-content {
-    margin: 0;
-    color: var(--color-text-dark);
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-/* Ensure the body wraps correctly next to the image */
-.comment-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-}
-
-/* 1. Main Container (Desktop Grounding) */
-@media (min-width: 769px) {
+/* =========================================
+   6. MOBILE / TIKTOK SLIDE-UP
+   ========================================= */
+@media (max-width: 768px) {
     .comment-section {
-        position: sticky; /* Keeps it from "flying" away */
-        top: 20px;       /* Distance from the top of the feed area */
-        
-        width: 380px;    /* Slightly wider for better readability */
-        height: calc(100vh - 40px); /* Fill most of the screen height */
-        
-        margin-left: 20px;
-        background: var(--color-card);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--color-border);
-        
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-        
-        /* Ensure it doesn't get squashed */
-        flex-shrink: 0; 
-        z-index: 50;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        height: 75vh !important;
+        z-index: 2000;
+        border-radius: 24px 24px 0 0;
+        border: none;
+        transform: translateY(100%);
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .comment-section.is-open {
+        transform: translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    /* TikTok Drag Handle */
+    .comment-header::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        background: var(--color-border);
+        border-radius: 10px;
     }
 }
 
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+
+
+
+/* =========================================
+   8. COMMENT ACTIONS (EDIT/DELETE)
+   ========================================= */
+.comment-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 10px;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s ease;
 }
-/* Update the container for that high-end flow */
-.comment-section.scrolling-active {
-    position: relative; 
-    height: 850px; /* Adjust to match your Cylo video height */
-    animation: commentSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+/* Show buttons when hovering over the comment */
+.comment-item:hover .comment-actions {
     opacity: 1;
 }
 
-/* Subtle fade + slide from the right when post changes */
-@keyframes commentSlideIn {
-    from {
-        opacity: 0.5;
-        transform: translateX(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+.action-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
-/* Hide scrollbar but keep functionality for a cleaner minimalist look */
-.comments-list::-webkit-scrollbar {
-    width: 4px;
+.action-btn:hover {
+    background-color: var(--color-bg);
+    color: var(--color-accent);
 }
-.comments-list::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 10px;
+
+.action-btn.delete-btn:hover {
+    color: #ff4d4f; /* Soft red for delete */
+    background-color: #fff1f0;
+}
+
+/* =========================================
+   9. EDIT MODE UI
+   ========================================= */
+.edit-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text-dark);
+    font-size: 0.92rem;
+    font-family: inherit;
+    resize: none;
+}
+
+.edit-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.save-btn {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.cancel-btn {
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+}
+
+.save-btn:hover, .cancel-btn:hover {
+    opacity: 0.8;
+}
+
+
+/* =========================================
+   7. DESKTOP STICKY
+   ========================================= */
+@media (min-width: 769px) {
+    .comment-section {
+        position: sticky !important;
+        top: 80px; /* Adjust based on your Navbar height */
+        transform: none !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
 }

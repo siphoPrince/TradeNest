@@ -1,13 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
-import { CircleX, Send } from 'lucide-react';
+import { CircleX, MessageSquare, Trash2, Edit3, Check, X } from 'lucide-react';
 import "../styles/CommentSection.css";
 
-const CommentSection = ({ userId, postId, onClose }) => {
+const formatTimeAgo = (dateString) => {
+    if (!dateString) return "Just now";
+    const now = new Date();
+    const then = new Date(dateString);
+    const seconds = Math.floor((now - then) / 1000);
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return then.toLocaleDateString();
+};
+
+const CommentSection = ({ postId, onClose, isOpen }) => {
     const [commentText, setCommentText] = useState("");
     const [comments, setComments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editText, setEditText] = useState("");
     
     const scrollRef = useRef(null);
+    const inputRef = useRef(null);
     const backendBaseUrl = "https://localhost:7124/uploads/";
 
     const formatUrl = (url, fallback) => {
@@ -16,37 +33,57 @@ const CommentSection = ({ userId, postId, onClose }) => {
         return `${backendBaseUrl}${url}`;
     };
 
-    // Effect 1: Refresh data every time a new postId scrolls into view
+    // --- IDENTIFICATION LOGIC ---
+    const getCurrentUserId = () => {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(window.atob(base64));
+            
+            // Your C# Backend uses NameIdentifier -> nameid
+            // We also check 'sub' as a fallback
+            return payload.nameid || payload.sub; 
+        } catch (e) { return null; }
+    };
+
+    const currentUserId = getCurrentUserId();
+
+    useEffect(() => {
+        if (isOpen && inputRef.current) {
+            setTimeout(() => inputRef.current.focus(), 300);
+        }
+    }, [isOpen]);
+
     useEffect(() => {
         const fetchComments = async () => {
+            if (!postId || !isOpen) return;
+            setComments([]); 
             setIsLoading(true);
+
             try {
                 const response = await fetch(`https://localhost:7124/api/comments/post/${postId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    setComments(data);
+                    setComments(Array.isArray(data) ? data : []);
                 }
             } catch (error) {
-                console.error("Error fetching comments:", error);
+                console.error("Fetch error:", error);
             } finally {
                 setIsLoading(false);
             }
         };
-
-        if (postId) fetchComments();
-    }, [postId]);
-
-    // Effect 2: Smooth reset of scroll position when changing posts
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = 0;
-        }
-    }, [postId]);
+        fetchComments();
+    }, [postId, isOpen]);
 
     const handlePostComment = async () => {
+        const trimmedText = commentText.trim();
+        if (!trimmedText || isSubmitting) return;
         const token = localStorage.getItem("token");
-        const newComment = { content: commentText, postId: Number(postId) };
+        if (!token) return alert("Please log in!");
 
+        setIsSubmitting(true);
         try {
             const response = await fetch("https://localhost:7124/api/comments", {
                 method: "POST",
@@ -54,101 +91,148 @@ const CommentSection = ({ userId, postId, onClose }) => {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(newComment)
+                body: JSON.stringify({ content: trimmedText, postId: Number(postId) })
             });
 
             if (response.ok) {
                 const savedComment = await response.json();
-                setComments([savedComment, ...comments]);
+                setComments(prev => [savedComment, ...prev]);
                 setCommentText("");
-
-                if (scrollRef.current) {
-                scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+                scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
             }
         } catch (error) {
-            console.error("Error posting comment:", error);
+            console.error("Submit error:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
+    const handleDelete = async (commentId) => {
+        if (!window.confirm("Delete this comment?")) return;
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`https://localhost:7124/api/comments/${commentId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (response.ok) {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+            }
+        } catch (err) { console.error("Delete error:", err); }
+    };
+
+    const handleUpdate = async (commentId) => {
+        if (!editText.trim()) return;
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`https://localhost:7124/api/comments/${commentId}`, {
+                method: "PUT",
+                headers: { 
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(editText) 
+            });
+            if (response.ok) {
+                setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: editText } : c));
+                setEditingCommentId(null);
+            }
+        } catch (err) { console.error("Update error:", err); }
+    };
+
     return (
-        /* The className 'scrolling-active' can be used for CSS transitions */
-        <div className="comment-section scrolling-active">
+        <div className={`comment-section ${isOpen ? 'is-open' : ''}`}>
             <div className="comment-header">
-                <span>{comments.length} comments</span>
+                <div className="header-info">
+                    <MessageSquare size={18} className="header-icon" />
+                    <span>{comments.length} comments</span>
+                </div>
                 <button className="close-button" onClick={onClose}>
-                    <CircleX size={20}/>
+                    <CircleX size={22}/>
                 </button>
             </div>
 
             <div className="comments-list" ref={scrollRef}>
                 {isLoading ? (
-                    <div className="status-message">Loading Cylo comments...</div>
+                    <div className="status-message"><div className="cylo-spinner"></div></div>
                 ) : comments.length === 0 ? (
-                    <div className="status-message">
-                        <p>No comments yet. Be the first to say something! 💬</p>
+                    <div className="status-message empty-state">
+                        <div className="empty-icon">💬</div>
+                        <p>No comments yet</p>
                     </div>
                 ) : (
-                    comments.map((comment) => {
-                        const profileImgName = 
-                            comment.profile?.imageUrl || 
-                            comment.user?.profile?.imageUrl || 
-                            comment.profilePictureUrl || 
-                            comment.user?.imageUrl;
+                    comments.map((c) => (
+                        <div key={c.id || Math.random()} className="comment-item">
+                            <img 
+                                src={formatUrl(c.profilePictureUrl, "https://picsum.photos/120")} 
+                                className="comment-avatar-img" 
+                                alt="" 
+                            />
+                            <div className="comment-body">
+                                <div className="comment-meta">
+                                    <span className="comment-author">@{c.handleName || 'user'}</span>
+                                    <span className="comment-date">{formatTimeAgo(c.createdAt)}</span>
 
-                        const profileUrl = formatUrl(profileImgName, "https://picsum.photos/120");
-
-                        const displayName = 
-                            comment.profile?.handleName || 
-                            comment.user?.handleName || 
-                            comment.handleName || 
-                            comment.userName || 
-                            comment.user?.userName || 
-                            "user";
-
-                        return (
-                            <div key={comment.id} className="comment-item">
-                                <img 
-                                    src={profileUrl} 
-                                    className="comment-avatar-img" 
-                                    alt="User" 
-                                    onError={(e) => { e.target.src = "https://picsum.photos/120"; }}
-                                />
-                                <div className="comment-body">
-                                    <div className="comment-meta">
-                                        <span className="comment-author">@{displayName}</span>
-                                        <small>
-                                            {comment.createdAt 
-                                                ? new Date(comment.createdAt).toLocaleDateString() 
-                                                : "Just now"}
-                                        </small>
-                                    </div>
-                                    <p className="comment-text-content">{comment.content}</p>
+                                    {/* AUTHORIZATION CHECK: Normalizing ID types to String */}
+                                    {currentUserId && String(c.userId) === String(currentUserId) && (
+                                        <div className="comment-actions">
+                                            <button 
+                                                className="action-btn"
+                                                onClick={() => { setEditingCommentId(c.id); setEditText(c.content); }}
+                                            >
+                                                <Edit3 size={14}/>
+                                            </button>
+                                            <button 
+                                                className="action-btn delete-btn"
+                                                onClick={() => handleDelete(c.id)}
+                                            >
+                                                <Trash2 size={14}/>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {editingCommentId === c.id ? (
+                                    <div className="edit-mode">
+                                        <textarea 
+                                            value={editText} 
+                                            onChange={(e) => setEditText(e.target.value)} 
+                                            className="edit-textarea"
+                                        />
+                                        <div className="edit-btns">
+                                            <button onClick={() => handleUpdate(c.id)} className="save-btn">
+                                                <Check size={16}/>
+                                            </button>
+                                            <button onClick={() => setEditingCommentId(null)} className="cancel-btn">
+                                                <X size={16}/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="comment-text-content">{c.content}</p>
+                                )}
                             </div>
-                        );
-                    })
+                        </div>
+                    ))
                 )}
             </div>
 
             <div className="comment-form">
-                <textarea 
-                    placeholder="Write a comment..."
-                    value={commentText} 
-                    onChange={(e) => setCommentText(e.target.value)} 
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && commentText.trim()) {
-                            e.preventDefault();
-                            handlePostComment();
-                        }
-                    }}
-                />
+                <div className="input-wrapper">
+                    <textarea 
+                        ref={inputRef}
+                        placeholder="Add a comment..."
+                        value={commentText} 
+                        onChange={(e) => setCommentText(e.target.value)} 
+                        disabled={isSubmitting}
+                    />
+                </div>
                 <button 
+                    className={`post-btn ${commentText.trim() ? 'active' : ''}`}
                     onClick={handlePostComment} 
-                    disabled={!commentText.trim()}
+                    disabled={!commentText.trim() || isSubmitting}
                 >
-                    <Send size={14} style={{marginRight: '6px'}}/>
-                    Post
+                    {isSubmitting ? <div className="small-spinner"></div> : "Post"}
                 </button>
             </div>
         </div>

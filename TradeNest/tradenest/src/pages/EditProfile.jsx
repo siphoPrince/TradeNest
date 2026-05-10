@@ -56,8 +56,8 @@ const EditProfile = () => {
                         imageUrl: p.imageUrl || "",
                         city: p.city || "",
                         province: p.province || "",
-                        latitude: p.latitude || null,
-                        longitude: p.longitude || null
+                        latitude: p.latitude ?? null,
+                        longitude: p.longitude ?? null
                     });
                 }
             } catch (error) {
@@ -72,18 +72,14 @@ const EditProfile = () => {
             alert("Geolocation is not supported by your browser");
             return;
         }
-
         setIsLocating(true);
-
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
-            
             try {
                 const response = await fetch(
                     `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
                 );
                 const data = await response.json();
-                
                 const city = data.address.city || data.address.town || data.address.suburb || "Unknown City";
                 const province = data.address.state || "";
 
@@ -94,15 +90,14 @@ const EditProfile = () => {
                     latitude: latitude,
                     longitude: longitude
                 }));
-                
                 alert(`Found you in ${city}!`);
             } catch (error) {
                 console.error("Error naming the location:", error);
-                alert("Could not get city name, but coordinates saved.");
+                alert("Coordinates saved, but city name could not be fetched.");
             } finally {
                 setIsLocating(false);
             }
-        }, (err) => {
+        }, () => {
             alert("Location access denied.");
             setIsLocating(false);
         });
@@ -125,21 +120,25 @@ const EditProfile = () => {
         if (!token) return navigate("/signIn");
 
         const formData = new FormData();
-        formData.append("Id", profile.id);
-        formData.append("Name", profile.name);
-        formData.append("SurName", profile.surName);
-        formData.append("HandleName", profile.handleName);
-        formData.append("Bio", profile.bio);
-        formData.append("Phone", profile.phone);
+        
+        // Ensure values are strings and not 'undefined'
+        formData.append("Id", profile.id.toString());
+        formData.append("Name", profile.name || "");
+        formData.append("SurName", profile.surName || "");
+        formData.append("HandleName", profile.handleName || "");
+        formData.append("Bio", profile.bio || "");
+        formData.append("Phone", profile.phone || "");
         formData.append("City", profile.city || "");
         formData.append("Province", profile.province || "");
 
-        if (profile.latitude !== null && profile.latitude !== "") {
-            formData.append("Latitude", profile.latitude);
+        // CRITICAL: Only append if they are actual numbers
+        if (profile.latitude !== null && profile.latitude !== undefined) {
+            formData.append("Latitude", profile.latitude.toString());
         }
-        if (profile.longitude !== null && profile.longitude !== "") {
-            formData.append("Longitude", profile.longitude);
+        if (profile.longitude !== null && profile.longitude !== undefined) {
+            formData.append("Longitude", profile.longitude.toString());
         }
+
         if (selectedFile) {
             formData.append("imageFile", selectedFile); 
         }
@@ -147,7 +146,11 @@ const EditProfile = () => {
         try {
             const response = await fetch(`https://localhost:7124/api/profile/save`, {
                 method: "POST",
-                headers: { "Authorization": `Bearer ${token}` },
+                headers: { 
+                    "Authorization": `Bearer ${token}`
+                    // DO NOT set Content-Type header when sending FormData; 
+                    // the browser will set it automatically with the boundary.
+                },
                 body: formData
             });
 
@@ -156,10 +159,12 @@ const EditProfile = () => {
                 navigate("/profile");
             } else {
                 const errorData = await response.json();
-                console.error("Server Error:", errorData);
+                console.error("Server Error details:", errorData);
+                alert(`Save failed: ${JSON.stringify(errorData.errors || "Unknown Error")}`);
             }
         } catch (error) {
             console.error("Network Error:", error);
+            alert("Connection error. Is the server running?");
         }
     };
 
@@ -175,7 +180,6 @@ const EditProfile = () => {
                 </header>
 
                 <div className="edit-container">
-                    {/* TOP SECTION: Photo & Identity */}
                     <div className="edit-hero">
                         <div className="profile-upload-container">
                             <img 
@@ -204,13 +208,11 @@ const EditProfile = () => {
                         </div>
                     </div>
 
-                    {/* BIO SECTION */}
                     <div className="edit-card">
                         <label>Bio</label>
                         <textarea className="modern-textarea" name="bio" value={profile.bio || ""} onChange={handleChange} placeholder="Tell your story..." rows="4" />
                     </div>
 
-                    {/* LOCATION SECTION */}
                     <div className="edit-card">
                         <label>Location</label>
                         <div className="location-field-wrapper">
@@ -221,7 +223,6 @@ const EditProfile = () => {
                         </div>
                     </div>
 
-                    {/* CONTACT SECTION */}
                     <div className="edit-card">
                         <label>Contact Phone</label>
                         <input className="modern-input" name="phone" value={profile.phone || ""} onChange={handleChange} placeholder="Phone number" />

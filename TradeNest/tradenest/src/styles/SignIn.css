@@ -1,135 +1,179 @@
+/* 1. Global Reset for Auth Pages */
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
+  font-family: 'Inter', sans-serif; /* Or your preferred font */
 }
 
+/* 2. Main Background Container */
 .auth-container {
+  position: relative;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: var(--color-bg);
-
+  align-items: center; /* Centers the content perfectly */
+  background-image: url('../assets/your-bg-image.jpg'); /* Add your image path here */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  padding: 20px;
 }
 
-
-/* overlay layer */
+/* 3. Subtle Dark/Light Overlay */
 .auth-container::before {
   content: "";
   position: absolute;
-  inset: 0; /* top:0; bottom:0; left:0; right:0; */
-  background: rgba(255, 255, 255, 0.3); /* light overlay */
-  z-index: 0; /* behind content */
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4); /* Darkens bg to make card pop */
+  z-index: 0;
 }
 
-/* make the login card above the overlay */
-.auth-card {
+/* 4. Content Wrapper (Logo + Card) */
+.auth-content {
   position: relative;
   z-index: 1;
-}
-
-
-.auth-container {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding-top: 60px; /* pushes everything down from very top */
-  
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* This keeps logo + card stacked vertically */
-.auth-content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 400px;
 }
 
 .logo-container {
-  margin-bottom: 2rem;
-  text-align: center;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
 }
 
 .auth-logo {
-  max-width: 120px;  /* hard limit */
-  width: 100%;
+  max-width: 140px;
   height: auto;
-  display: block;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
 }
 
-
-
-
+/* 5. The Glassmorphic Card */
 .auth-card {
-  background: transparent;
-  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95); /* Nearly solid white for readability */
+  backdrop-filter: blur(10px); /* Blurs background behind card */
+  padding: 2.5rem;
   width: 100%;
-  max-width: 400px;
-  border-radius: var(--radius-lg);
-  box-shadow: none; 
-  border: none; 
-  position: relative;
-  z-index: 1;
+  border-radius: 20px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode support if applicable */
+.dark .auth-card {
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
 }
 
 .auth-title {
-  color: var(--color-text-dark);
-  font-size: 1.5rem;
+  color: #1a1a1a;
+  font-size: 1.75rem;
+  font-weight: 700;
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
+.dark .auth-title { color: #ffffff; }
+
+/* 6. Form Styling */
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
 .auth-input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 1rem;
-  transition: var(--transition);
+  background: #f8fafc;
+  transition: all 0.2s ease;
 }
 
 .auth-input:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .auth-button {
-  background-color: var(--color-primary);
+  background-color: #2563eb;
   color: white;
-  padding: 0.75rem;
+  padding: 0.9rem;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: transform 0.1s active, background 0.2s;
 }
 
 .auth-button:hover {
-  background-color: var(--color-accent);
+  background-color: #1d4ed8;
+}
+
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+/* 7. Links & Extras */
+.forgot-link-container {
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.auth-link-secondary {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-decoration: none;
+}
+
+.auth-link-secondary:hover {
+  color: #2563eb;
+}
+
+/* 8. Divider (OR) */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #94a3b8;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-divider span {
+  padding: 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 9. Google Button Wrapper */
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .auth-footer {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
+  color: #64748b;
+  font-size: 0.95rem;
 }
 
 .auth-link {
-  color: var(--color-accent);
+  color: #2563eb;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }

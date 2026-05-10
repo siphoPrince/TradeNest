@@ -144,3 +144,236 @@
     background-color: var(--color-bg);
     color: var(--color-text-muted);
 }
+
+/* --- Tablet & Desktop Styles --- */
+@media (min-width: 768px) {
+    .dashboard-container {
+        padding: 40px;
+    }
+
+    .dashboard-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .view-toggle {
+        width: auto;
+    }
+
+    .table-container {
+        background-color: var(--color-card);
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+
+    .orders-table {
+        display: table;
+    }
+
+    .orders-table thead {
+        display: table-header-group;
+    }
+
+    .orders-table tbody {
+        display: table-row-group;
+    }
+
+    .orders-table tr {
+        display: table-row;
+        background: none;
+        border: none;
+    }
+
+    .orders-table th, 
+    .orders-table td {
+        display: table-cell;
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .orders-table td::before {
+        display: none; /* Hide the "Order ID:", "Item:" labels on desktop */
+    }
+
+    .action-group {
+        width: auto;
+    }
+
+    .icon-btn {
+        flex: none;
+        padding: 8px;
+    }
+}
+
+/* Dispute Status Style */
+.status-disputed {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+}
+
+.modal-body {
+    margin: 20px 0;
+}
+
+.order-ref {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.dispute-input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.textarea {
+    height: 100px;
+    resize: none;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 10px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-confirm-dispute {
+    flex: 2;
+    padding: 10px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-confirm-dispute:disabled {
+    opacity: 0.5;
+}
+
+
+
+
+
+
+/* --- Mobile Styles (Default) --- */
+.dashboard-container {
+    padding: 16px; /* Less padding on small screens */
+}
+
+.dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.view-toggle {
+    width: 100%;
+}
+
+.toggle-btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* Transform Table into Cards for Mobile */
+.orders-table, 
+.orders-table thead, 
+.orders-table tbody, 
+.orders-table th, 
+.orders-table td, 
+.orders-table tr {
+    display: block;
+}
+
+.orders-table thead {
+    display: none; /* Hide headers on mobile */
+}
+
+.orders-table tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-card);
+}
+
+.orders-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.orders-table td:last-child {
+    border-bottom: none;
+}
+
+/* This adds the "Label" for each row using data-attributes or manual entry */
+.orders-table td::before {
+    content: attr(data-label); /* Ensure your HTML has data-label="Order ID" etc. */
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-align: left;
+    margin-right: 10px;
+}
+
+.action-group {
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.icon-btn {
+    flex: 1;
+    justify-content: center;
+}
