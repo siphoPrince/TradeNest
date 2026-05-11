@@ -278,7 +278,7 @@ const Profile = () => {
                         </div>
                         
                         <div className="stat">
-                            <span className="stat-number">0</span>
+                            <span className="stat-number">{profile?.soldCount || 0}</span>
                             <span className="stat-label">Sold</span>
                         </div>
                     </div>
