@@ -10,8 +10,31 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  const validateForm = () => {
+    setMessage("");
+  // 1. Email Regex: Checks for something@somewhere.com
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (!emailRegex.test(email)) {
+    setMessage("Please enter a valid email address.");
+    return false;
+  }
+
+  // 2. Password Strength: Minimum 6 characters
+  if (password.length < 6) {
+    setMessage("Password must be at least 6 characters long.");
+    return false;
+  }
+
+  return true;
+};
+
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       // Note: your authService.register expects (username, email, password)
       await authService.register(username, email, password);
@@ -30,6 +53,13 @@ function SignUp() {
           </div>
         <div className="auth-card">
           <h2 className="auth-title">Create Account</h2>
+
+          {message && (
+            <p className={isError ? "auth-error-message" : "auth-success-message"} 
+               style={{ color: isError ? 'red' : 'green', textAlign: 'center', marginBottom: '10px' }}>
+              {message}
+            </p>
+          )}
 
           <form className="auth-form" onSubmit={handleRegister}>
             {/* Added Username Input since your service likely needs it */}

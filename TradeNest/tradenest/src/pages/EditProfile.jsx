@@ -104,7 +104,15 @@ const EditProfile = () => {
     };
 
     const handleChange = (e) => {
-        setProfile({ ...profile, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        // If the user is editing the handle, strip out spaces
+        if (name === "handleName") {
+            const sanitizedHandle = value.replace(/\s+/g, ""); // Removes all spaces
+            setProfile({ ...profile, [name]: sanitizedHandle });
+        } else {
+            setProfile({ ...profile, [name]: value });
+        }
     };
 
     const handleImageUpload = (e) => {

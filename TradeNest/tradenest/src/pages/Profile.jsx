@@ -11,7 +11,8 @@ import {
     ChevronDown, 
     Share2,
     Bookmark,
-    Grid // Added for the listings icon
+    Grid,
+    User
 } from 'lucide-react';
 import Navigation from "../components/Navigation";
 import "../styles/Profile.css";
@@ -26,14 +27,45 @@ const Profile = () => {
     const [activeTab, setActiveTab] = useState("listings");
     const [savedPosts, setSavedPosts] = useState([]);
 
+    // Follow Modal States
+    const [showFollowModal, setShowFollowModal] = useState(false);
+    const [followModalTitle, setFollowModalTitle] = useState("");
+    const [followList, setFollowList] = useState([]);
+    const [loadingFollow, setLoadingFollow] = useState(false);
+
     const navigate = useNavigate();
     const { id } = useParams();
     const backendUrl = "https://localhost:7124/uploads/";
     const loggedInUserId = localStorage.getItem("userId");
     const isOwnProfile = !id || id === loggedInUserId;
 
-    // Determine which data to show in the grid
     const currentViewPosts = activeTab === "saved" ? savedPosts : userPosts;
+
+    const fetchFollowData = async (type) => {
+        const token = localStorage.getItem("token");
+        const targetUserId = id || loggedInUserId;
+        
+        setFollowModalTitle(type === "followers" ? "Followers" : "Following");
+        setShowFollowModal(true);
+        setLoadingFollow(true);
+        setFollowList([]);
+
+        try {
+            const endpoint = type === "followers" ? "followers" : "following";
+            const response = await fetch(`https://localhost:7124/api/follow/${endpoint}/${targetUserId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setFollowList(data);
+            }
+        } catch (error) {
+            console.error(`Error fetching ${type}:`, error);
+        } finally {
+            setLoadingFollow(false);
+        }
+    };
 
     const handleShare = async (title, text, url) => {
         if (navigator.share) {
@@ -49,12 +81,8 @@ const Profile = () => {
     };
 
     useEffect(() => {
-        if (selectedPostIndex !== null) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-    }, [selectedPostIndex]);
+        document.body.style.overflow = (selectedPostIndex !== null || showFollowModal) ? 'hidden' : 'unset';
+    }, [selectedPostIndex, showFollowModal]);
 
     useEffect(() => {
         if (activeTab === "saved" && isOwnProfile) {
@@ -68,10 +96,6 @@ const Profile = () => {
             const targetUserId = id || loggedInUserId;
 
             if (!targetUserId || targetUserId === "undefined") return;
-            if (!token) {
-                navigate("/signIn");
-                return;
-            }
 
             try {
                 const profileResponse = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
@@ -187,6 +211,7 @@ const Profile = () => {
     };
 
     const isVideo = (url) => url?.match(/\.(mp4|webm|ogg|mov)$/i);
+    const getMediaUrl = (url) => url?.startsWith("http") ? url : `${backendUrl}${url}`;
 
     if (!profile && !loadingPosts) return <div className="loading">Profile not found. 😕</div>;
     if (!profile) return <div className="loading">Loading Profile... ⏳</div>;
@@ -198,7 +223,7 @@ const Profile = () => {
                 <div className="profile-container">
                     <div className="profile-header">
                         <img
-                            src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"}
+                            src={profile?.imageUrl ? getMediaUrl(profile.imageUrl) : "https://picsum.photos/120"}
                             className="profileImg"
                             alt="Profile"
                             onError={(e) => { e.target.src = "https://picsum.photos/120"; }}
@@ -242,21 +267,22 @@ const Profile = () => {
                             <span className="stat-number">{userPosts.length}</span>
                             <span className="stat-label">Listings</span>
                         </div>
-                        <div className="stat">
+                        
+                        <div className="stat" onClick={() => fetchFollowData("followers")} style={{cursor: 'pointer'}}>
                             <span className="stat-number">{profile?.followersCount || 0}</span>
                             <span className="stat-label">Followers</span>
                         </div>
-                        <div className="stat">
+                        <div className="stat" onClick={() => fetchFollowData("following")} style={{cursor: 'pointer'}}>
                             <span className="stat-number">{profile?.followingCount || 0}</span>
                             <span className="stat-label">Following</span>
                         </div>
+                        
                         <div className="stat">
                             <span className="stat-number">0</span>
                             <span className="stat-label">Sold</span>
                         </div>
                     </div>
 
-                    {/* --- UPDATED: TABS NAVIGATION --- */}
                     {isOwnProfile && (
                         <div className="profile-tabs-nav">
                             <button 
@@ -282,13 +308,12 @@ const Profile = () => {
                         ) : currentViewPosts.length > 0 ? (
                             currentViewPosts.map((post, index) => {
                                 const postData = activeTab === "saved" ? post.post : post;
-                                const fullUrl = postData.mediaUrl?.startsWith("http") ? postData.mediaUrl : `${backendUrl}${postData?.mediaUrl}`;
                                 return (
                                     <div key={postData.id} className="card" onClick={() => setSelectedPostIndex(index)}>
                                         {isVideo(postData.mediaUrl) ? (
-                                            <video src={fullUrl} className="listing-thumb" muted playsInline />
+                                            <video src={getMediaUrl(postData.mediaUrl)} className="listing-thumb" muted playsInline />
                                         ) : (
-                                            <img src={fullUrl} alt={postData.title} className="listing-thumb" onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }} />
+                                            <img src={getMediaUrl(postData.mediaUrl)} alt={postData.title} className="listing-thumb" onError={(e) => { e.target.src = "https://picsum.photos/300/400"; }} />
                                         )}
                                         <div className="card-info">
                                             <small className="price">R{postData.price}</small>
@@ -305,6 +330,41 @@ const Profile = () => {
                 </div>
             </div>
 
+            {/* --- FOLLOW MODAL --- */}
+            {showFollowModal && (
+                <div className="follow-modal-overlay" onClick={() => setShowFollowModal(false)}>
+                    <div className="follow-modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="follow-modal-header">
+                            <h3>{followModalTitle}</h3>
+                            <button className="close-modal" onClick={() => setShowFollowModal(false)}><X size={20}/></button>
+                        </div>
+                        <div className="follow-modal-body">
+                            {loadingFollow ? (
+                                <p>Loading...</p>
+                            ) : followList.length > 0 ? (
+                                followList.map(user => (
+                                    <div key={user.id} className="follow-item" onClick={() => {
+                                        setShowFollowModal(false);
+                                        navigate(`/profile/${user.id}`);
+                                    }}>
+                                        <img 
+                                            src={user.profileImageUrl ? getMediaUrl(user.profileImageUrl) : "https://picsum.photos/50"} 
+                                            alt={user.userName} 
+                                        />
+                                        <div className="follow-user-info">
+                                            <span>{user.userName}</span>
+                                            <small>{user.handleName || `@${user.userName}`}</small>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="empty-follow">No {followModalTitle.toLowerCase()} yet.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* --- TIKTOK STYLE VIEWER --- */}
             {selectedPostIndex !== null && (
                 <div className="tt-overlay" onClick={() => setSelectedPostIndex(null)}>
@@ -314,7 +374,6 @@ const Profile = () => {
 
                     <div className="tt-feed-container" onClick={(e) => e.stopPropagation()}>
                         <div className="tt-slide">
-                            {/* logic to handle post data structure which differs slightly in Bookmarks */}
                             {(() => {
                                 const post = activeTab === "saved" ? currentViewPosts[selectedPostIndex].post : currentViewPosts[selectedPostIndex];
                                 return (
@@ -322,21 +381,21 @@ const Profile = () => {
                                         <div className="tt-media-wrapper">
                                             {isVideo(post.mediaUrl) ? (
                                                 <video
-                                                    src={post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post.mediaUrl}`}
+                                                    src={getMediaUrl(post.mediaUrl)}
                                                     autoPlay
                                                     loop
                                                     controls
                                                     playsInline
                                                 />
                                             ) : (
-                                                <img src={post.mediaUrl?.startsWith("http") ? post.mediaUrl : `${backendUrl}${post.mediaUrl}`} alt="" />
+                                                <img src={getMediaUrl(post.mediaUrl)} alt="" />
                                             )}
                                         </div>
 
                                         <div className="tt-side-actions">
                                             <div className="tt-action">
-                                                <div className="tt-avatar-circle">
-                                                    <img src={profile?.imageUrl ? `${backendUrl}${profile.imageUrl}` : "https://picsum.photos/120"} alt="" />
+                                                <div className="tt-avatar-circle" onClick={() => setSelectedPostIndex(null)}>
+                                                    <img src={profile?.imageUrl ? getMediaUrl(profile.imageUrl) : "https://picsum.photos/120"} alt="" />
                                                     {!isOwnProfile && <div className="tt-plus-icon">+</div>}
                                                 </div>
                                             </div>

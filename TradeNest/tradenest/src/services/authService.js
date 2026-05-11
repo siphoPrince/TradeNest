@@ -23,11 +23,9 @@ const register = async(name, email, passwordHash)=>{
     return response.data;
 }
 
-const resetPassword = async (token, newPassword) => {
-    const response = await axios.post(API_URL + "reset-password", {
-        token,
-        newPassword
-    });
+const resetPassword = async (resetData) => {
+    // resetData will be { token: "...", newPassword: "..." }
+    const response = await axios.post(API_URL + "reset-password", resetData);
     return response.data;
 };
 

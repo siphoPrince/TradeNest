@@ -23,6 +23,11 @@ const Feed = () => {
         document.body.style.overflow = "hidden"; // Lock background scroll
     }
 };
+    useEffect(() => {
+    if (searchQuery) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}, [searchQuery]);
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -60,11 +65,22 @@ const Feed = () => {
     }, []);
 
     // Filter posts dynamically based on the search query
-    const filteredPosts = posts.filter(post => 
-        post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (post.handleName || post.name)?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredPosts = posts.filter(post => {
+            const query = searchQuery.toLowerCase().trim();
+            
+            // Check title, description, and handle
+            const basicMatch = 
+                post.title?.toLowerCase().includes(query) ||
+                post.description?.toLowerCase().includes(query) ||
+                (post.handleName || post.name)?.toLowerCase().includes(query);
+
+            // Check tags (if they are included in your DTO)
+            const tagMatch = post.tags?.some(tag => 
+                tag.name.toLowerCase().includes(query.replace('#', ''))
+            );
+
+            return basicMatch || tagMatch;
+        });
 
     // --- LOADING STATE (SKELETONS) ---
     if (loading) {

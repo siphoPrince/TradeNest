@@ -9,9 +9,13 @@ function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [message, setMessage] = useState(""); 
+  
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setMessage("");
+    if (!validateForm()) return;
     try {
       const response = await authService.login(email, password);
       localStorage.setItem("token", response.token);
@@ -22,6 +26,24 @@ function SignIn() {
       alert("Login failed. Please check your credentials.");
     }
   };
+
+  const validateForm = () => {
+  // 1. Email Regex: Checks for something@somewhere.com
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (!emailRegex.test(email)) {
+    setMessage("Please enter a valid email address.");
+    return false;
+  }
+
+  // 2. Password Strength: Minimum 6 characters
+  if (password.length < 6) {
+    setMessage("Password must be at least 6 characters long.");
+    return false;
+  }
+
+  return true;
+};
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -42,7 +64,7 @@ function SignIn() {
         </div>
         <div className="auth-card">
           <h2 className="auth-title">Welcome Back</h2>
-
+          {message && <p className="auth-error-msg" style={{ color: '#ff4444', textAlign: 'center', fontSize: '0.9rem', marginBottom: '10px' }}>{message}</p>}
           <form className="auth-form" onSubmit={handleLogin}>
             <input
               className="auth-input"
