@@ -1,95 +1,227 @@
-/* The semi-transparent background */
+/* Backdrop Overlay container with appearance animations */
 .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px); /* Adds a modern frosted glass effect */
+    background: rgba(10, 15, 30, 0.7);
+    backdrop-filter: blur(5px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 10000;
+    animation: fadeInOverlay 0.2s ease-out;
 }
 
-/* The actual white/themed card */
+/* Central Card Component Container rules matching global standard theme */
 .payment-modal {
-    background: var(--bg-card, #ffffff);
-    width: 90%;
-    max-width: 450px;
-    padding: 2rem;
-    border-radius: var(--radius-lg, 20px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    background: var(--color-card, #ffffff);
+    width: 92%;
+    max-width: 440px;
+    padding: 30px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border, #e2e8f0);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
     position: relative;
+    animation: scaleInCard 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Absolute clear context actions exit button */
 .close-btn {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 18px;
+    right: 18px;
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--text-muted);
-}
-
-.order-summary {
-    background: var(--bg-offset, #f8f9fa);
-    padding: 1rem;
-    border-radius: 12px;
+    color: var(--color-text-light, #64748b);
+    padding: 6px;
+    border-radius: 50%;
     display: flex;
-    justify-content: space-between;
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color);
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
 }
 
-.input-group {
-    margin-bottom: 1.2rem;
+.close-btn:hover {
+    background: var(--color-bg-secondary, #f1f5f9);
+    color: var(--color-text, #1e293b);
+}
+
+/* Title stack alignments */
+.modal-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.shield-icon {
+    display: inline-flex;
+    padding: 12px;
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border-radius: 50%;
+    margin-bottom: 12px;
+}
+
+.modal-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text, #1e293b);
+    margin: 0;
+}
+
+.modal-header .subtitle {
+    font-size: 13px;
+    color: var(--color-text-light, #64748b);
+    margin-top: 5px;
+}
+
+/* Summary item block formatting configuration */
+.order-summary {
+    background: var(--color-bg-secondary, #f8fafc);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border, #e2e8f0);
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
 }
 
-.input-group label {
-    font-size: 0.85rem;
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: var(--color-text, #334155);
+}
+
+.summary-row .label {
+    color: var(--color-text-light, #64748b);
+}
+
+.summary-row .value.bold {
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-main);
+    color: var(--color-text, #1e293b);
+    max-width: 65%;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.input-group input {
-    padding: 0.8rem;
-    border: 1.5px solid var(--border-color);
+.summary-divider {
+    height: 1px;
+    background: var(--color-border, #e2e8f0);
+    margin: 4px 0;
+}
+
+/* Emphasized Total row calculations style classes */
+.summary-row.total {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text, #1e293b);
+}
+
+.summary-row.total .total-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-primary, #2563eb);
+}
+
+/* Security and context warnings anchors */
+.security-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px dashed rgba(37, 99, 235, 0.25);
+    padding: 10px;
     border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
+    font-size: 12px;
+    color: var(--color-primary, #2563eb);
+    font-weight: 500;
+    margin-bottom: 20px;
 }
 
-.input-group input:focus {
-    outline: none;
-    border-color: var(--primary-color);
+.modal-error-alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 12px;
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.pay-btn {
+/* Primary Execution Submission action buttons */
+.pay-confirm-btn {
     width: 100%;
-    padding: 1rem;
-    background: var(--primary-color, #007bff);
-    color: white;
+    padding: 14px;
+    background: var(--color-primary, #2563eb);
+    color: #ffffff;
     border: none;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1.1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
     cursor: pointer;
-    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, filter 0.2s;
 }
 
-.pay-btn.loading {
-    opacity: 0.7;
+.pay-confirm-btn:hover:not(:disabled) {
+    filter: brightness(0.95);
+}
+
+.pay-confirm-btn:disabled {
+    opacity: 0.65;
     cursor: not-allowed;
+}
+
+/* Small inline component activity indicators */
+.spinner-small {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.loader-dot {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: rotateSpinner 0.6s linear infinite;
+}
+
+/* Informational platform regulations footnotes markup */
+.legal-footer {
+    font-size: 11px;
+    color: var(--color-text-light, #94a3b8);
+    text-align: center;
+    line-height: 1.5;
+    margin-top: 16px;
+    padding: 0 5px;
+}
+
+/* KEYFRAME ANIMATIONS DEFINITIONS */
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInCard {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes rotateSpinner {
+    to { transform: rotate(360deg); }
 }

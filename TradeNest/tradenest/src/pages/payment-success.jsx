@@ -16,7 +16,7 @@ const PaymentSuccess = () => {
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
                 <button 
-                    onClick={() => navigate('/feed')}
+                    onClick={() => navigate('/dashboard')}
                     className="secondary-btn"
                 >
                     Back to Feed

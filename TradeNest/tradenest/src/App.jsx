@@ -18,6 +18,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import MyOrders from "./pages/MyOrders";
 import PaymentError from "./pages/PaymentError";
 import ResetPassword from "./components/UpdatePassword";
+import Activity from "./pages/Activity";
 
 function App() {
   // Run this as early as possible to prevent "flashing" white on load
@@ -49,6 +50,7 @@ if (savedTheme === 'dark') {
         <Route path="/forgot-password" element={<ForgotPassword/>} />
         <Route path="/reset-password" element={<ResetPassword/>} />
         <Route path="/my-orders" element={<MyOrders/>} />
+        <Route path="/activity" element={<Activity />} />
       </Routes>
     </BrowserRouter>
   );

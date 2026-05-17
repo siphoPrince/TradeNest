@@ -1,54 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, ShieldCheck, Lock, CreditCard } from 'lucide-react';
 import "../styles/PaymentModel.css";
 
 const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, productId, onSetupRequired }) => {
     const [isProcessing, setIsProcessing] = useState(false);
+    const [localError, setLocalError] = useState("");
+
+    // Reset error when modal closes/opens
+    useEffect(() => {
+        if (!isOpen) {
+            setLocalError("");
+        }
+    }, [isOpen]);
 
     const handlePayment = async () => {
         setIsProcessing(true);
+        setLocalError("");
 
         const buyerId = localStorage.getItem('userId');
 
         if (!buyerId) {
-            alert("Please log in to continue.");
+            setLocalError("Please log in to your account to continue.");
             setIsProcessing(false);
             return;
         }
 
         try {
-            // 1. Call your C# Backend
+            // 1. Post to C# API endpoint
             const response = await axios.post(`https://localhost:7124/api/Payments/create-transaction`, {
-                buyerId: parseInt(buyerId),
-                sellerId: parseInt(sellerId),
-                postId: parseInt(productId),
+                buyerId: parseInt(buyerId, 10),
+                sellerId: parseInt(sellerId, 10),
+                postId: parseInt(productId, 10),
                 amount: parseFloat(productPrice),
                 itemDescription: productName
             });
 
-            // 2. FIX: The C# service returns 'checkoutUrl', not 'siteUrl'
+            // 2. Extract generated gateway link
             const checkoutUrl = response.data.checkoutUrl; 
 
             if (checkoutUrl) {
-                console.log("Redirecting to secure payment...");
+                console.log("Redirecting to secure gateway payment engine...");
                 window.location.href = checkoutUrl;
             } else {
-                throw new Error("Payment URL not generated.");
+                throw new Error("Payment gateway failed to issue an transaction access link.");
             }
 
         } catch (err) {
-            console.error("Payment Error:", err);
+            console.error("Payment Process Fault:", err);
             
-            // 3. FIX: Check if the response exists and grab the 'message' string
-            // This prevents the "Objects are not valid as a React child" crash
-            const errorMessage = err.response?.data?.message || "Payment system is currently offline.";
+            const errorMessage = err.response?.data?.message || "The payment system is currently offline. Please try again shortly.";
 
             if (err.response?.status === 400 || err.response?.status === 404) {
-                // Pass the string message to your parent component (BuyNow.jsx)
+                // Route seller payout errors up to parent frame layout handler
                 onSetupRequired(errorMessage); 
             } else {
-                alert(errorMessage);
+                setLocalError(errorMessage);
             }
         } finally {
             setIsProcessing(false);
@@ -58,41 +65,48 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, pr
     if (!isOpen) return null;
 
     return (
-        <div className="modal-backdrop">
-            <div className="payment-modal">
-                <button className="close-btn" onClick={onClose}>
-                    <X size={20} />
+        <div className="modal-backdrop" onClick={onClose}>
+            {/* stopPropagation prevents modal closing if clicking inner content panel card container */}
+            <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn" onClick={onClose} aria-label="Close modal">
+                    <X size={18} />
                 </button>
 
                 <div className="modal-header">
                     <div className="shield-icon">
-                        <ShieldCheck size={32} color="#22c55e" />
+                        <ShieldCheck size={32} />
                     </div>
                     <h2>Secure Checkout</h2>
                     <p className="subtitle">
-                        Powered by <strong>TradeSafe Escrow</strong>
+                        Escrow Framework managed by <strong>TradeSafe</strong>
                     </p>
                 </div>
 
+                {localError && (
+                    <div className="modal-error-alert">
+                        <span>{localError}</span>
+                    </div>
+                )}
+
                 <div className="order-summary">
                     <div className="summary-row">
-                        <span>Item</span>
-                        <span className="bold">{productName}</span>
+                        <span className="label">Item</span>
+                        <span className="value bold">{productName}</span>
                     </div>
                     <div className="summary-row">
-                        <span>Price</span>
-                        <span className="bold">R{productPrice?.toLocaleString()}</span>
+                        <span className="label">Price</span>
+                        <span className="value bold">R {productPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="summary-divider"></div>
                     <div className="summary-row total">
-                        <span>Total to Escrow</span>
-                        <span className="total-price">R{productPrice?.toLocaleString()}</span>
+                        <span className="label">Total to Escrow</span>
+                        <span className="total-price">R {productPrice?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
 
                 <div className="security-badge">
-                    <Lock size={12} />
-                    <span>Your funds are protected until delivery</span>
+                    <Lock size={13} />
+                    <span>Funds are held securely by TradeSafe until successful delivery</span>
                 </div>
 
                 <button 
@@ -101,18 +115,20 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, pr
                     disabled={isProcessing}
                 >
                     {isProcessing ? (
-                        <div className="spinner-small">Generating Secure Link...</div>
+                        <div className="spinner-small">
+                            <span className="loader-dot"></span> Generating Gateway Link...
+                        </div>
                     ) : (
                         <>
                             <CreditCard size={18} />
-                            Pay Securely
+                            <span>Confirm and Pay Securely</span>
                         </>
                     )}
                 </button>
 
                 <p className="legal-footer">
-                    Funds will be held by TradeSafe (Pty) Ltd. 
-                    Release is triggered upon your confirmation of delivery.
+                    Funds will be safeguarded in accordance with TradeSafe (Pty) Ltd escrow terms. 
+                    Payout release is authorized immediately following your verified confirmation of delivery.
                 </p>
             </div>
         </div>

@@ -880,3 +880,56 @@ html{
     background: #333;
     border-radius: 10px;
 }
+
+/* ==========================================================================
+   MOBILE BELL & BADGE POSITIONING
+   ========================================================================== */
+
+/* 1. Hide completely on desktop / big screens */
+.mobile-bell-anchor {
+    display: none !important;
+}
+
+/* 2. Show and position on small screens */
+@media (max-width: 768px) {
+    /* Ensures the parent profile-header component acts as the positioning anchor */
+    .profile-header {
+        position: relative !important;
+    }
+
+    .mobile-bell-anchor {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        
+        /* Forces it to the top right side of the profile header */
+        position: absolute !important;
+        top: 16px;
+        right: 16px;
+        z-index: 99;
+        
+        cursor: pointer;
+        padding: 6px;
+        color: var(--color-text-dark);
+    }
+
+    /* Red Notification Badge Placement */
+    .mobile-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background-color: #ff3b30; /* Vivid notification red */
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--color-bg); /* Clean separation ring around badge */
+        box-sizing: content-box;
+    }
+}

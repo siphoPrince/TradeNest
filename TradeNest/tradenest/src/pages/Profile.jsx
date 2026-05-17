@@ -12,7 +12,8 @@ import {
     Share2,
     Bookmark,
     Grid,
-    User
+    User,
+    Bell
 } from 'lucide-react';
 import Navigation from "../components/Navigation";
 import "../styles/Profile.css";
@@ -26,6 +27,7 @@ const Profile = () => {
     const [selectedPostIndex, setSelectedPostIndex] = useState(null);
     const [activeTab, setActiveTab] = useState("listings");
     const [savedPosts, setSavedPosts] = useState([]);
+    const [notificationsCount, setNotificationsCount] = useState(0);
 
     // Follow Modal States
     const [showFollowModal, setShowFollowModal] = useState(false);
@@ -90,6 +92,7 @@ const Profile = () => {
         }
     }, [activeTab]);
 
+    // Combined profile data loading and initial badge counts call
     useEffect(() => {
         const fetchProfileData = async () => {
             const token = localStorage.getItem("token");
@@ -98,6 +101,16 @@ const Profile = () => {
             if (!targetUserId || targetUserId === "undefined") return;
 
             try {
+                // Fetch direct badge counts for the initial page load layout
+                if (isOwnProfile) {
+                    fetch(`https://localhost:7124/api/notifications/unread-counts/${targetUserId}`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => {
+                            if (data) setNotificationsCount(data.notificationsCount || 0);
+                        })
+                        .catch(err => console.error("Error fetching initial badge counts:", err));
+                }
+
                 const profileResponse = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -169,6 +182,18 @@ const Profile = () => {
         }
     };
 
+    // Listens to background events broadcasted from Navigation.jsx
+    useEffect(() => {
+        const handleCountsUpdate = (e) => {
+            if (e.detail) {
+                setNotificationsCount(e.detail.notificationsCount || 0);
+            }
+        };
+
+        window.addEventListener("badgeCountsUpdated", handleCountsUpdate);
+        return () => window.removeEventListener("badgeCountsUpdated", handleCountsUpdate);
+    }, []);
+
     const handleFollow = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -222,6 +247,14 @@ const Profile = () => {
             <div className="profile-page">
                 <div className="profile-container">
                     <div className="profile-header">
+                        {isOwnProfile && (
+                            <div className="mobile-bell-anchor" onClick={() => navigate("/activity")} style={{ position: 'relative' }}>
+                                <Bell size={24} />
+                                {notificationsCount > 0 && (
+                                    <span className="sidebar-badge mobile-badge">{notificationsCount}</span>
+                                )}
+                            </div>
+                        )}
                         <img
                             src={profile?.imageUrl ? getMediaUrl(profile.imageUrl) : "https://picsum.photos/120"}
                             className="profileImg"

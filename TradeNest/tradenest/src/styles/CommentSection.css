@@ -2,7 +2,7 @@
    1. MAIN CONTAINER (CYLO THEME)
    ========================================= */
 .comment-section {
-    width: 380px; /* Slightly wider for better readability */
+    width: 380px; 
     height: 90vh; 
     background: var(--color-card);
     border-radius: var(--radius-lg);
@@ -25,6 +25,8 @@
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--color-border);
+    position: relative;
+    z-index: 10; /* Ensures the header stays on top of any scrolling content */
 }
 
 .header-info {
@@ -65,12 +67,12 @@
 }
 
 .comment-item {
+    position: relative; /* Lock the absolute positioned buttons inside here */
     display: flex;
     gap: 12px;
-    padding: 16px 0;
+    padding: 16px 12px; /* Slight horizontal padding adjustment */
     border-bottom: 1px solid var(--color-bg);
 }
-
 .comment-avatar-img {
     width: 36px;
     height: 36px;
@@ -80,19 +82,16 @@
     flex-shrink: 0;
 }
 
-.comment-body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-}
 
 .comment-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important; 
+    width: 100% !important;
+    gap: 8px !important;
 }
-
 .comment-author {
     font-weight: 700;
     font-size: 0.85rem;
@@ -102,6 +101,7 @@
 .comment-date {
     font-size: 0.75rem;
     color: var(--color-text-muted);
+    margin-left: 6px;
 }
 
 .comment-text-content {
@@ -200,10 +200,10 @@
     justify-content: center;
     gap: 8px;
     padding: 8px 24px;
-    background-color: var(--color-text-muted); /* Gray when inactive */
+    background-color: var(--color-text-muted); 
     color: white;
     border: none;
-    border-radius: 20px; /* Pill shape */
+    border-radius: 20px; 
     font-weight: 600;
     font-size: 0.9rem;
     cursor: not-allowed;
@@ -224,76 +224,48 @@
     opacity: 0.7;
 }
 
-/* =========================================
-   6. MOBILE / TIKTOK SLIDE-UP
-   ========================================= */
-@media (max-width: 768px) {
-    .comment-section {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        margin-left: 0 !important;
-        width: 100% !important;
-        height: 75vh !important;
-        z-index: 2000;
-        border-radius: 24px 24px 0 0;
-        border: none;
-        transform: translateY(100%);
-        visibility: hidden;
-        pointer-events: none;
-        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    }
+/* Target the container box */
+div.comment-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important; /* This will create the physical space between them */
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important; /* Clear the diagnostic red */
+    border: none !important;            /* Clear the diagnostic border */
+    padding: 0 !important;
+}
 
-    .comment-section.is-open {
-        transform: translateY(0);
-        visibility: visible;
-        pointer-events: auto;
-    }
+/* BREAK THE 3D OVERLAP FOR THE BUTTONS */
+div.comment-actions button.action-btn {
+    /* Crucial: This strips the hidden absolute positioning causing the overlay */
+    position: static !important; 
+    
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;  
+    height: 28px !important; 
+    margin: 0 !important;
+    padding: 4px !important;
+    flex-shrink: 0 !important;
+    
+    /* Clear out the diagnostic colors */
+    background-color: transparent !important;
+    border: none !important;
+}
 
-    /* TikTok Drag Handle */
-    .comment-header::before {
-        content: "";
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 36px;
-        height: 4px;
-        background: var(--color-border);
-        border-radius: 10px;
-    }
+/* Keep the icons inside happy */
+div.comment-actions button.action-btn svg {
+    display: block !important;
+    width: 14px !important;
+    height: 14px !important;
 }
 
 
 
-
-/* =========================================
-   8. COMMENT ACTIONS (EDIT/DELETE)
-   ========================================= */
-.comment-actions {
-    display: flex;
-    gap: 8px;
-    margin-left: 10px;
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.2s ease;
-}
-
-/* Show buttons when hovering over the comment */
-.comment-item:hover .comment-actions {
-    opacity: 1;
-}
-
-.action-btn {
-    background: transparent;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    color: var(--color-text-muted);
-    display: flex;
-    align-items: center;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
 
 .action-btn:hover {
     background-color: var(--color-bg);
@@ -301,12 +273,13 @@
 }
 
 .action-btn.delete-btn:hover {
-    color: #ff4d4f; /* Soft red for delete */
-    background-color: #fff1f0;
+    color: #ff4d4f !important; 
+    background-color: #fff1f0 !important;
 }
 
+
 /* =========================================
-   9. EDIT MODE UI
+   7. EDIT MODE UI
    ========================================= */
 .edit-mode {
     display: flex;
@@ -360,14 +333,180 @@
     opacity: 0.8;
 }
 
+/* =========================================
+   8. REPLIES & METRICS LAYOUT
+   ========================================= */
+.nested-reply-item {
+    margin-left: 36px; 
+    border-left: 2px solid #eef0f2;
+    padding-left: 12px;
+    display: flex;
+    
+}
+
+.comment-footer-metrics {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.interaction-link-btn {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+}
+
+.interaction-link-btn.liked {
+    color: #ff3b30; 
+}
+
+.nested-reply-box-input {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
 
 /* =========================================
-   7. DESKTOP STICKY
+   9. RESPONSIVE MEDIA QUERIES
    ========================================= */
+@media (max-width: 768px) {
+    .comment-section {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        height: 75dvh !important; /* Using dvh handles mobile keyboards perfectly */
+        z-index: 2000;
+        border-radius: 24px 24px 0 0;
+        border: none;
+        transform: translateY(100%);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-btn {
+        padding: 6px !important;
+    }
+
+    .comment-actions {
+        /* Force them to always be visible on touch devices instead of relying on mouse hovers */
+        opacity: 1 !important;
+        visibility: visible !important;
+        
+        /* Strip out absolute positioning so they sit natively inline on the same row */
+        position: static !important; 
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important; /* Clean space between Edit and Delete on small touch targets */
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Separate class for smooth open/close animations */
+    .comment-section.with-transition {
+        transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    }
+
+    .comment-section.is-open {
+        transform: translateY(0);
+    }
+
+    /* THE FIX: Lifted the entry bar up vertically to clear bottom navigation bars */
+    .comment-form {
+        position: absolute !important;
+        bottom: 65px !important; /* Adjust this value up or down depending on your main layout's nav bar height */
+        left: 0 !important;
+        width: 100% !important;
+        background: var(--color-card) !important;
+        border-top: 1px solid var(--color-border);
+        z-index: 10;
+        
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        
+        /* Safe padding baseline */
+        padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px) 16px !important;
+    }
+
+    .comment-form .input-wrapper {
+        flex: 1 !important;
+    }
+
+    .comment-form textarea {
+        height: 38px !important;
+        resize: none !important;
+    }
+
+    .comment-form .post-btn {
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 12px !important;
+    }
+
+    /* FIX: Constrain the scrollable list container so it doesn't bleed behind the lifted input bar */
+    .comments-list {
+        height: calc(100% - 180px) !important; 
+        overflow-y: auto !important;
+        padding-bottom: 20px !important;
+    }
+
+    /* TikTok Drag Handle Indicator bar styling */
+    .comment-header {
+        cursor: grab;
+        touch-action: none;
+        padding-top: 24px !important;
+    }
+
+    .comment-header::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 5px;
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    
+    .comment-header:active {
+        cursor: grabbing;
+    }
+}
+
+
+.meta-left-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap; /* Allows text to drop cleanly if the screen gets micro-sized */
+}
+
+
+
+
+
+
+
+
+
+
 @media (min-width: 769px) {
     .comment-section {
         position: sticky !important;
-        top: 80px; /* Adjust based on your Navbar height */
+        top: 80px; 
         transform: none !important;
         visibility: visible !important;
         pointer-events: auto !important;

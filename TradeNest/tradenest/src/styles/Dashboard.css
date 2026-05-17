@@ -298,6 +298,7 @@ body{
     .logo, 
     .search-bar, 
     .nav-link-disabled,
+    .nav-link-badge-container,
     .negotiate-btn {
         display: none !important;
     }
@@ -894,6 +895,44 @@ body{
 .stock-counter-ui.urgent {
   background: rgba(220, 38, 38, 0.7);
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+
+
+/* Container layout adjustment for badge compatibility */
+.nav-link-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Matches your current link layouts */
+    position: relative;
+}
+
+/* Wrapper to isolate position anchor onto the icon itself */
+.link-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Floating Sidebar Badge Styling */
+.sidebar-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #ff3b30; /* Crisp marketplace warning red */
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff; /* Helps the badge pop out from dark/colored backgrounds */
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 
