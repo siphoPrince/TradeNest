@@ -1,77 +1,109 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
-import FilterBar from "./FilterBar"; // Updated to match component rendering name
+import FilterBar from "./FilterBar"; 
 import SearchBar from "../components/SearchBar";
-import { Play, X, Heart, MessageCircle, Share2, ShoppingBag, SearchX } from "lucide-react"; 
+import { Play, X, Heart, MessageCircle, Share2, ShoppingBag, SearchX, MapPin, Users } from "lucide-react"; 
 import "../styles/Explore.css";
 
 const Explore = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     
-    const [posts, setPosts] = useState([]);
+    const [items, setItems] = useState([]); // Represents dynamic state results (products or profiles)
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPost, setSelectedPost] = useState(null);
 
-    // Read URL State Variables Safely (handles null values on mount)
+    // Read URL State Variables Safely
     const searchQuery = searchParams.get("search") || "";
     const activeCategory = searchParams.get("category") || "All";
     const minPrice = searchParams.get("minPrice") || "";
     const maxPrice = searchParams.get("maxPrice") || "";
-    const lat = searchParams.get("lat") || "";
-    const lon = searchParams.get("lon") || "";
+    const activeSuburb = searchParams.get("suburb") || "";
+    const activeCity = searchParams.get("city") || "";
+    const activeProvince = searchParams.get("province") || "";
+    const searchType = searchParams.get("type") || "products";
 
     // Fetch master list of categories once on mount
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await fetch("https://localhost:7124/api/Categories");
-                const data = await response.json();
+                if (!response.ok) throw new Error("Categories bad response");
                 
-                // Defensive check to guarantee an array spreads correctly
+                const responseText = await response.text();
+                const data = responseText ? JSON.parse(responseText) : [];
                 const safeData = Array.isArray(data) ? data : [];
                 setCategories([{ id: 0, name: "All" }, ...safeData]);
             } catch (error) { 
                 console.error("Failed to load categories:", error); 
-                setCategories([{ id: 0, name: "All" }]); // Fallback default state
+                setCategories([{ id: 0, name: "All" }]); 
             }
         };
         fetchCategories();
     }, []);
 
-    // Fetch posts when ANY parameter inside the URL changes
+    // Fetch results dynamically when ANY URL parameter state alterations fire
     useEffect(() => {
-        const fetchPosts = async () => {
+        const fetchSearchResults = async () => {
+            // Guard clause: Prevent empty profile query lookups
+            if (searchType === "creators" && !searchQuery.trim()) {
+                setItems([]);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             try {
-                let url = `https://localhost:7124/api/Posts/explore?`;
-                
-                // Formulate parameters for backend controllers
-                if (activeCategory !== "All") url += `category=${encodeURIComponent(activeCategory)}&`;
-                if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
-                if (minPrice) url += `minPrice=${minPrice}&`;
-                if (maxPrice) url += `maxPrice=${maxPrice}&`;
-                if (lat && lon) url += `lat=${lat}&lon=${lon}&radius=50`;
+                let url = "";
+                const params = new URLSearchParams();
+
+                if (searchType === "creators") {
+                    // 1. Point dynamically to backend profiles search route
+                    params.append("query", searchQuery.trim());
+                    url = `https://localhost:7124/api/profile/search?${params.toString()}`;
+                } else {
+                    // 2. Point to standard catalog item search route
+                    if (activeCategory !== "All") params.append("category", activeCategory);
+                    if (searchQuery) params.append("search", searchQuery.trim());
+                    if (minPrice) params.append("minPrice", minPrice);
+                    if (maxPrice) params.append("maxPrice", maxPrice);
+                    if (activeSuburb) params.append("suburb", activeSuburb);
+                    if (activeCity) params.append("city", activeCity);
+                    if (activeProvince) params.append("province", activeProvince);
+                    
+                    url = `https://localhost:7124/api/Profile/explore?${params.toString()}`;
+                }
 
                 const response = await fetch(url);
-                const data = await response.json();
                 
-                // Unify common .NET Core API layout architectures
-                setPosts(data.data || data || []); 
+                // Fail elegantly if network status code indicates failure
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+
+                const responseText = await response.text();
+                if (!responseText) {
+                    setItems([]);
+                    return;
+                }
+                
+                // Parse out response envelope variations cleanly
+                const data = JSON.parse(responseText);
+                const finalizedItems = Array.isArray(data) ? data : data.data || [];
+                setItems(finalizedItems); 
             } catch (error) { 
-                console.error("Search Fetch Error:", error);
-                setPosts([]); 
-            } finally { 
+                console.error("Explore Fetch Error:", error);
+                setItems([]); 
+            } finally {
                 setLoading(false); 
             }
         };
         
-        fetchPosts();
-    }, [activeCategory, searchQuery, minPrice, maxPrice, lat, lon]);
+        fetchSearchResults();
+    }, [activeCategory, searchQuery, minPrice, maxPrice, activeSuburb, activeCity, activeProvince, searchType]);
 
-    // Handle updating URL when category pills are tapped
     const handleCategorySelect = (categoryName) => {
         const params = new URLSearchParams(searchParams);
         if (categoryName === "All") {
@@ -82,7 +114,6 @@ const Explore = () => {
         navigate(`/explore?${params.toString()}`);
     };
 
-    // Handles updates arriving from advanced FilterDrawer/FilterBar
     const handleApplyDrawerFilters = (updatedFilters) => {
         const params = new URLSearchParams(searchParams);
         
@@ -97,7 +128,6 @@ const Explore = () => {
         navigate(`/explore?${params.toString()}`);
     };
 
-    // Total structural reset
     const handleGlobalClear = () => {
         navigate('/explore');
     };
@@ -110,73 +140,118 @@ const Explore = () => {
 
     const isVideo = (url) => url?.match(/\.(mp4|webm|ogg|mov)$/i);
 
+    const formatLocation = (suburb, city) => {
+        if (suburb && city) return `${suburb}, ${city}`;
+        return suburb || city || "South Africa";
+    };
+
     return (
         <div className="explore-page">
             <Navigation />
             
             <div className="explore-main-content">
-                {/* Actions Toolbar Container */}
-                <div className="explore-toolbar" style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 20px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0' }}>
-                    <SearchBar />
-                    <FilterBar onApply={handleApplyDrawerFilters} />
-                </div>
-
-                <div className="explore-header">
-                    <div className="category-scroll-wrapper">
-                        {/* Null-safe optional chaining fallback */}
-                        {categories?.map((cat) => (
-                            <button 
-                                key={cat?.id || cat?.name}
-                                className={`explore-cat-btn ${activeCategory === cat?.name ? "active" : ""}`}
-                                onClick={() => handleCategorySelect(cat?.name)}
-                            >
-                                {cat?.name}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
                 <div className="explore-container">
-                    {/* Status Info Row */}
-                    {(searchQuery || activeCategory !== "All" || minPrice || maxPrice) && (
-                        <div className="search-status" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
-                            <p style={{ margin: 0 }}>
-                                Showing results 
-                                {activeCategory !== "All" && <span> in <strong>{activeCategory}</strong></span>}
+                    
+                    {/* Centered Structured Search Toolbar */}
+                    <div className="explore-toolbar">
+                        <SearchBar />
+                        {searchType === "products" && <FilterBar onApply={handleApplyDrawerFilters} />}
+                    </div>
+
+                    {/* Only display category pill choices when tracking standard merchandise items */}
+                    {searchType === "products" && (
+                        <div className="explore-header">
+                            <div className="category-scroll-wrapper">
+                                {categories?.map((cat) => (
+                                    <button 
+                                        key={cat?.id || cat?.name}
+                                        className={`explore-cat-btn ${activeCategory === cat?.name ? "active" : ""}`}
+                                        onClick={() => handleCategorySelect(cat?.name)}
+                                    >
+                                        {cat?.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active Filters Context Status Line */}
+                    {(searchQuery || activeCategory !== "All" || minPrice || maxPrice || activeSuburb || activeCity) && (
+                        <div className="search-status">
+                            <p>
+                                Showing {searchType} 
+                                {activeCategory !== "All" && searchType === "products" && <span> in <strong>{activeCategory}</strong></span>}
                                 {searchQuery && <span> for: <strong>"{searchQuery}"</strong></span>}
-                                {(minPrice || maxPrice) && <span> inside price filter</span>}
+                                {(activeSuburb || activeCity) && searchType === "products" && <span> near: <strong>{formatLocation(activeSuburb, activeCity)}</strong></span>}
                             </p>
-                            <button className="clear-search-text" onClick={handleGlobalClear} style={{ background: 'none', border: 'none', color: '#ff3b30', cursor: 'pointer', fontWeight: '500' }}>Clear All</button>
+                            <button className="clear-search-text" onClick={handleGlobalClear}>Clear All</button>
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="explore-loader"><div className="spinner"></div></div>
-                    ) : posts && posts.length > 0 ? (
-                        <div className="explore-grid">
-                            {posts.map((post) => (
-                                <div key={post?.id} className="explore-item" onClick={() => setSelectedPost(post)}>
-                                    {isVideo(post?.mediaUrl) ? (
-                                        <div className="video-wrapper">
-                                            <video src={getMediaUrl(post?.mediaUrl)} className="explore-img" muted playsInline />
-                                            <div className="video-badge"><Play size={14} fill="white" /></div>
-                                        </div>
-                                    ) : (
-                                        <img src={getMediaUrl(post?.mediaUrl)} alt={post?.title || "Explore asset"} className="explore-img" />
-                                    )}
-                                    <div className="explore-item-overlay">
-                                        <div className="overlay-info">
-                                            <span className="overlay-price">R{post?.price}</span>
-                                            <span className="overlay-title">{post?.title}</span>
+                        <div className="explore-loader">
+                            <div className="spinner"></div>
+                        </div>
+                    ) : items && items.length > 0 ? (
+                        searchType === "creators" ? (
+                            /* --- CREATOR / PROFILE ROW GRID VIEW --- */
+                            <div className="creator-search-results">
+                                {items.map((profile) => (
+                                    <div 
+                                        key={profile.userId} 
+                                        className="creator-search-card"
+                                        onClick={() => navigate(`/profile/${profile.userId}`)}
+                                    >
+                                        <img 
+                                            src={profile.imageUrl ? getMediaUrl(profile.imageUrl) : "https://picsum.photos/80"} 
+                                            alt={profile.name}
+                                        />
+                                        <div>
+                                            <span>{profile.name} {profile.surName}</span>
+                                            <small>@{profile.handleName || "creator"}</small>
+                                            {(profile.suburb || profile.city) && (
+                                                <div>
+                                                    <MapPin size={12} />
+                                                    <span>{formatLocation(profile.suburb, profile.city)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* --- TRADITIONAL PRODUCT DISPLAY GRID --- */
+                            <div className="explore-grid">
+                                {items.map((post) => (
+                                    <div key={post?.id} className="explore-item" onClick={() => setSelectedPost(post)}>
+                                        {isVideo(post?.mediaUrl) ? (
+                                            <div className="video-wrapper">
+                                                <video src={getMediaUrl(post?.mediaUrl)} className="explore-img" muted playsInline />
+                                                <div className="video-badge"><Play size={14} fill="white" /></div>
+                                            </div>
+                                        ) : (
+                                            <img src={getMediaUrl(post?.mediaUrl)} alt={post?.title || "Explore asset"} className="explore-img" />
+                                        )}
+                                        
+                                        <div className="explore-item-overlay">
+                                            {(post?.suburb || post?.city) && (
+                                                <div className="card-location-badge">
+                                                    <MapPin size={10} /> {post.suburb || post.city}
+                                                </div>
+                                            )}
+                                            <div className="overlay-info">
+                                                <span className="overlay-price">R{post?.price}</span>
+                                                <span className="overlay-title">{post?.title}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     ) : (
                         <div className="no-results-container">
                             <SearchX size={64} strokeWidth={1} />
-                            <h3>No items found</h3>
+                            <h3>No {searchType} found</h3>
                             <p>Try searching for something else or resetting your global filters.</p>
                         </div>
                     )}
@@ -197,13 +272,22 @@ const Explore = () => {
                         </div>
                         <div className="modal-info-side">
                             <div className="modal-user-header">
-                                <div className="avatar small">{selectedPost?.handleName?.[0] || "U"}</div>
-                                <strong>{selectedPost?.handleName || "User"}</strong>
+                                <div className="avatar small" style={{ backgroundImage: selectedPost?.avatarUrl ? `url(${getMediaUrl(selectedPost.avatarUrl)})` : 'none', backgroundSize: 'cover' }}>
+                                    {!selectedPost?.avatarUrl && (selectedPost?.handleName?.[0] || "U")}
+                                </div>
+                                <strong style={{ cursor: 'pointer' }} onClick={() => navigate(`/profile/${selectedPost.userId}`)}>
+                                    @{selectedPost?.handleName || "User"}
+                                </strong>
                             </div>
                             <div className="modal-body">
                                 <h3>{selectedPost?.title}</h3>
                                 <p className="modal-description">{selectedPost?.description || "No description provided."}</p>
                                 <h2 className="modal-price">R{selectedPost?.price}</h2>
+                                
+                                <p style={{ fontSize: '13px', color: '#555', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '6px', border: '1px solid #eee' }}>
+                                    <MapPin size={14} style={{ color: '#007aff' }} /> 
+                                    <span>Available for meetup/escrow in: <strong>{formatLocation(selectedPost?.suburb, selectedPost?.city)}</strong></span>
+                                </p>
                             </div>
                             <div className="modal-actions">
                                 <button className="btn-primary buy-btn">

@@ -73,9 +73,7 @@ const ManageListings = () => {
                     <button className={view === "inventory" ? "tab-active" : "tab-inactive"} onClick={() => setView("inventory")}>
                         Inventory ({posts.length})
                     </button>
-                    <button className={view === "payments" ? "tab-active" : "tab-inactive"} onClick={() => setView("payments")}>
-                        Payouts
-                    </button>
+                   
                 </div>
 
                 {view === "inventory" ? (

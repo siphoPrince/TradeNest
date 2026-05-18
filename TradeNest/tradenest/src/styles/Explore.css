@@ -1,8 +1,9 @@
 /* Container Layout */
 .explore-page {
     display: flex;
-    background-color: var(--color-bg, #fafafa);
+    background-color: #fafafa;
     min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .explore-main-content {
@@ -10,25 +11,44 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 0 24px;
 }
 
-/* Category Navigation (Instagram Stories Style) */
+/* The Core Grid Wrapper */
+.explore-container {
+    width: 100%;
+    max-width: 960px; /* Aligns perfectly with content grid structures */
+    padding: 30px 0 60px 0;
+}
+
+/* Modernized Custom Toolbar Area */
+.explore-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Strip down raw nested elements inside custom search inputs to look clean */
+.explore-toolbar > div {
+    flex: 1;
+}
+
+/* Category Navigation (Clean Pill Selection Style) */
 .explore-header {
     width: 100%;
-    max-width: 935px;
-    padding: 20px 0;
-    position: sticky;
-    top: 0;
-    background: var(--color-bg, #fafafa);
-    z-index: 10;
+    padding: 10px 0 25px 0;
+    background: #fafafa;
 }
 
 .category-scroll-wrapper {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
-    padding: 0 20px;
     scrollbar-width: none;
+    padding-bottom: 5px;
 }
 
 .category-scroll-wrapper::-webkit-scrollbar {
@@ -36,43 +56,59 @@
 }
 
 .explore-cat-btn {
-    padding: 6px 16px;
-    border-radius: 8px;
-    border: 1px solid #dbdbdb;
+    padding: 8px 18px;
+    border-radius: 100px; /* Pill Styling */
+    border: 1px solid #e6e6e6;
     background: #fff;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #262626;
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.explore-cat-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
 }
 
 .explore-cat-btn.active {
-    background: #262626;
+    background: #111;
     color: #fff;
-    border-color: #262626;
+    border-color: #111;
+    font-weight: 600;
+}
+
+/* Search Information Header Layout */
+.search-status {
+    width: 100%;
+    margin-bottom: 20px;
 }
 
 /* The Grid System */
-.explore-container {
-    width: 100%;
-    max-width: 935px; /* Standard Instagram width */
-    padding: 0 0 50px 0;
-}
-
 .explore-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 28px; /* Desktop gap */
+    gap: 20px; /* Polished layout spacing */
 }
 
-/* The Grid Item (Square) */
+/* The Grid Item (Premium Grid Card Look) */
 .explore-item {
     position: relative;
-    aspect-ratio: 1 / 1; /* Makes it a perfect square */
-    background-color: #efefef;
+    aspect-ratio: 1 / 1;
+    background-color: #f0f0f0;
+    border-radius: 12px; /* Smooth rounded grid items */
     overflow: hidden;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.explore-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
 }
 
 .explore-img {
@@ -83,96 +119,59 @@
     transition: transform 0.5s ease;
 }
 
-/* Overlay on Hover */
+/* High Visibility Overlay Styles on Hover */
 .explore-item-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.25s ease;
     color: #fff;
-    padding: 15px;
-    text-align: center;
+    padding: 16px;
+    text-align: left;
+    box-sizing: border-box;
 }
 
 .explore-item:hover .explore-item-overlay {
     opacity: 1;
 }
 
-.explore-item:hover .explore-img {
-    transform: scale(1.05);
+.overlay-info {
+    width: 100%;
 }
 
 .overlay-price {
     display: block;
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
 }
 
 .overlay-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 400;
-    margin-top: 5px;
+    opacity: 0.95;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* --- Responsive States --- */
-
-@media (max-width: 768px) {
-    .explore-grid {
-        gap: 3px; /* Instagram's signature thin gap on mobile */
-    }
-
-    .explore-container {
-        padding: 0;
-    }
-
-    .explore-item-overlay {
-        display: none; /* Instagram hides overlays on mobile grid */
-    }
+/* Location Badge inside Card Layouts */
+.card-location-badge {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
+    font-weight: 500;
 }
 
-/* Phone Screen (Stay 3x3) */
-@media (max-width: 480px) {
-    .explore-header {
-        padding: 10px 0;
-    }
-    
-    .explore-cat-btn {
-        font-size: 0.8rem;
-        padding: 5px 12px;
-    }
-}
-
-/* Loader Styling */
-.explore-loader {
-    padding: 50px;
-    text-align: center;
-    color: #8e8e8e;
-}
-
-.spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #262626;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 10px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Existing container and grid styles remain the same... */
-
+/* Video Indicators and Wrappers */
 .video-wrapper {
     width: 100%;
     height: 100%;
@@ -182,159 +181,125 @@
 video.explore-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures video fills the 1:1 square */
+    object-fit: cover;
     display: block;
     background-color: #000;
 }
 
-/* Video Indicator (Top Right) */
 .video-badge {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 12px;
+    right: 12px;
     color: white;
     z-index: 2;
     pointer-events: none;
-    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
+    background: rgba(0,0,0,0.5);
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
 }
 
-/* Ensure the overlay sits on top of everything */
-.explore-item-overlay {
-    z-index: 5;
+/* Creator Layout Configurations */
+.creator-search-card {
+    border: 1px solid #eaeaea !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s ease !important;
 }
 
-/* Smooth zoom transition for videos too */
-.explore-item:hover video.explore-img {
-    transform: scale(1.05);
+.creator-search-card:hover {
+    transform: translateY(-2px);
+    border-color: #ccc !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* Mobile Adjustments for Video */
-@media (max-width: 768px) {
-    .video-badge {
-        top: 5px;
-        right: 5px;
-        transform: scale(0.8);
-    }
-}
-
-
-
-/* --- pop up ---*/
-/* --- Modal Overlay --- */
+/* --- Pop Up Modal Architecture Fixes --- */
 .explore-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Dark blur effect */
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
-    padding: 20px;
-    backdrop-filter: blur(5px);
+    z-index: 9999; /* Force over header navigation */
+    padding: 40px;
+    backdrop-filter: blur(12px);
 }
 
-.modal-close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    z-index: 2100;
-}
-
-/* --- Modal Layout --- */
 .explore-modal-content {
-    background: var(--color-card);
+    background: #ffffff;
     width: 100%;
-    max-width: 1100px;
-    height: 85vh;
-    display: flex; /* Split screen */
-    border-radius: var(--radius-md);
+    max-width: 1020px;
+    height: 80vh;
+    display: flex;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 24px 50px rgba(0,0,0,0.25);
 }
 
 .modal-media-side {
-    flex: 1.4;
-    background: #000;
+    flex: 1.3;
+    background: #0f0f0f;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.modal-media-side img, 
-.modal-media-side video {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
 }
 
 .modal-info-side {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--color-card);
-    border-left: 1px solid var(--color-border);
+    background: #ffffff;
+    border-left: 1px solid #efefef;
 }
 
-/* --- Modal Elements --- */
-.modal-user-header {
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid var(--color-border);
+/* --- Loader Elements --- */
+.explore-loader {
+    padding: 100px 0;
+    text-align: center;
 }
 
-.modal-body {
-    padding: 1.5rem;
-    flex: 1;
-    overflow-y: auto;
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #111;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.modal-description {
-    margin: 1rem 0;
-    color: var(--color-text-muted);
-    line-height: 1.5;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-.modal-price {
-    color: var(--color-primary);
-    font-size: 1.8rem;
-    font-weight: 800;
+/* --- Responsive Adjustments --- */
+@media (max-width: 900px) {
+    .explore-grid {
+        gap: 12px;
+    }
 }
 
-.modal-actions {
-    padding: 1.5rem;
-    border-top: 1px solid var(--color-border);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.action-icons {
-    display: flex;
-    gap: 15px;
-    color: var(--color-text-dark);
-}
-
-.buy-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px;
-    font-weight: 700;
-}
-
-/* --- Mobile Fix for Modal --- */
 @media (max-width: 768px) {
+    .explore-main-content {
+        padding: 0 12px;
+    }
+    .explore-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2x2 grid on mobile viewports for visibility */
+        gap: 8px;
+    }
+    .explore-item {
+        border-radius: 8px;
+    }
+    .explore-item-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+    }
     .explore-modal-content {
         flex-direction: column;
         height: 90vh;

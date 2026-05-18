@@ -19,6 +19,7 @@ import MyOrders from "./pages/MyOrders";
 import PaymentError from "./pages/PaymentError";
 import ResetPassword from "./components/UpdatePassword";
 import Activity from "./pages/Activity";
+import Message from "./pages/Inbox";
 
 function App() {
   // Run this as early as possible to prevent "flashing" white on load
@@ -37,7 +38,8 @@ if (savedTheme === 'dark') {
         <Route path="/explore" element={<Explore />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/inbox" element={<Inbox />} />
+        <Route path="/Messages" element={<Message />} />
+        <Route path="/inbox" element={<Message />} />
         <Route path="/buyNow" element={<BuyNow />} />
         <Route path="/Manage" element={<ManageListings />} />
         <Route path="/edit-post/:id" element={<EditListing />} />

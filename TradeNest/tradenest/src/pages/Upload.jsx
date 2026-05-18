@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef } from "react"; // Added useRef
+import React, { useState, useCallback, useRef } from "react"; 
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
-import { Camera, Upload as UploadIcon, X } from "lucide-react"; // Nice icons
+import { Camera, Upload as UploadIcon, X, Radio, Square } from "lucide-react"; 
 import axios from "axios";
 import Navigation from "../components/Navigation";
 import "../styles/Upload.css";
@@ -9,6 +9,9 @@ import "../styles/Upload.css";
 const Upload = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null); 
+  const videoPreviewRef = useRef(null); // Added for in-app camera viewfinder feed
+  const mediaRecorderRef = useRef(null); // Track runtime recording instances
+  
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
 
@@ -25,21 +28,27 @@ const Upload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(""); 
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Live Recording Control Engine States
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [recordedChunks, setRecordedChunks] = useState([]);
   
   const handleTagKeyDown = (e) => {
-  if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
-    e.preventDefault();
-    const newTag = tagInput.trim().replace(",", "");
-    if (!tags.includes(newTag)) {
-      setTags([...tags, newTag]);
+    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim().replace(",", "");
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput("");
     }
-    setTagInput("");
-  }
-};
+  };
 
-const removeTag = (tagToRemove) => {
-  setTags(tags.filter((t) => t !== tagToRemove));
-};
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter((t) => t !== tagToRemove));
+  };
 
   const handleUpload = async () => {
     const token = localStorage.getItem("token");
@@ -104,7 +113,6 @@ const removeTag = (tagToRemove) => {
   };
 
   const onDrop = useCallback((acceptedFiles) => {
-    // Only take the first file since we're doing video-only listings
     const file = acceptedFiles[0];
     if (file) {
       setFiles([
@@ -117,28 +125,124 @@ const removeTag = (tagToRemove) => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "video/*": [] }, // RESTRICT TO VIDEO ONLY
+    accept: { "video/*": [] }, 
     multiple: false
   });
 
-  const removeFile = (name) => {
+  const removeFile = () => {
     setFiles([]);
   };
 
-  // Function to trigger the native camera
-  const handleCameraClick = () => {
-    fileInputRef.current.click();
+  // =========================================
+  // INTEGRATED NATIVE IN-APP CAPTURE LOGIC
+  // =========================================
+
+  const startCamera = async () => {
+    setErrorMessage("");
+    setIsCameraActive(true);
+    setRecordedChunks([]);
+
+    // Strategy 1: Attempt to grab the back camera first
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment", 
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: true
+      });
+
+      setCameraStream(stream);
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      // Strategy 2: If back camera is not found, fallback to ANY available camera (like your webcam)
+      if (err.name === "NotFoundError" || err.name === "OverconstrainedError") {
+        console.log("Rear camera not found, falling back to default webcam...");
+        try {
+          const fallbackStream = await navigator.mediaDevices.getUserMedia({
+            video: true, // Just get whatever camera is plugged in
+            audio: true
+          });
+
+          setCameraStream(fallbackStream);
+          if (videoPreviewRef.current) {
+            videoPreviewRef.current.srcObject = fallbackStream;
+          }
+        } catch (fallbackErr) {
+          console.error("Complete camera failure:", fallbackErr);
+          setErrorMessage("No functional camera device detected on this system.");
+          setIsCameraActive(false);
+        }
+      } else {
+        // Handle explicit user permission denials or blocks
+        console.error("Camera access error:", err);
+        setErrorMessage("Could not launch device viewfinder. Please check permissions or SSL config.");
+        setIsCameraActive(false);
+      }
+    }
   };
 
-  const handleCapture = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFiles([
-        Object.assign(file, {
-          preview: URL.createObjectURL(file),
-        })
-      ]);
+  const startRecording = () => {
+    if (!cameraStream) return;
+    
+    setRecordedChunks([]);
+    
+    const options = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? { mimeType: "video/webm;codecs=vp9" }
+      : { mimeType: "video/webm" };
+
+    const mediaRecorder = new MediaRecorder(cameraStream, options);
+    mediaRecorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        setRecordedChunks((prev) => [...prev, event.data]);
+      }
+    };
+
+    mediaRecorder.start(10); // Capture data stream chunks every 10ms
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      // Delay processing slightly to guarantee the last async data blocks finish dropping into the buffer array
+      setTimeout(() => {
+        setRecordedChunks((chunks) => {
+          if (chunks.length === 0) return chunks;
+          
+          const videoBlob = new Blob(chunks, { type: "video/mp4" });
+          const generatedFile = new File([videoBlob], `cylo-recording-${Date.now()}.mp4`, {
+            type: "video/mp4",
+          });
+
+          setFiles([
+            Object.assign(generatedFile, {
+              preview: URL.createObjectURL(generatedFile),
+            })
+          ]);
+          
+          // Power down hardware tracks clean
+          closeCameraViewport(cameraStream);
+          return [];
+        });
+      }, 100);
     }
+  };
+
+  const closeCameraViewport = (activeStream = cameraStream) => {
+    if (activeStream) {
+      activeStream.getTracks().forEach((track) => track.stop());
+    }
+    setCameraStream(null);
+    setIsCameraActive(false);
+    setIsRecording(false);
   };
 
   return (
@@ -154,6 +258,44 @@ const removeTag = (tagToRemove) => {
               <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
             </div>
             <p>{uploadProgress}% Uploaded</p>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================
+          TIKTOK-STYLE LIVE CAMERA VIEW OVERLAY
+         ========================================= */}
+      {isCameraActive && (
+        <div className="camera-viewfinder-overlay">
+          <div className="viewfinder-window">
+            <video 
+              ref={videoPreviewRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              className="live-camera-feed"
+            />
+            
+            <div className="viewfinder-header">
+              <span className="live-badge">{isRecording ? "🔴 RECORDING" : "STANDBY"}</span>
+              <button className="close-viewfinder-btn" onClick={() => closeCameraViewport()}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="viewfinder-controls">
+              {!isRecording ? (
+                <button className="record-trigger-btn start" onClick={startRecording}>
+                  <Radio size={28} />
+                  <span>Start Record</span>
+                </button>
+              ) : (
+                <button className="record-trigger-btn stop" onClick={stopRecording}>
+                  <Square size={28} />
+                  <span>Stop & Save</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -179,19 +321,10 @@ const removeTag = (tagToRemove) => {
                   <p>Upload Video</p>
                 </div>
 
-                {/* OPTION 2: TAKE VIDEO (The TikTok way) */}
-                <div className="camera-zone" onClick={handleCameraClick}>
+                {/* OPTION 2: LIVE CAMERA INTERACTION PORTAL */}
+                <div className="camera-zone" onClick={startCamera}>
                    <Camera size={32} />
                    <p>Record Video</p>
-                   {/* Capture="environment" tells the phone to use the back camera */}
-                   <input 
-                    type="file" 
-                    accept="video/*" 
-                    capture="environment" 
-                    ref={fileInputRef} 
-                    style={{display: 'none'}} 
-                    onChange={handleCapture}
-                   />
                 </div>
               </div>
             ) : (

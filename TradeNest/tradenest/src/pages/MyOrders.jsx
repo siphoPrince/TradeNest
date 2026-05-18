@@ -4,16 +4,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, AlertTriangle, Check, User, Tag, Loader2, CreditCard, Trash2, XCircle, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'; 
 import '../styles/MyOrders.css'; 
 
-const API_BASE_URL = 'https://localhost:7124/api/Payments';
+// Split base targets to cleanly respect our separated controller layout
+const ORDERS_API_URL = 'https://localhost:7124/api/orders';
+const PAYMENTS_API_URL = 'https://localhost:7124/api/payments';
 
 const getStatusClass = (status) => {
     const s = status?.toUpperCase();
-    if (s === 'FUNDS_DEPOSITED' || s === 'DEPOSITED') return 'status-success';
-    if (s === 'COMPLETED' || s === 'FUNDS_RELEASED') return 'status-completed';
-    if (s === 'DISPUTED' || s === 'CANCELLING') return 'status-disputed'; 
+    if (s === 'FUNDS_DEPOSITED') return 'status-success';
+    if (s === 'COMPLETED' || s === 'DELIVERED') return 'status-completed';
+    if (s === 'DISPUTED') return 'status-disputed'; 
     if (s === 'CREATED') return 'status-created';
-    if (s === 'CANCELLED' || s === 'REFUNDED' || s === 'CANCELED') return 'status-neutral'; 
-    if (s === 'DELIVERY' || s === 'INITIATED' || s === 'IN_TRANSIT') return 'status-handover';
+    if (s === 'CANCELED') return 'status-neutral'; 
+    if (['DELIVERY_STARTED', 'IN_TRANSIT'].includes(s)) return 'status-handover';
     return 'status-default';
 };
 
@@ -36,7 +38,7 @@ const MyOrders = () => {
     const location = useLocation();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('buying');
+    const [view, setView] = useState('buying'); // 'buying' or 'selling'
     
     const [searchTerm, setSearchTerm] = useState(''); 
     const [currentPage, setCurrentPage] = useState(1);
@@ -46,7 +48,7 @@ const MyOrders = () => {
     // Actions & Form Modals State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [modalMode, setModalMode] = useState('dispute'); 
+    const [modalMode, setModalMode] = useState('dispute'); // 'dispute' or 'refund'
     const [disputeReason, setDisputeReason] = useState('');
     
     // Modern UI Popups State Replacement
@@ -78,29 +80,35 @@ const MyOrders = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Fetch Orders implementation
+    // Fetch Orders implementation mapped to dedicated role endpoints
     const fetchOrders = useCallback(async (showLoading = true, pageToFetch = currentPage, searchVal = debouncedSearch) => {
         if (!currentUserId) return;
         if (showLoading) setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/my-orders/${currentUserId}`, {
+            // Re-routed directly to OrdersController roles endpoints
+            const response = await axios.get(`${ORDERS_API_URL}/${view}/${currentUserId}`, {
                 params: {
                     page: pageToFetch,
                     pageSize: ordersPerPage,
-                    view: view,
                     search: searchVal.trim() 
                 }
             });
             
-            setOrders(response.data.items || []);
-            setTotalPages(response.data.totalPages || 1);
+            // Client side handling fallback if backend returns raw list array or pagination wrapper
+            if (Array.isArray(response.data)) {
+                setOrders(response.data);
+                setTotalPages(Math.ceil(response.data.length / ordersPerPage) || 1);
+            } else {
+                setOrders(response.data.items || []);
+                setTotalPages(response.data.totalPages || 1);
+            }
         } catch (error) {
             console.error("Error fetching orders:", error);
             showToast("Failed to fetch up-to-date order records.", "error");
         } finally {
             if (showLoading) setLoading(false);
         }
-    }, [view, currentUserId, ordersPerPage]); 
+    }, [view, currentUserId, ordersPerPage, currentPage, debouncedSearch]); 
 
     // Sync views when page context elements update
     useEffect(() => {
@@ -136,7 +144,7 @@ const MyOrders = () => {
     // Background escrow listener sync
     useEffect(() => {
         const hasActiveTransactions = orders.some(o => 
-            ['CREATED', 'FUNDS_DEPOSITED', 'DEPOSITED', 'INITIATED', 'DELIVERY', 'IN_TRANSIT'].includes(o.status?.toUpperCase())
+            ['CREATED', 'FUNDS_DEPOSITED', 'DELIVERY_STARTED', 'IN_TRANSIT'].includes(o.status?.toUpperCase())
         );
 
         if (hasActiveTransactions) {
@@ -159,7 +167,7 @@ const MyOrders = () => {
         }
     };
 
-    // Replaced window.confirm wrapper
+    // Deletes tracking transaction via the dedicated Payments clean-up endpoint
     const handleDeleteOrder = (orderId) => {
         setCustomConfirm({
             show: true,
@@ -169,7 +177,7 @@ const MyOrders = () => {
             onConfirm: async () => {
                 setProcessingOrders(prev => ({ ...prev, [orderId]: true }));
                 try {
-                    await axios.delete(`${API_BASE_URL}/delete-transaction/${orderId}`);
+                    await axios.delete(`${PAYMENTS_API_URL}/delete-transaction/${orderId}`);
                     setOrders(prev => prev.filter(o => o.id !== orderId));
                     showToast("Order transaction successfully wiped.", "success");
                 } catch (error) {
@@ -181,17 +189,17 @@ const MyOrders = () => {
         });
     };
 
-    // Replaced window.confirm wrapper
+    // Buyer manually confirms early release/acceptance of funds via OrdersController
     const handleRelease = (orderId) => {
         setCustomConfirm({
             show: true,
-            title: "Confirm Meetup Delivery",
+            title: "Confirm Delivery Receipt",
             message: "Only release secure funds if you have explicitly inspected your item and are completely satisfied with the handover.",
             type: "success",
             onConfirm: async () => {
                 setProcessingOrders(prev => ({ ...prev, [orderId]: true }));
                 try {
-                    const response = await axios.post(`${API_BASE_URL}/release-funds/${orderId}`);
+                    const response = await axios.post(`${ORDERS_API_URL}/${orderId}/release`);
                     const finalStatus = response.data.status || 'COMPLETED';
                     
                     setOrders(prev => prev.map(o => 
@@ -199,7 +207,7 @@ const MyOrders = () => {
                     ));
                     showToast("Payment release triggered successfully! Transaction complete.", "success");
                 } catch (error) {
-                    showToast(error.response?.data?.message || "Action failed. Escrow framework might still be processing parameters.", "error");
+                    showToast(error.response?.data?.message || "Action failed. Escrow parameters might still be processing.", "error");
                 } finally {
                     setProcessingOrders(prev => ({ ...prev, [orderId]: false }));
                 }
@@ -207,22 +215,24 @@ const MyOrders = () => {
         });
     };
 
+    // Handles modal processing for Cancellations (Payments) and Disputes (Orders)
     const handleModalSubmit = async () => {
         if (!disputeReason.trim()) return showToast("Please select a valid reason to proceed.", "warning");
         setProcessingOrders(prev => ({ ...prev, [selectedOrder.id]: true }));
         
+        // Point modal submissions to their respectively owned controllers
         const endpoint = modalMode === 'refund' 
-            ? `${API_BASE_URL}/refund-transaction/${selectedOrder.id}`
-            : `${API_BASE_URL}/dispute-transaction/${selectedOrder.id}`;
+            ? `${PAYMENTS_API_URL}/refund-transaction/${selectedOrder.id}`
+            : `${ORDERS_API_URL}/${selectedOrder.id}/dispute`;
 
         try {
             await axios.post(
                 endpoint, 
-                { reason: disputeReason }, 
+                modalMode === 'refund' ? { reason: disputeReason } : { reason: disputeReason }, 
                 { headers: { 'Content-Type': 'application/json' } }
             );
             
-            const targetedStatus = modalMode === 'refund' ? 'REFUNDED' : 'DISPUTED';
+            const targetedStatus = modalMode === 'refund' ? 'CANCELED' : 'DISPUTED';
             setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, status: targetedStatus } : o));
             setIsModalOpen(false);
             setDisputeReason('');
@@ -234,23 +244,23 @@ const MyOrders = () => {
         }
     };
 
-    // Replaced window.confirm wrapper
+    // Seller begins delivery track via OrdersController
     const handleStartHandover = (orderId) => {
         setCustomConfirm({
             show: true,
             title: "Initiate Product Delivery Handover",
-            message: "Are you physically with the buyer right now? This step alerts their app console to release transaction escrow instantly.",
+            message: "This will start the shipping/handover timeline on TradeSafe. Ready to hand over or ship the item?",
             type: "warning",
             onConfirm: async () => {
                 setProcessingOrders(prev => ({ ...prev, [orderId]: true }));
                 try {
-                    const response = await axios.post(`${API_BASE_URL}/start-handover/${orderId}`);
-                    const newStatus = response.data.status || 'INITIATED';
+                    const response = await axios.post(`${ORDERS_API_URL}/${orderId}/start-delivery`);
+                    const newStatus = response.data.status || 'DELIVERY_STARTED';
                     
                     setOrders(prev => prev.map(o => 
                         o.id === orderId ? { ...o, status: newStatus } : o
                     ));
-                    showToast("Handover activated! Request buyer confirmation notification receipt.", "success");
+                    showToast("Handover track activated successfully!", "success");
                 } catch (error) {
                     showToast(error.response?.data?.message || "Could not register initial handover state.", "error");
                 } finally {
@@ -336,7 +346,7 @@ const MyOrders = () => {
                                     return (
                                         <tr key={order.id}>
                                             <td data-label="Order">#{order.id}</td>
-                                            <td data-label="Item">{order.itemDescription}</td>
+                                            <td data-label="Item">{order.itemDescription || (order.post && order.post.title) || 'Marketplace Item'}</td>
                                             <td data-label="Amount">R{order.amount}</td>
                                             <td data-label="Date & Time" style={{ fontSize: '13px', color: '#4b5563' }}>
                                                 {formatOrderDate(order.createdAt)} 
@@ -348,21 +358,36 @@ const MyOrders = () => {
                                             </td>
                                             <td data-label="Actions">
                                                 <div className="action-group">
-                                                    <button className="icon-btn" onClick={() => navigate(`/inbox?orderId=${order.id}`)}>
+                                                    <button 
+                                                        className="icon-btn" 
+                                                        onClick={() => {
+                                                            const loggedInUserId = localStorage.getItem("userId");
+                                                            const targetUserId = String(order.buyerId) === String(loggedInUserId) 
+                                                                ? order.sellerId 
+                                                                : order.buyerId;
+
+                                                            navigate(`/messages?orderId=${order.id}&userId=${targetUserId}`);
+                                                        }}
+                                                    >
                                                         <MessageSquare size={16} />
                                                     </button>
 
-                                                    {['DISPUTED', 'CANCELLING'].includes(orderStatus) ? (
+                                                    {orderStatus === 'DISPUTED' ? (
                                                         <div className="dispute-lockout-badge">
                                                             <span>⚠️ Funds Frozen in Escrow</span>
                                                         </div>
-                                                    ) : ['CANCELLED', 'REFUNDED', 'CANCELED'].includes(orderStatus) ? (
+                                                    ) : orderStatus === 'CANCELED' ? (
                                                         <div className="dispute-lockout-badge">
-                                                            <span>Funds Locked Securely</span>
+                                                            <span>Transaction Canceled</span>
+                                                        </div>
+                                                    ) : orderStatus === 'COMPLETED' ? (
+                                                        <div className="dispute-lockout-badge success-payout-badge">
+                                                            <span>Funds Released Safely</span>
                                                         </div>
                                                     ) : (
                                                         <>
-                                                            {['CREATED', 'FUNDS_DEPOSITED', 'DEPOSITED'].includes(orderStatus) && (
+                                                            {/* Cancel/Refund applies only before handovers start */}
+                                                            {['CREATED', 'FUNDS_DEPOSITED'].includes(orderStatus) && (
                                                                 <button 
                                                                     className="icon-btn btn-cancel-refund"
                                                                     title="Cancel & Refund Order"
@@ -379,10 +404,11 @@ const MyOrders = () => {
                                                                 </button>
                                                             )}
 
-                                                            {['INITIATED', 'DELIVERY', 'IN_TRANSIT'].includes(orderStatus) && (
+                                                            {/* Disputes are allowed at any time during active processing/transit tracks */}
+                                                            {['DELIVERY_STARTED', 'IN_TRANSIT', 'DELIVERED'].includes(orderStatus) && (
                                                                 <button 
                                                                     className="icon-btn btn-dispute-trigger" 
-                                                                    title="Dispute / Cancel Transaction"
+                                                                    title="Dispute Transaction"
                                                                     disabled={isItemProcessing}
                                                                     onClick={() => {
                                                                         setSelectedOrder(order);
@@ -396,6 +422,7 @@ const MyOrders = () => {
                                                                 </button>
                                                             )}
                                                             
+                                                            {/* BUYER WORKFLOW VISUALS */}
                                                             {view === 'buying' && orderStatus === 'CREATED' && (
                                                                 <>
                                                                     <button disabled={isItemProcessing} onClick={() => handlePaymentRedirect(order.checkoutUrl)} className="btn-pay-action">
@@ -407,28 +434,38 @@ const MyOrders = () => {
                                                                 </>
                                                             )}
 
-                                                            {view === 'buying' && ['FUNDS_DEPOSITED', 'DEPOSITED'].includes(orderStatus) && (
+                                                            {view === 'buying' && orderStatus === 'FUNDS_DEPOSITED' && (
                                                                 <div className="waiting-container text-muted">
-                                                                    <span className="waiting-text" style={{ fontSize: '12px', color: '#6b7280' }}>Waiting for seller to start handover...</span>
+                                                                    <span className="waiting-text" style={{ fontSize: '12px', color: '#6b7280' }}>Waiting for seller to fulfill...</span>
                                                                 </div>
                                                             )}
 
-                                                            {view === 'buying' && ['INITIATED', 'DELIVERY', 'IN_TRANSIT'].includes(orderStatus) && (
+                                                            {view === 'buying' && ['DELIVERY_STARTED', 'IN_TRANSIT'].includes(orderStatus) && (
                                                                 <button disabled={isItemProcessing} onClick={() => handleRelease(order.id)} className="btn-release-action">
                                                                     {isItemProcessing ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />} Confirm Receipt
                                                                 </button>
                                                             )}
 
-                                                            {view === 'selling' && ['FUNDS_DEPOSITED', 'DEPOSITED'].includes(orderStatus) && (
+                                                            {/* SELLER WORKFLOW VISUALS */}
+                                                            {view === 'selling' && orderStatus === 'FUNDS_DEPOSITED' && (
                                                                 <button disabled={isItemProcessing} onClick={() => handleStartHandover(order.id)} className="btn-start-action">
-                                                                    {isItemProcessing ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />} Start Handover
+                                                                    {isItemProcessing ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />} Start Delivery
                                                                 </button>
                                                             )}
+
+                                                            {view === 'buying' && orderStatus === 'DELIVERED' && (
+                                                                <div className="waiting-container protection-window-alert" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                                    <Loader2 className="animate-spin" size={14} style={{ color: '#3b82f6' }} />
+                                                                    <span className="waiting-text" style={{ fontSize: '12px', color: '#2563eb', fontWeight: '500' }}>
+                                                                        Inspection window active. Funds auto-releasing soon.
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                             
-                                                            {view === 'selling' && ['INITIATED', 'DELIVERY', 'IN_TRANSIT'].includes(orderStatus) && (
+                                                            {view === 'selling' && ['DELIVERY_STARTED', 'IN_TRANSIT', 'DELIVERED'].includes(orderStatus) && (
                                                                 <div className="waiting-container">
                                                                     <Loader2 className="animate-spin" size={14} />
-                                                                    <span className="waiting-text">Handover Active: Waiting for buyer...</span>
+                                                                    <span className="waiting-text">Fulfillment Active ({order.status?.replace('_', ' ')})</span>
                                                                 </div>
                                                             )}
                                                         </>

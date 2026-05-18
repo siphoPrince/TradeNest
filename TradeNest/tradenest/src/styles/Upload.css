@@ -339,3 +339,162 @@
   width: 100%;
   outline: none;
 }
+
+
+/* ==========================================================================
+   LIVE VIEWFINDER CAMERA MODAL (Cylo Native Recording System)
+   ========================================================================== */
+
+/* Fullscreen dark backdrop layer */
+.camera-viewfinder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(10, 10, 12, 0.98); /* Deep translucent onyx matching modern premium UI templates */
+    z-index: 9999; /* Forces viewport positioning above navigation layouts */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+/* Emulates smartphone layout bounds on viewport monitors */
+.viewfinder-window {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    max-height: 800px;
+    background: #000000;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Immersive video rendering viewport logic */
+.live-camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Uniformly crops hardware bounds to fill full window frame */
+    background: #000000;
+}
+
+/* Top control strip layer layout mechanics */
+.viewfinder-header {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+/* Live dynamic monitoring system indicators */
+.live-badge {
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Translucent close button modifier overrides */
+.close-viewfinder-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.close-viewfinder-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+/* Bottom triggering deck layout configuration */
+.viewfinder-controls {
+    position: absolute;
+    bottom: 35px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+/* Core shared recording button interaction base */
+.record-trigger-btn {
+    border: none;
+    padding: 14px 28px;
+    border-radius: 40px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.record-trigger-btn:active {
+    transform: scale(0.96);
+}
+
+/* State definitions for tracking mode variations */
+.record-trigger-btn.start {
+    background: #ffffff;
+    color: #000000;
+}
+
+.record-trigger-btn.start:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.record-trigger-btn.stop {
+    background: #ff4d4f; /* Global emergency accent red */
+    color: #ffffff;
+    animation: capturePulse 2s infinite;
+}
+
+.record-trigger-btn.stop:hover {
+    background: #ff7875;
+}
+
+/* Breathing indicator animation to simulate active streaming capturing */
+@keyframes capturePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.6), 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 16px rgba(255, 77, 79, 0), 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0), 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+}

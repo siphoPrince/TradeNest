@@ -18,6 +18,7 @@ const EditProfile = () => {
         bio: "",
         phone: "",
         imageUrl: "",
+        suburb: "", // Added Suburb
         city: "",
         province: "",
         latitude: null,
@@ -54,6 +55,7 @@ const EditProfile = () => {
                         bio: p.bio || "",
                         phone: p.phone || "",
                         imageUrl: p.imageUrl || "",
+                        suburb: p.suburb || "", // Mapped native Suburb string
                         city: p.city || "",
                         province: p.province || "",
                         latitude: p.latitude ?? null,
@@ -80,20 +82,29 @@ const EditProfile = () => {
                     `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
                 );
                 const data = await response.json();
-                const city = data.address.city || data.address.town || data.address.suburb || "Unknown City";
-                const province = data.address.state || "";
+                const addr = data.address || {};
+                
+                // Optimized parsing specific to South African municipal data formats
+                const detectedSuburb = addr.suburb || addr.neighbourhood || addr.residential || "";
+                const detectedCity = addr.city || addr.town || addr.city_district || addr.municipality || "Unknown Location";
+                const province = addr.state || "";
 
                 setProfile(prev => ({
                     ...prev,
-                    city: city,
+                    suburb: detectedSuburb,
+                    city: detectedCity,
                     province: province,
                     latitude: latitude,
                     longitude: longitude
                 }));
-                alert(`Found you in ${city}!`);
+
+                const locationAlertText = detectedSuburb 
+                    ? `Found you near ${detectedSuburb}, ${detectedCity}! 📍` 
+                    : `Found you near ${detectedCity}! 📍`;
+                alert(locationAlertText);
             } catch (error) {
                 console.error("Error naming the location:", error);
-                alert("Coordinates saved, but city name could not be fetched.");
+                alert("Coordinates saved, but location details could not be resolved.");
             } finally {
                 setIsLocating(false);
             }
@@ -106,9 +117,8 @@ const EditProfile = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // If the user is editing the handle, strip out spaces
         if (name === "handleName") {
-            const sanitizedHandle = value.replace(/\s+/g, ""); // Removes all spaces
+            const sanitizedHandle = value.replace(/\s+/g, ""); 
             setProfile({ ...profile, [name]: sanitizedHandle });
         } else {
             setProfile({ ...profile, [name]: value });
@@ -129,17 +139,16 @@ const EditProfile = () => {
 
         const formData = new FormData();
         
-        // Ensure values are strings and not 'undefined'
         formData.append("Id", profile.id.toString());
         formData.append("Name", profile.name || "");
         formData.append("SurName", profile.surName || "");
         formData.append("HandleName", profile.handleName || "");
         formData.append("Bio", profile.bio || "");
         formData.append("Phone", profile.phone || "");
+        formData.append("Suburb", profile.suburb || ""); // Sent cleanly to backend DTO
         formData.append("City", profile.city || "");
         formData.append("Province", profile.province || "");
 
-        // CRITICAL: Only append if they are actual numbers
         if (profile.latitude !== null && profile.latitude !== undefined) {
             formData.append("Latitude", profile.latitude.toString());
         }
@@ -154,11 +163,7 @@ const EditProfile = () => {
         try {
             const response = await fetch(`https://localhost:7124/api/profile/save`, {
                 method: "POST",
-                headers: { 
-                    "Authorization": `Bearer ${token}`
-                    // DO NOT set Content-Type header when sending FormData; 
-                    // the browser will set it automatically with the boundary.
-                },
+                headers: { "Authorization": `Bearer ${token}` },
                 body: formData
             });
 
@@ -221,11 +226,29 @@ const EditProfile = () => {
                         <textarea className="modern-textarea" name="bio" value={profile.bio || ""} onChange={handleChange} placeholder="Tell your story..." rows="4" />
                     </div>
 
+                    {/* Upgraded Location Card with Dual Row Layout */}
                     <div className="edit-card">
-                        <label>Location</label>
-                        <div className="location-field-wrapper">
-                            <input className="modern-input" name="city" value={profile.city || ""} onChange={handleChange} placeholder="City (e.g. Johannesburg)" />
-                            <button className="geo-btn" onClick={getLocation} disabled={isLocating}>
+                        <label>Location Details</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ flex: 1, display: 'flex', gap: '10px' }}>
+                                <input 
+                                    className="modern-input" 
+                                    name="suburb" 
+                                    value={profile.suburb || ""} 
+                                    onChange={handleChange} 
+                                    placeholder="Suburb (e.g. Sandton)" 
+                                    style={{ flex: 1 }}
+                                />
+                                <input 
+                                    className="modern-input" 
+                                    name="city" 
+                                    value={profile.city || ""} 
+                                    onChange={handleChange} 
+                                    placeholder="City (e.g. Johannesburg)" 
+                                    style={{ flex: 1 }}
+                                />
+                            </div>
+                            <button className="geo-btn" onClick={getLocation} disabled={isLocating} style={{ height: '44px', shrink: 0 }}>
                                 {isLocating ? "..." : <MapPin size={18} />}
                             </button>
                         </div>

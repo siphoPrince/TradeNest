@@ -13,17 +13,19 @@ import {
     Bookmark,
     Grid,
     User,
-    Bell
+    Bell,
+    MapPin 
 } from 'lucide-react';
 import Navigation from "../components/Navigation";
 import "../styles/Profile.css";
 import "../styles/Follow.css";
+import ProductCard from "../components/ProductCard";
 
 const Profile = () => {
     const [userPosts, setUserPosts] = useState([]);
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
-    const [profile, setProfile] = useState(null);
+    const [profile, setProfile] = useState(null); 
     const [selectedPostIndex, setSelectedPostIndex] = useState(null);
     const [activeTab, setActiveTab] = useState("listings");
     const [savedPosts, setSavedPosts] = useState([]);
@@ -92,7 +94,6 @@ const Profile = () => {
         }
     }, [activeTab]);
 
-    // Combined profile data loading and initial badge counts call
     useEffect(() => {
         const fetchProfileData = async () => {
             const token = localStorage.getItem("token");
@@ -101,7 +102,6 @@ const Profile = () => {
             if (!targetUserId || targetUserId === "undefined") return;
 
             try {
-                // Fetch direct badge counts for the initial page load layout
                 if (isOwnProfile) {
                     fetch(`https://localhost:7124/api/notifications/unread-counts/${targetUserId}`)
                         .then(res => res.ok ? res.json() : null)
@@ -122,12 +122,17 @@ const Profile = () => {
 
                 if (profileResponse.ok) {
                     const data = await profileResponse.json();
+                    
                     setProfile({
                         ...data.profile,
                         email: data.profile.user?.email,
                         tradeSafeId: data.profile.user?.tradeSafeRecipientId,
                         followersCount: data.followersCount || 0,
-                        followingCount: data.followingCount || 0
+                        followingCount: data.followingCount || 0,
+                        soldCount: data.profile.soldCount || 0, // Maps counter safely from database schema
+                        suburb: data.profile.suburb || "",
+                        city: data.profile.city || "",
+                        province: data.profile.province || ""
                     });
                     if (data.isFollowing !== undefined) setIsFollowing(data.isFollowing);
                 }
@@ -182,7 +187,6 @@ const Profile = () => {
         }
     };
 
-    // Listens to background events broadcasted from Navigation.jsx
     useEffect(() => {
         const handleCountsUpdate = (e) => {
             if (e.detail) {
@@ -265,6 +269,20 @@ const Profile = () => {
                             <span className="userName">{profile?.name} {profile?.surName}</span>
                             <small className="userHandle">@{profile?.handleName || "user"}</small>
                             <small className="bio">{profile?.bio || "No bio yet."}</small>
+
+                            <div className="profile-meta-info">
+                                {(profile?.suburb || profile?.city) && (
+                                    <div className="profile-location-tag" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#666', fontSize: '13px', marginTop: '6px' }}>
+                                        <MapPin size={15} style={{ color: '#ff3b30' }} />
+                                        <span>
+                                            Based in <strong>
+                                                {profile.suburb ? `${profile.suburb}, ` : ""}{profile.city}
+                                            </strong>
+                                            {profile.province && <span style={{ color: '#999' }}> ({profile.province})</span>}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="profile-actions">
                                 {isOwnProfile ? (
@@ -399,82 +417,36 @@ const Profile = () => {
             )}
 
             {/* --- TIKTOK STYLE VIEWER --- */}
-            {selectedPostIndex !== null && (
-                <div className="tt-overlay" onClick={() => setSelectedPostIndex(null)}>
-                    <button className="tt-close" onClick={() => setSelectedPostIndex(null)}>
-                        <X size={30} color="white" />
-                    </button>
-
-                    <div className="tt-feed-container" onClick={(e) => e.stopPropagation()}>
-                        <div className="tt-slide">
-                            {(() => {
-                                const post = activeTab === "saved" ? currentViewPosts[selectedPostIndex].post : currentViewPosts[selectedPostIndex];
-                                return (
-                                    <>
-                                        <div className="tt-media-wrapper">
-                                            {isVideo(post.mediaUrl) ? (
-                                                <video
-                                                    src={getMediaUrl(post.mediaUrl)}
-                                                    autoPlay
-                                                    loop
-                                                    controls
-                                                    playsInline
-                                                />
-                                            ) : (
-                                                <img src={getMediaUrl(post.mediaUrl)} alt="" />
-                                            )}
-                                        </div>
-
-                                        <div className="tt-side-actions">
-                                            <div className="tt-action">
-                                                <div className="tt-avatar-circle" onClick={() => setSelectedPostIndex(null)}>
-                                                    <img src={profile?.imageUrl ? getMediaUrl(profile.imageUrl) : "https://picsum.photos/120"} alt="" />
-                                                    {!isOwnProfile && <div className="tt-plus-icon">+</div>}
-                                                </div>
-                                            </div>
-                                            <div className="tt-action"><Heart size={28} fill="white" /><small>Like</small></div>
-                                            <div className="tt-action" onClick={() => navigate(`/messages/${profile.user?.id}`)}><MessageCircle size={28} fill="white" /><small>Chat</small></div>
-                                            <div className="tt-action"><ShoppingBag size={28} color="#00ff88" /><small>Buy</small></div>
-                                            <div 
-                                                className="tt-action" 
-                                                onClick={() => handleShare(
-                                                    post.title,
-                                                    `Check out this listing for R${post.price} on Cylo!`,
-                                                    `${window.location.origin}/post/${post.id}`
-                                                )}
+            {selectedPostIndex !== null && currentViewPosts[selectedPostIndex] && (
+                <div className="profile-modal-overlay" onClick={() => setSelectedPostIndex(null)}>
+                    <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={() => setSelectedPostIndex(null)}>✕</button>
+                        {(() => {
+                            const post = currentViewPosts[selectedPostIndex];
+                            return (
+                                <div className="modal-inner-layout">
+                                    <ProductCard post={post} />
+                                    <div className="tt-nav">
+                                        {selectedPostIndex > 0 && (
+                                            <button 
+                                                className="nav-arrow up"
+                                                onClick={() => setSelectedPostIndex(selectedPostIndex - 1)}
                                             >
-                                                <Share2 size={28} fill="white" />
-                                                <small>Share</small>
-                                            </div>
-                                            {isOwnProfile && activeTab === "listings" && (
-                                                <div className="tt-action" onClick={() => handleDelete(post.id)}>
-                                                    <small style={{color: '#ff4444'}}>Delete</small>
-                                                </div>
-                                            )}
-                                            {isOwnProfile && activeTab === "saved" && (
-                                                <div className="tt-action" onClick={() => toggleSave(post.id)}>
-                                                    <Bookmark size={28} fill="#00ff88" />
-                                                    <small>Unsave</small>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="tt-bottom-info">
-                                            <h3>@{profile?.handleName}</h3>
-                                            <p>{post.title}</p>
-                                            <span className="tt-price-tag">R{post.price}</span>
-                                        </div>
-                                    </>
-                                );
-                            })()}
-
-                            <div className="tt-nav">
-                                {selectedPostIndex > 0 && 
-                                    <button onClick={() => setSelectedPostIndex(selectedPostIndex - 1)}><ChevronUp size={40}/></button>}
-                                {selectedPostIndex < currentViewPosts.length - 1 && 
-                                    <button onClick={() => setSelectedPostIndex(selectedPostIndex + 1)}><ChevronDown size={40}/></button>}
-                            </div>
-                        </div>
+                                                <ChevronUp size={40}/>
+                                            </button>
+                                        )}
+                                        {selectedPostIndex < currentViewPosts.length - 1 && (
+                                            <button 
+                                                className="nav-arrow down"
+                                                onClick={() => setSelectedPostIndex(selectedPostIndex + 1)}
+                                            >
+                                                <ChevronDown size={40}/>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
