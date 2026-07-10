@@ -15,54 +15,77 @@ function SignUp() {
 
   const validateForm = () => {
     setMessage("");
-  // 1. Email Regex: Checks for something@somewhere.com
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
-  if (!emailRegex.test(email)) {
-    setMessage("Please enter a valid email address.");
-    return false;
-  }
+    setIsError(false); // Reset error state on new validation run
 
-  // 2. Password Strength: Minimum 6 characters
-  if (password.length < 6) {
-    setMessage("Password must be at least 6 characters long.");
-    return false;
-  }
+    // 1. Email Regex: Checks for something@somewhere.com
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email.trim())) {
+      setIsError(true);
+      setMessage("Please enter a valid email address.");
+      return false;
+    }
 
-  return true;
-};
+    // 2. Password Strength: Minimum 6 characters
+    if (password.length < 6) {
+      setIsError(true);
+      setMessage("Password must be at least 6 characters long.");
+      return false;
+    }
+
+    return true;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
     try {
-      // Note: your authService.register expects (username, email, password)
-      await authService.register(username, email, password);
-      alert("Registration successful! Please login.");
-      navigate("/");
+      // Trim inputs before passing them to the service layer
+      await authService.register(username.trim(), email.trim(), password);
+      
+      setIsError(false);
+      setMessage("Registration successful! Redirecting to login...");
+
+      // Delay navigation slightly so the user can actually see the success message
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+
     } catch (error) {
-      alert("Registration failed. Try a different email or username.");
+      setIsError(true);
+      
+      // Captures the precise reason sent back from C# via your updated authService
+      const detailedError = error.message || "Registration failed. Please check your connection.";
+      setMessage(detailedError);
     }
   };
 
   return (
     <div className="auth-container">
-        <div className="auth-content">
-          <div className="logo-container">
-            <img src={Logo} alt="Logo" className="auth-logo" />
-          </div>
+      <div className="auth-content">
+        <div className="logo-container">
+          <img src={Logo} alt="Logo" className="auth-logo" />
+        </div>
         <div className="auth-card">
           <h2 className="auth-title">Create Account</h2>
 
           {message && (
-            <p className={isError ? "auth-error-message" : "auth-success-message"} 
-               style={{ color: isError ? 'red' : 'green', textAlign: 'center', marginBottom: '10px' }}>
+            <p 
+              className={isError ? "auth-error-message" : "auth-success-message"} 
+              style={{ 
+                color: isError ? '#e53e3e' : '#38a169', 
+                textAlign: 'center', 
+                marginBottom: '15px',
+                fontWeight: '500',
+                fontSize: '14px'
+              }}
+            >
               {message}
             </p>
           )}
 
           <form className="auth-form" onSubmit={handleRegister}>
-            {/* Added Username Input since your service likely needs it */}
             <input
               className="auth-input"
               type="text"

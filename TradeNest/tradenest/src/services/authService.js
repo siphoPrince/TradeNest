@@ -1,42 +1,45 @@
-import axios  from "axios";
-const API_URL = "https://localhost:7124/api/Auth/";
+import api from "./api"; 
 
-const login = async(email, passwordHash)=>{
-    const response = await axios.post(API_URL + "login", {
-        email,
-        passwordHash
+const login = async (email, password) => {
+    // FIX: Map 'password' to 'passwordHash' to match 'request.PasswordHash' in C# LoginDto
+    const response = await api.post("/api/Auth/login", {
+        email: email,
+        passwordHash: password 
     });
-    return response.data;
-}
-
-const forgotPassword = async (email) => {
-    const response = await axios.post(API_URL + "forgot-password", { email });
     return response.data;
 };
 
-const register = async(name, email, passwordHash)=>{
-    const response = await axios.post(API_URL + "register", {
-        name,
-        email,
-        passwordHash
+const register = async (username, email, password) => {
+    // FIX: Map 'username' to 'name' to match 'request.Name' in C# UserRegisterDto
+    const response = await api.post("/api/Auth/register", {
+        name: username, 
+        email: email,
+        password: password
     });
     return response.data;
-}
+};
+
+const forgotPassword = async (email) => {
+    const response = await api.post("/api/Auth/forgot-password", { email });
+    return response.data;
+};
 
 const resetPassword = async (resetData) => {
-    // resetData will be { token: "...", newPassword: "..." }
-    const response = await axios.post(API_URL + "reset-password", resetData);
+    const response = await api.post("/api/Auth/reset-password", resetData);
     return response.data;
 };
 
 const googleLogin = async (idToken) => {
-    const response = await axios.post(API_URL + "google-login", JSON.stringify(idToken), {
+    // Pass idToken directly as a raw string literal value. 
+    // Axios will automatically wrap it cleanly in quotes for ASP.NET Core [FromBody] binding.
+    const response = await api.post("/api/Auth/google-login", idToken, {
         headers: {
             'Content-Type': 'application/json'
         }
     });
     return response.data;
-}
+};
+
 
 export default {
     login,

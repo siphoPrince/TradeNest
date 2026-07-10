@@ -34,7 +34,7 @@ const BuyNow = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`https://localhost:7124/api/Posts/${id}`);
+                const response = await fetch(`https://cylosocials.co.za/api/Posts/${id}`);
                 if (response.ok) {
                     const data = await response.json();
                     setProduct(data);
@@ -61,7 +61,7 @@ const BuyNow = () => {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             return url; // Return Cloudflare R2 URL directly
         }
-        return `https://localhost:7124/uploads/${url}`; // Fallback to local server environment
+        return `https://cylosocials.co.za/uploads/${url}`; // Fallback to local server environment
     };
 
     const handleSetupRequired = (message) => {

@@ -1,81 +1,68 @@
-import {Heart} from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import api from '../services/api'; // 1. IMPORT: Bring in your custom axios instance (verify path)
 
-const Likes=({ postId, initialIsLiked = false, initialLikeCount = 0 })=>{
+const Likes = ({ postId, initialIsLiked = false, initialLikeCount = 0 }) => {
     const [isLiked, setIsLiked] = useState(initialIsLiked);
     const [likeCount, setLikeCount] = useState(initialLikeCount);
     
-  useEffect(() => {
+    useEffect(() => {
         setIsLiked(initialIsLiked);
         setLikeCount(initialLikeCount);
     }, [initialIsLiked, initialLikeCount]);
-
-
 
     const handleLike = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
 
         if (!token) {
-        alert("Please log in to like posts!");
-        return;
-    }
+            alert("Please log in to like posts!");
+            return;
+        }
 
-  
-        
-        
         const wasLikedBeforeClick = isLiked; 
         const previousCount = likeCount;
 
-        const newLikedState = !wasLikedBeforeClick;
-
-    
+        // Optimistic UI update for immediate response feel
         setIsLiked(!wasLikedBeforeClick);
         setLikeCount(prev => !wasLikedBeforeClick ? prev + 1 : prev - 1);
 
-
         try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`https://localhost:7124/api/likes/toggle/${postId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+            // 2. SWAP: Use your api instance. No need for hardcoded domain or manual headers!
+            const response = await api.post(`/api/likes/toggle/${postId}`);
 
-                if (!response.ok) {
-                    // 3. If the server fails, we need to roll back the UI
-                    throw new Error("Failed to sync with server");
-                }
-
-                const data = await response.json();
-                setIsLiked(data.isLiked);
-                setLikeCount(data.likeCount);
-            } catch (error) {
-                
-                setIsLiked(wasLikedBeforeClick);
-                setLikeCount(previousCount);
-                console.error("Error updating like:", error);
-            }
+            // Axios automatically treats non-2xx status codes as errors, throwing to catch block.
+            // We can directly grab data off the response object.
+            const data = response.data;
+            setIsLiked(data.isLiked);
+            setLikeCount(data.likeCount);
+        } catch (error) {
+            // Fallback rollback state on network errors
+            setIsLiked(wasLikedBeforeClick);
+            setLikeCount(previousCount);
+            console.error("Error updating like:", error);
+        }
     };
 
-
     return (
-            <div className="LikeAction"> {/* 1. The outer container */}
-                <button 
-                    onClick={handleLike} 
-                    className="like-icon-btn" // 2. This becomes the circle
-                >
-                    <Heart 
-                        fill={isLiked ? "red" : "none"} 
-                        color={isLiked ? "red" : "black"} 
-                    />
-                </button>
-                <span className="like-count" style={{ color: 'black' }}>{likeCount}</span> 
-            </div>
-        );
+        <div className={`LikeAction ${isLiked ? 'liked' : ''}`}>
+            <button 
+                onClick={handleLike} 
+                className="like-icon-btn"
+                type="button"
+            >
+                <Heart 
+                    size={22}
+                    className="engagement-icon" 
+                    fill={isLiked ? "var(--color-danger)" : "none"} 
+                    color={isLiked ? "var(--color-danger)" : "currentColor"} 
+                />
+            </button>
+            <span className="count-label like-count" style={{ fontSize: "18px", fontWeight: "400" }}>
+                {likeCount}
+            </span>
+        </div>
+    );
+};
 
-}
-
-export default Likes
+export default Likes;

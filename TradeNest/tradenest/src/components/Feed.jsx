@@ -4,59 +4,61 @@ import ProductCard from "./ProductCard";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import CommentSection from "./CommentSection";
+import api from "../services/api"; 
 
 const Feed = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    // Track which post has its comments expanded
     const [expandedPostId, setExpandedPostId] = useState(null);
-    // Track global search across the feed
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Triggered when the comment icon in Engagement is clicked
-    const toggleComments = (postId) => {
-    if (expandedPostId === postId) {
-        setExpandedPostId(null);
-        document.body.style.overflow = "unset"; // Re-enable scroll
-    } else {
-        setExpandedPostId(postId);
-        document.body.style.overflow = "hidden"; // Lock background scroll
-    }
-};
+    // Robust Body Scroll Lock Management
     useEffect(() => {
-    if (searchQuery) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}, [searchQuery]);
+        if (expandedPostId !== null) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+        
+        // Cleanup function safely resets scroll rules if the component unmounts unexpectedly
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [expandedPostId]);
 
+    const toggleComments = (postId) => {
+        setExpandedPostId(prevId => prevId === postId ? null : postId);
+    };
+
+    const handleUpdateCommentCount = (postId, newCount) => {
+        setPosts(prevPosts => 
+            prevPosts.map(post => 
+                post.id === postId 
+                    ? { ...post, commentCount: newCount } 
+                    : post
+            )
+        );
+    };
+
+    useEffect(() => {
+        if (searchQuery) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [searchQuery]);
+
+    // Hook 1: Safely unpacking the updated PagedResponse layout
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const response = await fetch("https://localhost:7124/api/posts?pageNumber=1&pageSize=10", {
-                    headers: {
-                        'Authorization': token ? `Bearer ${token}` : "" ,
-                        'Cache-Control': 'no-cache',
-                    }
-                });
-
-                const result = await response.json();
-                setPosts(result.data || []);
-                setLoading(false);
-
-                const savedScroll = sessionStorage.getItem("feed-scroll");
-            if (savedScroll) {
-                // Use a tiny timeout to ensure React has finished painting the HTML
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: parseInt(savedScroll),
-                        behavior: 'instant' 
-                    });
-                    sessionStorage.removeItem("feed-scroll");
-                }, 250);
-            }
+                const response = await api.get("/api/posts?pageNumber=1&pageSize=10");
+                
+                // Explicitly unwrap .data from the backend PagedResponse structural wrapper
+                const incomingData = response.data?.data;
+                setPosts(Array.isArray(incomingData) ? incomingData : []);
             } catch (error) {
                 console.error("Error fetching feed:", error);
+                setPosts([]); // Graceful fallback state
+            } finally {
                 setLoading(false);
             }
         };
@@ -64,25 +66,47 @@ const Feed = () => {
         fetchPosts();
     }, []);
 
-    // Filter posts dynamically based on the search query
+    // Hook 2: Scroll Restoration
+    useEffect(() => {
+        if (!loading && posts.length > 0) {
+            const savedScroll = sessionStorage.getItem("feed-scroll");
+            if (savedScroll) {
+                const timer = setTimeout(() => {
+                    window.scrollTo({
+                        top: parseInt(savedScroll, 10),
+                        behavior: 'instant' 
+                    });
+                    sessionStorage.removeItem("feed-scroll");
+                }, 300);
+
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [loading, posts]);
+
+    // Hook 3: Global Unmount Interceptor
+    useEffect(() => {
+        return () => {
+            if (window.scrollY > 0) {
+                sessionStorage.setItem("feed-scroll", window.scrollY);
+            }
+        };
+    }, []);
+
     const filteredPosts = posts.filter(post => {
-            const query = searchQuery.toLowerCase().trim();
-            
-            // Check title, description, and handle
-            const basicMatch = 
-                post.title?.toLowerCase().includes(query) ||
-                post.description?.toLowerCase().includes(query) ||
-                (post.handleName || post.name)?.toLowerCase().includes(query);
+        const query = searchQuery.toLowerCase().trim();
+        const basicMatch = 
+            post.title?.toLowerCase().includes(query) ||
+            post.description?.toLowerCase().includes(query) ||
+            (post.handleName || post.name)?.toLowerCase().includes(query);
 
-            // Check tags (if they are included in your DTO)
-            const tagMatch = post.tags?.some(tag => 
-                tag.name.toLowerCase().includes(query.replace('#', ''))
-            );
+        const tagMatch = post.tags?.some(tag => 
+            tag.name.toLowerCase().includes(query.replace('#', ''))
+        );
 
-            return basicMatch || tagMatch;
-        });
+        return basicMatch || tagMatch;
+    });
 
-    // --- LOADING STATE (SKELETONS) ---
     if (loading) {
         return (
             <div className="feed">
@@ -99,17 +123,13 @@ const Feed = () => {
         );
     }
 
-    // --- ACTUAL FEED RENDER ---
     return (
         <div className="feed">
             <div className={`feed-layout ${expandedPostId ? 'comments-active' : ''}`}>
-                
                 <div className="main-screen">
                     {filteredPosts.length > 0 ? (
                         filteredPosts.map((post) => (
                             <div key={post.id} className="post-wrapper"> 
-                                
-                                {/* 1. The Video Content */}
                                 <div className="post-container">
                                     <ProductCard 
                                         post={post} 
@@ -118,7 +138,6 @@ const Feed = () => {
                                     />                        
                                 </div>
 
-                                {/* 2. Action Buttons */}
                                 <Engagement 
                                     postId={post.id} 
                                     postTitle={post.title}
@@ -126,35 +145,23 @@ const Feed = () => {
                                     onToggleComments={() => toggleComments(post.id)}
                                     IsLikedByCurrentUser={post.isLikedByCurrentUser}
                                     LikeCount={post.likeCount}
-                                    CommentCount={post.commentCount ?? post.comments?.length ?? 0}
+                                    CommentCount={post.commentCount ?? post.activeCommentsCount ?? 0}
                                     initialIsBookmarked={post.isBookmarkedByCurrentUser}
                                 />
-
-                                {/* 3. The Comment Section (Only shows if this specific post is active) */}
-                                {expandedPostId === post.id && (
-                                    <CommentSection 
-                                        key={`comments-${post.id}`}
-                                        postId={post.id}
-                                        onClose={() => setExpandedPostId(null)}
-                                        isOpen={true}
-                                    />
-                                )}
                             </div>
                         ))
                     ) : (
-                        <div style={{ color: '#888', textAlign: 'center', marginTop: '50px' }}>
-                            <p>No products found matching "{searchQuery}"</p>
-                            <button 
-                                onClick={() => setSearchQuery("")} 
-                                style={{ padding: '8px 16px', borderRadius: '20px', background: '#333', color: 'white', border: 'none', cursor: 'pointer', marginTop: '10px' }}
-                            >
-                                Clear Search
-                            </button>
-                        </div>
+                        <div className="no-posts">No posts found matching criteria.</div>
                     )}
                 </div>
-
             </div>
+
+            <CommentSection 
+                postId={expandedPostId}
+                isOpen={expandedPostId !== null}
+                onClose={() => setExpandedPostId(null)}
+                onCommentCountChange={handleUpdateCommentCount}
+            />
         </div>
     );
 };

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { CircleX, MessageSquare, Trash2, Edit3, Check, X, Heart, CornerDownRight } from 'lucide-react';
+import Toast from './Toast'; // Adjust path if necessary to point to your Toast file
 import "../styles/CommentSection.css";
 
 const formatTimeAgo = (dateString) => {
@@ -15,7 +16,7 @@ const formatTimeAgo = (dateString) => {
     return then.toLocaleDateString();
 };
 
-const CommentSection = ({ postId, onClose, isOpen }) => {
+const CommentSection = ({ postId, onClose, isOpen, onCommentCountChange }) => {
     const [commentText, setCommentText] = useState("");
     const [comments, setComments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +26,11 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState("");
     const [isActionPending, setIsActionPending] = useState(false);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null); // Modern alternative to window.confirm
     
+    // --- TOAST STATE ---
+    const [toast, setToast] = useState(null); // Format: { message: string, type: "success" | "error" | "info" }
+
     // --- REPLIES STATE ---
     const [replyingToCommentId, setReplyingToCommentId] = useState(null);
     const [replyText, setReplyText] = useState("");
@@ -37,7 +42,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
     const startY = useRef(0);
     const scrollRef = useRef(null);
     const inputRef = useRef(null);
-    const backendBaseUrl = "https://localhost:7124/uploads/";
+    const backendBaseUrl = "https://cylosocials.co.za/uploads/";
 
     const formatUrl = (url, fallback) => {
         if (!url) return fallback;
@@ -45,7 +50,13 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
         return `${backendBaseUrl}${url}`;
     };
 
-    const getCurrentUserId = () => {
+    // Helper to trigger premium custom toasts seamlessly
+    const triggerToast = (message, type = "error") => {
+        setToast({ message, type });
+    };
+
+    // Extract User ID safely inside useMemo to minimize redundant token decoding operations
+    const currentUserId = useMemo(() => {
         const token = localStorage.getItem("token");
         if (!token) return null;
         try {
@@ -60,15 +71,19 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
         } catch (e) { 
             return null; 
         }
-    };
+    }, [isOpen]);
 
-    const currentUserId = getCurrentUserId();
+    // Compute active visible comments safely for local UI metrics
+    const activeCommentsCount = useMemo(() => {
+        return comments.filter(c => c.content !== "This comment was deleted.").length;
+    }, [comments]);
 
-    // Reset dragging offset coordinates cleanly if the panel closes
+    // Track state mutations cleanly when panel transitions visibility status
     useEffect(() => {
         if (!isOpen) {
             setCurrentY(0);
             setIsDragging(false);
+            setConfirmDeleteId(null);
         } else if (inputRef.current) {
             setTimeout(() => inputRef.current.focus(), 300);
         }
@@ -76,7 +91,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
     // --- TOUCH EVENT HANDLERS (TIKTOK SWIPE CLOSE) ---
     const handleTouchStart = (e) => {
-        if (window.innerWidth > 768) return; // Disable gesture handlers on desktop layouts
+        if (window.innerWidth > 768) return; 
         startY.current = e.touches[0].clientY;
         setIsDragging(true);
     };
@@ -84,8 +99,6 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
     const handleTouchMove = (e) => {
         if (!isDragging) return;
         const deltaY = e.touches[0].clientY - startY.current;
-        
-        // Only allow pulling downwards (positive deltaY mappings)
         if (deltaY > 0) {
             setCurrentY(deltaY);
         }
@@ -94,49 +107,72 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
     const handleTouchEnd = () => {
         if (!isDragging) return;
         setIsDragging(false);
-
-        // If swiped down past the 140px threshold limit, animate offscreen entirely
         if (currentY > 140) {
             onClose();
         } else {
-            // Snap instantly back up into viewport context
             setCurrentY(0);
         }
     };
 
+    // Helper to safely notify the parent of a clean metric change
+    const syncCountToParent = (updatedCommentsList) => {
+        if (typeof onCommentCountChange === 'function') {
+            const freshCount = updatedCommentsList.filter(c => c.content !== "This comment was deleted.").length;
+            onCommentCountChange(postId, freshCount);
+        }
+    };
+
+    // --- API INTERACTIONS ---
     useEffect(() => {
         const fetchComments = async () => {
-            if (!postId || !isOpen) return;
-            setComments([]); 
-            setIsLoading(true);
+            if (!postId) return;
+            
+            if (isOpen) setIsLoading(true);
 
             const token = localStorage.getItem("token");
-            const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+            const headers = {
+                "Accept": "application/json",
+                ...(token ? { "Authorization": `Bearer ${token}` } : {})
+            };
 
             try {
-                const response = await fetch(`https://localhost:7124/api/comments/post/${postId}`, { headers });
+                const response = await fetch(`https://cylosocials.co.za/api/comments/post/${postId}`, { 
+                    method: "GET",
+                    headers 
+                });
+                
                 if (response.ok) {
                     const data = await response.json();
-                    setComments(Array.isArray(data) ? data : []);
+                    const cleanData = Array.isArray(data) ? data : [];
+                    setComments(cleanData);
+                    syncCountToParent(cleanData);
+                } else {
+                    console.warn(`Backend returned status code: ${response.status}`);
+                    setComments([]);
                 }
             } catch (error) {
-                console.error("Fetch error:", error);
+                console.error("Network link failure fetching comments:", error);
+                setComments([]);
             } finally {
                 setIsLoading(false);
             }
         };
+        
         fetchComments();
-    }, [postId, isOpen]);
+    }, [postId, isOpen]); 
 
     const handlePostComment = async () => {
         const trimmedText = commentText.trim();
         if (!trimmedText || isSubmitting) return;
         const token = localStorage.getItem("token");
-        if (!token) return alert("Please log in!");
+        if (!token) {
+            triggerToast("Please log in to add a comment.", "error");
+            return;
+        }
 
         setIsSubmitting(true);
         try {
-            const response = await fetch("https://localhost:7124/api/comments", {
+            const response = await fetch("https://cylosocials.co.za/api/comments", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -147,12 +183,20 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
             if (response.ok) {
                 const savedComment = await response.json();
-                setComments(prev => [savedComment, ...prev]);
+                setComments(prev => {
+                    const nextComments = [savedComment, ...prev];
+                    syncCountToParent(nextComments);
+                    return nextComments;
+                });
                 setCommentText("");
+                triggerToast("Comment posted!", "success");
                 scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                triggerToast("Failed to post comment. Try again.", "error");
             }
         } catch (error) {
             console.error("Submit error:", error);
+            triggerToast("Network link error.", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -162,11 +206,14 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
         const trimmedReplyText = replyText.trim();
         if (!trimmedReplyText || isActionPending) return;
         const token = localStorage.getItem("token");
-        if (!token) return alert("Please log in!");
+        if (!token) {
+            triggerToast("Please log in to reply.", "error");
+            return;
+        }
 
         setIsActionPending(true);
         try {
-            const response = await fetch("https://localhost:7124/api/comments", {
+            const response = await fetch("https://cylosocials.co.za/api/comments", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -181,12 +228,20 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
             if (response.ok) {
                 const savedReply = await response.json();
-                setComments(prev => [...prev, savedReply]);
+                setComments(prev => {
+                    const nextComments = [...prev, savedReply];
+                    syncCountToParent(nextComments);
+                    return nextComments;
+                });
                 setReplyText("");
                 setReplyingToCommentId(null);
+                triggerToast("Reply posted successfully!", "success");
+            } else {
+                triggerToast("Failed to submit reply.", "error");
             }
         } catch (error) {
             console.error("Reply error:", error);
+            triggerToast("Something went wrong.", "error");
         } finally {
             setIsActionPending(false);
         }
@@ -194,10 +249,13 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
     const handleToggleLike = async (commentId) => {
         const token = localStorage.getItem("token");
-        if (!token) return alert("Please log in to like comments!");
+        if (!token) {
+            triggerToast("Please log in to like comments!", "error");
+            return;
+        }
 
         try {
-            const response = await fetch(`https://localhost:7124/api/comments/${commentId}/like`, {
+            const response = await fetch(`https://cylosocials.co.za/api/comments/${commentId}/like`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -216,13 +274,12 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
     };
 
     const handleDelete = async (commentId) => {
-        if (!window.confirm("Delete this comment?")) return;
         const token = localStorage.getItem("token");
         if (!token) return;
 
         setIsActionPending(true);
         try {
-            const response = await fetch(`https://localhost:7124/api/comments/${commentId}`, {
+            const response = await fetch(`https://cylosocials.co.za/api/comments/${commentId}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -230,19 +287,33 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                 if (response.status === 200) {
                     const data = await response.json();
                     if (data && data.isSoftDeleted) {
-                        setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: "This comment was deleted." } : c));
+                        setComments(prev => {
+                            const nextComments = prev.map(c => c.id === commentId ? { ...c, content: "This comment was deleted." } : c);
+                            syncCountToParent(nextComments);
+                            return nextComments;
+                        });
                     }
                 } else {
-                    setComments(prev => prev.filter(c => c.id !== commentId));
+                    setComments(prev => {
+                        const nextComments = prev.filter(c => c.id !== commentId);
+                        syncCountToParent(nextComments);
+                        return nextComments;
+                    });
                 }
                 
+                triggerToast("Comment deleted cleanly.", "success");
+
                 if (editingCommentId === commentId) {
                     setEditingCommentId(null);
                     setEditText("");
                 }
+                setConfirmDeleteId(null);
+            } else {
+                triggerToast("Unable to delete comment.", "error");
             }
         } catch (err) { 
             console.error("Delete error:", err); 
+            triggerToast("Network request failed.", "error");
         } finally {
             setIsActionPending(false);
         }
@@ -256,7 +327,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
         setIsActionPending(true);
         try {
-            const response = await fetch(`https://localhost:7124/api/comments/${commentId}`, {
+            const response = await fetch(`https://cylosocials.co.za/api/comments/${commentId}`, {
                 method: "PUT",
                 headers: { 
                     "Authorization": `Bearer ${token}`,
@@ -268,9 +339,13 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                 setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: trimmedEdit } : c));
                 setEditingCommentId(null);
                 setEditText("");
+                triggerToast("Comment updated!", "success");
+            } else {
+                triggerToast("Failed to edit comment.", "error");
             }
         } catch (err) { 
             console.error("Update error:", err); 
+            triggerToast("Connection error.", "error");
         } finally {
             setIsActionPending(false);
         }
@@ -278,14 +353,19 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
     const handleStartEdit = (comment) => {
         setReplyingToCommentId(null);
+        setConfirmDeleteId(null);
         setEditingCommentId(comment.id);
         setEditText(comment.content);
     };
 
-    const mainComments = comments.filter(c => !c.parentCommentId);
+    const mainComments = useMemo(() => comments.filter(c => !c.parentCommentId), [comments]);
     const getRepliesForParent = (parentId) => comments.filter(c => c.parentCommentId === parentId);
 
-    // Apply inline coordinate translations while dragging to overwrite global CSS transforms instantly
+    // --- FIX: Prevent rendering on desktop entirely if not open ---
+    if (!isOpen && window.innerWidth > 768) {
+        return null;
+    }
+
     const dynamicMobileStyles = (window.innerWidth <= 768 && isOpen) ? {
         transform: `translateY(${currentY}px)`
     } : {};
@@ -295,7 +375,15 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
             style={dynamicMobileStyles}
             className={`comment-section ${isOpen ? 'is-open' : ''} ${!isDragging ? 'with-transition' : ''}`}
         >
-            {/* GESTURE BAR ATTACHED DIRECTLY TO HEADER ROW */}
+            {/* Custom Premium Toast Component Rendering inside layout */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type} 
+                    onClose={() => setToast(null)} 
+                />
+            )}
+
             <div 
                 className="comment-header"
                 onTouchStart={handleTouchStart}
@@ -304,7 +392,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
             >
                 <div className="header-info">
                     <MessageSquare size={18} className="header-icon" />
-                    <span>{comments.length} comments</span>
+                    <span>{activeCommentsCount} comments</span>
                 </div>
                 <button className="close-button" onClick={onClose}>
                     <CircleX size={22}/>
@@ -312,7 +400,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
             </div>
 
             <div className="comments-list" ref={scrollRef}>
-                {isLoading ? (
+                {isLoading && isOpen ? (
                     <div className="status-message"><div className="cylo-spinner"></div></div>
                 ) : comments.length === 0 ? (
                     <div className="status-message empty-state">
@@ -326,7 +414,6 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
                         return (
                             <div key={c.id} className="comment-group-wrapper">
-                                {/* MAIN COMMENT ITEM */}
                                 <div className="comment-item">
                                     <img 
                                         src={formatUrl(c.profilePictureUrl, "https://picsum.photos/120")} 
@@ -342,20 +429,46 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
 
                                             {isMainCommentOwner && (
                                                 <div className="comment-actions">
-                                                    <button 
-                                                        className="action-btn"
-                                                        disabled={isActionPending}
-                                                        onClick={() => handleStartEdit(c)}
-                                                    >
-                                                        <Edit3 size={14}/>
-                                                    </button>
-                                                    <button 
-                                                        className="action-btn delete-btn"
-                                                        disabled={isActionPending}
-                                                        onClick={() => handleDelete(c.id)}
-                                                    >
-                                                        <Trash2 size={14}/>
-                                                    </button>
+                                                    {confirmDeleteId === c.id ? (
+                                                        <div className="inline-delete-confirm-flow">
+                                                            <button 
+                                                                className="confirm-action-btn check-confirm"
+                                                                onClick={() => handleDelete(c.id)}
+                                                                disabled={isActionPending}
+                                                                title="Confirm Delete"
+                                                            >
+                                                                <Check size={14} />
+                                                            </button>
+                                                            <button 
+                                                                className="confirm-action-btn cancel-confirm"
+                                                                onClick={() => setConfirmDeleteId(null)}
+                                                                disabled={isActionPending}
+                                                                title="Cancel"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <button 
+                                                                className="action-btn"
+                                                                disabled={isActionPending}
+                                                                onClick={() => handleStartEdit(c)}
+                                                            >
+                                                                <Edit3 size={14}/>
+                                                            </button>
+                                                            <button 
+                                                                className="action-btn delete-btn"
+                                                                disabled={isActionPending}
+                                                                onClick={() => {
+                                                                    setEditingCommentId(null);
+                                                                    setConfirmDeleteId(c.id);
+                                                                }}
+                                                            >
+                                                                <Trash2 size={14}/>
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -391,6 +504,7 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                                                         className="interaction-link-btn"
                                                         onClick={() => {
                                                             setEditingCommentId(null);
+                                                            setConfirmDeleteId(null);
                                                             setReplyingToCommentId(replyingToCommentId === c.id ? null : c.id);
                                                         }}
                                                     >
@@ -400,7 +514,6 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                                             </>
                                         )}
 
-                                        {/* INLINE REPLY BOX */}
                                         {replyingToCommentId === c.id && (
                                             <div className="nested-reply-box-input">
                                                 <input 
@@ -417,7 +530,6 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                                     </div>
                                 </div>
 
-                                {/* CHILD REPLIES STREAM */}
                                 {replies.map((reply) => {
                                     const isReplyOwner = currentUserId && (Number(reply.userId) === currentUserId);
                                     
@@ -431,29 +543,51 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                                             />
                                             <div className="comment-body">
                                                 <div className="comment-meta">
-                                                    {/* GROUP THE LEFT ELEMENTS TOGETHER */}
                                                     <div className="meta-left-group">
                                                         <span className="comment-author">@{reply.handleName || 'user'}</span>
                                                         <span className="comment-date">{formatTimeAgo(reply.createdAt)}</span>
                                                     </div>
                                                     
-                                                    {/* RIGHT ELEMENT */}
                                                     {isReplyOwner && (
                                                         <div className="comment-actions">
-                                                            <button 
-                                                                className="action-btn"
-                                                                disabled={isActionPending}
-                                                                onClick={() => handleStartEdit(reply)}
-                                                            >
-                                                                <Edit3 size={14}/>
-                                                            </button>
-                                                            <button 
-                                                                className="action-btn delete-btn"
-                                                                disabled={isActionPending}
-                                                                onClick={() => handleDelete(reply.id)}
-                                                            >
-                                                                <Trash2 size={14}/>
-                                                            </button>
+                                                            {confirmDeleteId === reply.id ? (
+                                                                <div className="inline-delete-confirm-flow">
+                                                                    <button 
+                                                                        className="confirm-action-btn check-confirm"
+                                                                        onClick={() => handleDelete(reply.id)}
+                                                                        disabled={isActionPending}
+                                                                    >
+                                                                        <Check size={14} />
+                                                                    </button>
+                                                                    <button 
+                                                                        className="confirm-action-btn cancel-confirm"
+                                                                        onClick={() => setConfirmDeleteId(null)}
+                                                                        disabled={isActionPending}
+                                                                    >
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <button 
+                                                                        className="action-btn"
+                                                                        disabled={isActionPending}
+                                                                        onClick={() => handleStartEdit(reply)}
+                                                                    >
+                                                                        <Edit3 size={14}/>
+                                                                    </button>
+                                                                    <button 
+                                                                        className="action-btn delete-btn"
+                                                                        disabled={isActionPending}
+                                                                        onClick={() => {
+                                                                            setEditingCommentId(null);
+                                                                            setConfirmDeleteId(reply.id);
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 size={14}/>
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -498,7 +632,6 @@ const CommentSection = ({ postId, onClose, isOpen }) => {
                 )}
             </div>
 
-            {/* MAIN POST ENTRY FORM (Shifted out from comment-form styling into optimized markup classes) */}
             <div className="comment-form">
                 <div className="input-wrapper">
                     <textarea 

@@ -1,4 +1,7 @@
-/* Container Layout */
+/* ==========================================================================
+   CONTAINER & MAIN BASE LAYOUT
+   ========================================================================== */
+
 .explore-page {
     display: flex;
     background-color: #fafafa;
@@ -12,31 +15,31 @@
     flex-direction: column;
     align-items: center;
     padding: 0 24px;
+    /* Account for sidebar displacement on desktop environments */
+    margin-left: 260px; 
+    width: calc(100% - 260px);
+    box-sizing: border-box;
 }
 
-/* The Core Grid Wrapper */
 .explore-container {
     width: 100%;
-    max-width: 960px; /* Aligns perfectly with content grid structures */
+    max-width: 1100px; /* Enhanced breathability for listing layouts */
     padding: 30px 0 60px 0;
 }
 
-/* Modernized Custom Toolbar Area */
+/* Modernized Search & Action Toolbar Area */
 .explore-toolbar {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
     justify-content: space-between;
     width: 100%;
     margin-bottom: 20px;
 }
 
-/* Strip down raw nested elements inside custom search inputs to look clean */
-.explore-toolbar > div {
-    flex: 1;
-}
 
-/* Category Navigation (Clean Pill Selection Style) */
+
+/* Category Pill Selections Layout */
 .explore-header {
     width: 100%;
     padding: 10px 0 25px 0;
@@ -56,8 +59,8 @@
 }
 
 .explore-cat-btn {
-    padding: 8px 18px;
-    border-radius: 100px; /* Pill Styling */
+    padding: 10px 20px;
+    border-radius: 100px;
     border: 1px solid #e6e6e6;
     background: #fff;
     font-weight: 500;
@@ -66,7 +69,6 @@
     white-space: nowrap;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .explore-cat-btn:hover {
@@ -81,34 +83,57 @@
     font-weight: 600;
 }
 
-/* Search Information Header Layout */
+/* Dynamic Filter Status Headers */
 .search-status {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f1f3;
+    padding: 12px 16px;
+    border-radius: 10px;
 }
 
-/* The Grid System */
+.search-status p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.clear-search-text {
+    background: transparent;
+    border: none;
+    color: #ff3b30;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   EXPLORE MEDIA GRID HOVER ARCHITECTURE
+   ========================================================================== */
+
 .explore-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px; /* Polished layout spacing */
+    gap: 20px;
 }
 
-/* The Grid Item (Premium Grid Card Look) */
 .explore-item {
     position: relative;
     aspect-ratio: 1 / 1;
-    background-color: #f0f0f0;
-    border-radius: 12px; /* Smooth rounded grid items */
+    background-color: #000;
+    border-radius: 14px;
     overflow: hidden;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .explore-item:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.12);
 }
 
 .explore-img {
@@ -116,17 +141,41 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease;
+    transition: transform 0.6s ease;
 }
 
-/* High Visibility Overlay Styles on Hover */
-.explore-item-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+.explore-item:hover .explore-img {
+    transform: scale(1.03);
+}
+
+.video-wrapper {
     width: 100%;
     height: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%);
+    position: relative;
+    background: #000;
+}
+
+.video-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: white;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Card Information Vignette Overlay */
+.explore-item-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -134,13 +183,28 @@
     opacity: 0;
     transition: opacity 0.25s ease;
     color: #fff;
-    padding: 16px;
-    text-align: left;
+    padding: 20px;
     box-sizing: border-box;
 }
 
 .explore-item:hover .explore-item-overlay {
     opacity: 1;
+}
+
+.card-location-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #111;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .overlay-info {
@@ -149,165 +213,377 @@
 
 .overlay-price {
     display: block;
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.35rem;
+    font-weight: 800;
     color: #fff;
 }
 
 .overlay-title {
     font-size: 0.85rem;
     font-weight: 400;
-    opacity: 0.95;
-    margin-top: 3px;
+    opacity: 0.9;
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-/* Location Badge inside Card Layouts */
-.card-location-badge {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    backdrop-filter: blur(4px);
-    font-weight: 500;
-}
-
-/* Video Indicators and Wrappers */
-.video-wrapper {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-video.explore-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
     display: block;
-    background-color: #000;
 }
 
-.video-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    color: white;
-    z-index: 2;
-    pointer-events: none;
-    background: rgba(0,0,0,0.5);
-    padding: 6px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-}
+/* ==========================================================================
+   PREMIUM CINEMATIC TIKTOK MODAL POPUP FIXES
+   ========================================================================== */
 
-/* Creator Layout Configurations */
-.creator-search-card {
-    border: 1px solid #eaeaea !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    transition: all 0.2s ease !important;
-}
-
-.creator-search-card:hover {
-    transform: translateY(-2px);
-    border-color: #ccc !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* --- Pop Up Modal Architecture Fixes --- */
 .explore-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
+    inset: 0;
+    background: rgba(8, 8, 10, 0.85); /* Deep dark theater backdrop layout overlay */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999; /* Force over header navigation */
+    z-index: 11000; /* Assures presentation depth over headers and menus */
     padding: 40px;
-    backdrop-filter: blur(12px);
+    box-sizing: border-box;
+    animation: exploreFadeIn 0.2s ease-out;
 }
 
 .explore-modal-content {
     background: #ffffff;
     width: 100%;
-    max-width: 1020px;
-    height: 80vh;
+    max-width: 1040px;
+    height: 85vh;
+    max-height: 845px;
     display: flex;
-    border-radius: 16px;
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 24px 50px rgba(0,0,0,0.25);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    position: relative;
+    animation: exploreScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* --- Left Side Panel: Video Display Deck --- */
 .modal-media-side {
-    flex: 1.3;
-    background: #0f0f0f;
+    flex: 1.4;
+    background: #000000;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    height: 100%;
 }
 
+.modal-media-side video,
+.modal-media-side img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Preserves vertical 9:16 aspect smartphone streams without crop distortion */
+    background: #000;
+}
+
+/* --- Right Side Panel: Social Engagement Info Deck --- */
 .modal-info-side {
     flex: 1;
     display: flex;
     flex-direction: column;
     background: #ffffff;
     border-left: 1px solid #efefef;
+    height: 100%;
+    box-sizing: border-box;
 }
 
-/* --- Loader Elements --- */
-.explore-loader {
-    padding: 100px 0;
-    text-align: center;
+/* User Identity Header matching component anchors */
+.modal-user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    border-bottom: 1px solid #f2f2f5;
 }
 
-.spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #111;
+.modal-user-header .avatar.small {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    background-color: #f0f0f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #555;
+    border: 1px solid #e1e1e6;
+    flex-shrink: 0;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.modal-user-header strong {
+    font-size: 0.95rem;
+    color: #111111;
+    font-weight: 600;
+    transition: color 0.2s;
 }
 
-/* --- Responsive Adjustments --- */
+.modal-user-header strong:hover {
+    color: #007aff;
+}
+
+/* Main Post Narrative & Description Container Blocks */
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.modal-body h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.01em;
+}
+
+.modal-description {
+    font-size: 0.95rem;
+    color: #3a3a3c;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    white-space: pre-wrap;
+}
+
+.modal-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #111;
+    margin: 15px 0;
+    letter-spacing: -0.02em;
+}
+
+/* Bottom CTA Control Deck Layout Elements */
+.modal-actions {
+    padding: 24px;
+    border-top: 1px solid #f2f2f5;
+    background: #ffffff;
+}
+
+.buy-btn {
+    width: 100%;
+    padding: 16px;
+    background: #111111;
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.buy-btn:hover {
+    background: #007aff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25);
+}
+
+/* --- Absolute Overlay Close Vector Button --- */
+.modal-close-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 12000; /* Forces stack priority clear of content viewport heights */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-close-btn:hover {
+    background: #ffffff;
+    color: #000000;
+    transform: scale(1.08) rotate(90deg);
+}
+
+/* ==========================================================================
+   ANIMATION TRANSITION DECLARATIONS
+   ========================================================================== */
+
+@keyframes exploreFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes exploreScaleUp {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   MOBILE & VIEWPORT RESPONSIVE RESTRUCTURE RULES
+   ========================================================================== */
+
 @media (max-width: 900px) {
+    .explore-main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 0 16px;
+    }
     .explore-grid {
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
 }
 
 @media (max-width: 768px) {
-    .explore-main-content {
-        padding: 0 12px;
+    .explore-container {
+        padding: 16px 0 100px 0; 
     }
+
+    .explore-toolbar {
+        gap: 10px;
+    }
+
     .explore-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2x2 grid on mobile viewports for visibility */
-        gap: 8px;
+        gap: 6px; 
     }
+
     .explore-item {
         border-radius: 8px;
     }
+
     .explore-item-overlay {
-        opacity: 1;
-        background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+        opacity: 1; 
+        padding: 12px;
+        background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 40%);
     }
+
+    .overlay-price {
+        font-size: 1.1rem;
+    }
+
+    .card-location-badge {
+        display: none; 
+    }
+
+    /* --- MOBILE FLEX OVERLAY VIEWPORT FIXES --- */
+    .explore-modal-overlay {
+        padding: 0;
+        align-items: flex-start; /* Ensures scaling lists flow down sequentially */
+        overflow-y: auto;        /* Allows the overlay wrapper to scroll on small phones */
+    }
+
     .explore-modal-content {
         flex-direction: column;
-        height: 90vh;
+        height: auto;            /* Allow layout to size based on its contents naturally */
+        min-height: 100vh;       /* Stretch content to bottom edge seamlessly */
+        max-height: none;        /* Unlocks viewport constraint trap */
+        border-radius: 0;
+        animation: none;
     }
+
     .modal-media-side {
-        flex: 1;
+        flex: none;
+        width: 100%;
+        height: 50vh;            /* Locks media window viewport perfectly to half screen depth */
     }
+
     .modal-info-side {
-        flex: 1.2;
+        flex: 1;
+        height: auto;            /* Lets text block components expand freely */
+        border-left: none;
+        border-top: 1px solid var(--color-border, #f2f2f5);
+        background-color: var(--color-card, #ffffff); /* Fallback safety tokens */
+    }
+
+    .modal-user-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--color-border, #f2f2f5);
+    }
+
+    .modal-body {
+        padding: 16px;
+        overflow-y: visible;     /* Unlocks nested frame layout scrolling traps */
+    }
+
+    /* Keep text dark-mode readable if elements default to white fields */
+    .modal-body h3, .modal-price, .modal-user-header strong {
+        color: var(--color-text-dark, #111111) !important;
+    }
+
+    .modal-actions {
+        position: sticky;        /* Forces the button container wrapper sheet anchor flow */
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 16px 16px 32px 16px; 
+        border-top: 1px solid var(--color-border, #f2f2f5);
+        background: var(--color-card, #ffffff);
+        box-sizing: border-box;
+        z-index: 10;
+    }
+    
+    .buy-btn {
+        background-color: #007aff !important; /* Force a clear visible blue background */
+        color: #ffffff !important;
+        font-weight: 700;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .modal-close-btn {
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.6);
+        border-color: rgba(255,255,255,0.2);
+    }
+}
+
+
+
+/* ==========================================================================
+   MOBILE FORCE SEARCH VISIBILITY FIX
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Force the toolbar row container to fill full viewport width inline */
+    .explore-toolbar {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        padding: 0 4px; /* Small layout breathing room on edges */
+        box-sizing: border-box;
+    }
+
+    /* Force the search bar wrapper to stretch fully beside the filter button */
+    .explore-toolbar > :first-child {
+        display: flex !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Force the internal inputs inside the SearchBar component to render properly */
+    .explore-toolbar > :first-child div,
+    .explore-toolbar > :first-child input {
+        display: flex !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        box-sizing: border-box;
     }
 }

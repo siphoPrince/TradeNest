@@ -28,7 +28,7 @@ const PaymentModal = ({ isOpen, onClose, productPrice, productName, sellerId, pr
 
         try {
             // 1. Post to C# API endpoint
-            const response = await axios.post(`https://localhost:7124/api/Payments/create-transaction`, {
+            const response = await axios.post(`https://cylosocials.co.za/api/Payments/create-transaction`, {
                 buyerId: parseInt(buyerId, 10),
                 sellerId: parseInt(sellerId, 10),
                 postId: parseInt(productId, 10),

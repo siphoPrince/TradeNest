@@ -40,7 +40,7 @@ const SellerSetup = ({ onComplete }) => {
     try {
         const userId = localStorage.getItem('userId');
         const response = await axios.post(
-            `https://localhost:7124/api/Payments/onboard/${userId}`, 
+            `https://cylosocials.co.za/api/Payments/onboard/${userId}`, 
             payload
         );
         

@@ -1,61 +1,31 @@
-
-
 :root {
-
   /* === Core Colors === */
-
   --color-primary: #1E3A8A;
-
   --color-accent: #2563EB;
-
   --color-bg: #F1F5F9;
-
   --color-card: #FFFFFF;
-
   --color-text-dark: #0F172A;
-
   --color-text-muted: #64748B;
 
-
-
   /* === State Colors === */
-
   --color-success: #16A34A;
-
   --color-danger: #DC2626;
-
   --color-warning: #F59E0B;
 
-
-
   /* === Borders === */
-
   --color-border: #E2E8F0;
 
-
-
   /* === Radius === */
-
   --radius-sm: 8px;
-
   --radius-md: 12px;
-
   --radius-lg: 16px;
 
-
-
   /* === Shadows === */
-
   --shadow-sm: 0 2px 6px rgba(0,0,0,0.05);
-
   --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
 
-
-
   /* === Transition === */
-
   --transition: all 150ms ease-in-out;
-
 }
 
 /* === Dark Mode Overrides === */
@@ -66,15 +36,15 @@
   --color-text-muted: oklch(0.708 0 0);  /* Muted Grey */
   
   --color-primary: oklch(0.488 0.243 264.376); /* Vibrant Indigo/Blue */
-  --color-accent: oklch(0.269 0 0);
+  --color-accent: oklch(0.55 0.20 250.0);      /* Fixed Vibrant Interactive Accent */
   
   --color-success: oklch(0.696 0.17 162.48);
   --color-danger: oklch(0.396 0.141 25.723);
   --color-warning: oklch(0.769 0.188 70.08);
-  --color-border: oklch(0.269 0 0);
+  --color-border: oklch(0.269 0 0);      /* Clean dark separator line */
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.7);
 }
 
 /* =============================================================
@@ -94,6 +64,19 @@ body {
   line-height: 1.5;
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth custom scrollbars for dark mode environments */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
 /* =============================================================
@@ -172,17 +155,257 @@ body {
 
 .text-gradient {
   background: linear-gradient(45deg, var(--color-primary), var(--color-accent));
-  
-  /* Standard property (add this) */
   background-clip: text; 
-  
-  /* Vendor prefix (keep this for Chrome/Safari/Edge) */
   -webkit-background-clip: text; 
-  
-  /* Makes the actual text transparent so the background shows through */
   color: transparent; 
   -webkit-text-fill-color: transparent; 
-  
-  /* Optional: ensures the gradient doesn't wrap weirdly */
   display: inline-block;
+}
+
+/* =============================================================
+   EXPLORE PAGE & NAVIGATION LAYOUT FIXES
+   ============================================================= */
+
+/* Search Input Container Fix */
+.search-container {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  padding: 2px 8px;
+}
+
+.search-container input {
+  background-color: transparent !important;
+  color: var(--color-text-dark) !important;
+  border: none !important;
+  outline: none;
+}
+
+/* Category Filter Pills */
+.category-pill {
+  background-color: var(--color-card);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.category-pill:hover {
+  color: var(--color-text-dark);
+  border-color: var(--color-text-muted);
+}
+
+/* Active Category Pill State ("All") */
+.category-pill.active {
+  background-color: var(--color-text-dark);
+  color: var(--color-bg);
+  border-color: var(--color-text-dark);
+}
+
+/* Filter Button */
+.filter-btn {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dark);
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Global Bottom Mobile Tab Bar Navigation Fix */
+.bottom-nav-bar {
+  background-color: var(--color-card);
+  border-top: 1px solid var(--color-border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.bottom-nav-item {
+  color: var(--color-text-muted);
+  transition: var(--transition);
+}
+
+.bottom-nav-item.active {
+  color: var(--color-primary);
+}
+
+/* =============================================================
+   PROFILE PAGE COMPONENT FIXES
+   ============================================================= */
+
+/* Edit Profile, Share Profile, Settings Row Action Buttons */
+.profile-action-btn {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dark) !important; /* Force it to use your near-white dark mode token */
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  padding: 0.625rem 1.25rem; /* Ensure consistent padding with .btn */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.profile-action-btn:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-dark) !important;
+}
+
+.profile-action-btn.active {
+  background-color: var(--color-text-dark);
+  color: var(--color-bg) !important;
+}
+
+/* Profile Analytics/Stat Counter Sections (Listings, Sold, Followers) */
+.profile-stat-block {
+  text-align: center;
+}
+
+.profile-stat-value {
+  color: var(--color-text-dark);
+  font-weight: 700;
+}
+
+.profile-stat-label {
+  color: var(--color-text-muted);
+}
+
+/* Profile View Feed Grid Section Line & Tabs Selector */
+.profile-tabs-header {
+  border-bottom: 1px solid var(--color-border);
+  background-color: transparent;
+  display: flex;
+}
+
+.tab-item {
+  color: var(--color-text-muted);
+  position: relative;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+}
+
+.tab-item.active {
+  color: var(--color-text-dark);
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+/* =============================================================
+   GRID MEDIA & OVERLAY BADGES (Premium Dark Mode)
+   ============================================================= */
+
+/* Price Tags positioned inside product card items (e.g., R2400) */
+.product-price-tag {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-weight: 600;
+}
+
+/* Premium Transparent Blur Spec Overlays (e.g., 12GB/256GB) */
+.spec-badge {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fluid Layout Wrapper for Video Thumbnails */
+.sold-overlay-container {
+  position: relative;
+}
+
+/* Sleek Translucent 'SOLD' Badge Overlay */
+.sold-label-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  color: #ffffff !important;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 5;
+}
+
+/* Ensure the wrapper enforces context colors completely */
+.explore-page.var-bg-fix {
+    background-color: var(--color-bg) !important;
+    min-height: 100vh;
+    color: var(--color-text-dark);
+}
+
+/* Fix Search Toolbar Layout alignment variables */
+.explore-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem;
+    width: 100%;
+}
+
+/* Force filter bar child component button styles to react to theme properties */
+.explore-toolbar button, .filter-btn {
+    background-color: var(--color-card) !important;
+    border: 1px solid var(--color-border) !important;
+    color: var(--color-text-dark) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 10px 16px !important;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.explore-toolbar button:hover, .filter-btn:hover {
+    background-color: var(--color-border) !important;
+}
+
+/* Premium Category Active State Adjustment */
+.category-pill.active {
+    background-color: var(--color-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--color-primary) !important;
+}
+
+/* Ensure underlying search bar subcomponents inherit transparency cleanly */
+.search-container {
+    flex: 1;
+    background-color: var(--color-card) !important;
+    border: 1px solid var(--color-border) !important;
 }

@@ -1,14 +1,15 @@
 import "../styles/Profile.css";
 import "../styles/EditProfile.css";
 import Navigation from "../components/Navigation";
+import Toast from "../components/Toast"; // Imported Custom Toast Notification
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Camera, ChevronLeft } from 'lucide-react';
+import { MapPin, Camera, ChevronLeft, Loader2 } from 'lucide-react';
 
 const EditProfile = () => {
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
-    const backendUrl = "https://localhost:7124/uploads/";
+    const backendUrl = "https://cylosocials.co.za/uploads/";
 
     const [profile, setProfile] = useState({
         id: 0,
@@ -18,7 +19,7 @@ const EditProfile = () => {
         bio: "",
         phone: "",
         imageUrl: "",
-        suburb: "", // Added Suburb
+        suburb: "", 
         city: "",
         province: "",
         latitude: null,
@@ -27,6 +28,13 @@ const EditProfile = () => {
 
     const [selectedFile, setSelectedFile] = useState(null);
     const [isLocating, setIsLocating] = useState(false);
+
+    // Pure JavaScript Toast Notification State Management
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type) => {
+        setToast({ message, type });
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -39,7 +47,7 @@ const EditProfile = () => {
             }
 
             try {
-                const res = await fetch(`https://localhost:7124/api/profile/${storedUserId}`, {
+                const res = await fetch(`https://cylosocials.co.za/api/profile/${storedUserId}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 
@@ -55,7 +63,7 @@ const EditProfile = () => {
                         bio: p.bio || "",
                         phone: p.phone || "",
                         imageUrl: p.imageUrl || "",
-                        suburb: p.suburb || "", // Mapped native Suburb string
+                        suburb: p.suburb || "", 
                         city: p.city || "",
                         province: p.province || "",
                         latitude: p.latitude ?? null,
@@ -64,6 +72,7 @@ const EditProfile = () => {
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
+                showToast("Failed to load profile settings.", "error");
             }
         };
         fetchProfile();
@@ -71,10 +80,12 @@ const EditProfile = () => {
 
     const getLocation = () => {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser");
+            showToast("Geolocation is not supported by your browser.", "error");
             return;
         }
         setIsLocating(true);
+        showToast("Fetching location from GPS satellite...", "info");
+
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
             try {
@@ -84,7 +95,6 @@ const EditProfile = () => {
                 const data = await response.json();
                 const addr = data.address || {};
                 
-                // Optimized parsing specific to South African municipal data formats
                 const detectedSuburb = addr.suburb || addr.neighbourhood || addr.residential || "";
                 const detectedCity = addr.city || addr.town || addr.city_district || addr.municipality || "Unknown Location";
                 const province = addr.state || "";
@@ -101,15 +111,16 @@ const EditProfile = () => {
                 const locationAlertText = detectedSuburb 
                     ? `Found you near ${detectedSuburb}, ${detectedCity}! 📍` 
                     : `Found you near ${detectedCity}! 📍`;
-                alert(locationAlertText);
+                
+                showToast(locationAlertText, "success");
             } catch (error) {
                 console.error("Error naming the location:", error);
-                alert("Coordinates saved, but location details could not be resolved.");
+                showToast("Coordinates saved, but failed resolving area names.", "error");
             } finally {
                 setIsLocating(false);
             }
         }, () => {
-            alert("Location access denied.");
+            showToast("Location access denied. Check browser permissions.", "error");
             setIsLocating(false);
         });
     };
@@ -131,6 +142,7 @@ const EditProfile = () => {
         setSelectedFile(file); 
         const preview = URL.createObjectURL(file); 
         setProfile({ ...profile, imageUrl: preview });
+        showToast("Avatar preview updated locally!", "success");
     };
 
     const updateProfile = async () => {
@@ -145,7 +157,7 @@ const EditProfile = () => {
         formData.append("HandleName", profile.handleName || "");
         formData.append("Bio", profile.bio || "");
         formData.append("Phone", profile.phone || "");
-        formData.append("Suburb", profile.suburb || ""); // Sent cleanly to backend DTO
+        formData.append("Suburb", profile.suburb || ""); 
         formData.append("City", profile.city || "");
         formData.append("Province", profile.province || "");
 
@@ -161,29 +173,41 @@ const EditProfile = () => {
         }
 
         try {
-            const response = await fetch(`https://localhost:7124/api/profile/save`, {
+            const response = await fetch(`https://cylosocials.co.za/api/profile/save`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData
             });
 
             if (response.ok) {
-                alert("Profile saved successfully! 🚀");
-                navigate("/profile");
+                showToast("Profile saved successfully! 🚀", "success");
+                setTimeout(() => {
+                    navigate("/profile");
+                }, 1200);
             } else {
                 const errorData = await response.json();
                 console.error("Server Error details:", errorData);
-                alert(`Save failed: ${JSON.stringify(errorData.errors || "Unknown Error")}`);
+                showToast(`Save failed: Check input parameters.`, "error");
             }
         } catch (error) {
             console.error("Network Error:", error);
-            alert("Connection error. Is the server running?");
+            showToast("Connection error. Is your API backend running?", "error");
         }
     };
 
     return (
         <div className="profile-layout">
             <Navigation />
+            
+            {/* Dynamic Toast Portal Anchor */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    type={toast.type} 
+                    onClose={() => setToast(null)} 
+                />
+            )}
+
             <div className="edit-profile-wrapper">
                 <header className="edit-header">
                     <button className="back-btn" onClick={() => navigate(-1)}>
@@ -223,10 +247,9 @@ const EditProfile = () => {
 
                     <div className="edit-card">
                         <label>Bio</label>
-                        <textarea className="modern-textarea" name="bio" value={profile.bio || ""} onChange={handleChange} placeholder="Tell your story..." rows="4" />
+                        <textarea className="modern-textarea" name="bio" value={profile.bio || ""} onChange={handleChange} placeholder="Tell your story..." rows={4} />
                     </div>
 
-                    {/* Upgraded Location Card with Dual Row Layout */}
                     <div className="edit-card">
                         <label>Location Details</label>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -248,8 +271,8 @@ const EditProfile = () => {
                                     style={{ flex: 1 }}
                                 />
                             </div>
-                            <button className="geo-btn" onClick={getLocation} disabled={isLocating} style={{ height: '44px', shrink: 0 }}>
-                                {isLocating ? "..." : <MapPin size={18} />}
+                            <button className="geo-btn" onClick={getLocation} disabled={isLocating} style={{ height: '44px', width: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                {isLocating ? <Loader2 className="animate-spin" size={18} /> : <MapPin size={18} />}
                             </button>
                         </div>
                     </div>

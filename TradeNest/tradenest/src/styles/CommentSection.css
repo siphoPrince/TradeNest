@@ -264,9 +264,6 @@ div.comment-actions button.action-btn svg {
     height: 14px !important;
 }
 
-
-
-
 .action-btn:hover {
     background-color: var(--color-bg);
     color: var(--color-accent);
@@ -341,7 +338,6 @@ div.comment-actions button.action-btn svg {
     border-left: 2px solid #eef0f2;
     padding-left: 12px;
     display: flex;
-    
 }
 
 .comment-footer-metrics {
@@ -365,7 +361,9 @@ div.comment-actions button.action-btn svg {
 .interaction-link-btn.liked {
     color: #ff3b30; 
 }
-
+.like-count{
+    color: #333;
+}
 .nested-reply-box-input {
     display: flex;
     gap: 8px;
@@ -485,7 +483,6 @@ div.comment-actions button.action-btn svg {
     }
 }
 
-
 .meta-left-group {
     display: flex !important;
     flex-direction: row !important;
@@ -494,21 +491,30 @@ div.comment-actions button.action-btn svg {
     flex-wrap: wrap; /* Allows text to drop cleanly if the screen gets micro-sized */
 }
 
-
-
-
-
-
-
-
-
-
+/* =========================================
+   10. PC / BIG SCREEN RE-ANCHOR FIX
+   ========================================= */
 @media (min-width: 769px) {
+    /* Layout structural alignment fix */
+    .feed-layout-container, 
+    div:has(> .comment-section) { 
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important; /* Force items to scale to equal heights */
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
     .comment-section {
-        position: sticky !important;
-        top: 80px; 
-        transform: none !important;
+        position: relative !important; 
+        transform: none !important;    
         visibility: visible !important;
         pointer-events: auto !important;
+        display: flex !important;      
+        width: 380px !important;       
+        min-width: 380px !important;   
+        height: auto !important;       /* Let it scale dynamically to match the feed container */
+        margin-left: 20px !important;  
+        opacity: 1 !important;         
     }
 }

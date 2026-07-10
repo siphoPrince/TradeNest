@@ -10,49 +10,70 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const [message, setMessage] = useState(""); 
-  
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
-    if (!validateForm()) return;
+
+    console.log("🟢 [DEBUG] Sign In button clicked!");
+    console.log(`🟢 [DEBUG] Current Form Inputs -> Email: "${email}", Password Length: ${password.length}`);
+    
+    if (!validateForm()) {
+      console.log("❌ [DEBUG] Form validation failed. Stopping execution.");
+      return;
+    }
+
     try {
+      console.log("📡 [DEBUG] Validation passed. Dispatching payload to authService...");
       const response = await authService.login(email, password);
+      
+      console.log("🎉 [DEBUG] Connection successful! Server token payload received:", response);
       localStorage.setItem("token", response.token);
       localStorage.setItem("userId", response.userId);
       
       navigate("/dashboard");
     } catch (error) {
-      alert("Login failed. Please check your credentials.");
+      console.error("💥 [DEBUG] CRITICAL CONNECTION EXCEPTION CAUGHT:");
+      console.error("Error Core Message:", error.message);
+      console.error("Server API Status Code:", error.response?.status);
+      console.error("Server Returned Raw Data Payload:", error.response?.data);
+      
+      // Provides direct visual diagnostic reporting instead of swallowing the true error root
+      const friendlyError = error.response?.data || error.message || "Invalid Credentials";
+      alert(`Login failed: ${friendlyError}`);
     }
   };
 
   const validateForm = () => {
-  // 1. Email Regex: Checks for something@somewhere.com
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
-  if (!emailRegex.test(email)) {
-    setMessage("Please enter a valid email address.");
-    return false;
-  }
+    // 1. Email Regex: Checks for something@somewhere.com
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+      setMessage("Please enter a valid email address.");
+      return false;
+    }
 
-  // 2. Password Strength: Minimum 6 characters
-  if (password.length < 6) {
-    setMessage("Password must be at least 6 characters long.");
-    return false;
-  }
+    // 2. Password Strength: Minimum 6 characters
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters long.");
+      return false;
+    }
 
-  return true;
-};
+    return true;
+  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
+        console.log("🟢 [DEBUG] Google intercept token retrieved. Verifying with C# API backend...");
         const response = await authService.googleLogin(credentialResponse.credential);
+        
+        console.log("🎉 [DEBUG] Google OAuth session successfully provisioned:", response);
         localStorage.setItem("token", response.token);
         localStorage.setItem("userId", response.userId);
         navigate("/dashboard");
     } catch (error) {
-        alert("Google Sign-In failed.");
+        console.error("💥 [DEBUG] Google Sign-In backend verification failed:", error);
+        alert(`Google Sign-In failed: ${error.response?.data || error.message}`);
     }
 };
 
@@ -64,7 +85,13 @@ function SignIn() {
         </div>
         <div className="auth-card">
           <h2 className="auth-title">Welcome Back</h2>
-          {message && <p className="auth-error-msg" style={{ color: '#ff4444', textAlign: 'center', fontSize: '0.9rem', marginBottom: '10px' }}>{message}</p>}
+          
+          {message && (
+            <p className="auth-error-msg" style={{ color: '#ff4444', textAlign: 'center', fontSize: '0.9rem', marginBottom: '10px' }}>
+              {message}
+            </p>
+          )}
+
           <form className="auth-form" onSubmit={handleLogin}>
             <input
               className="auth-input"
@@ -95,7 +122,6 @@ function SignIn() {
             </Link>
           </div>
 
-          {/* Added a divider and the Google Button */}
           <div className="auth-divider">
             <span>OR</span>
           </div>

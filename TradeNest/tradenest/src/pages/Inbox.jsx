@@ -66,7 +66,7 @@ const Message = () => {
     useEffect(() => {
         if (!token) return;
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:7124/chatHub", { accessTokenFactory: () => token })
+            .withUrl("https://cylosocials.co.za/chatHub", { accessTokenFactory: () => token })
             .withAutomaticReconnect()
             .build();
 
@@ -134,7 +134,7 @@ const Message = () => {
     // 3. Fetch Sidebar Threads
     const fetchConversations = async () => {
         try {
-            const res = await fetch("https://localhost:7124/api/messages/conversations", {
+            const res = await fetch("https://cylosocials.co.za/api/messages/conversations", {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -145,7 +145,7 @@ const Message = () => {
                 if (autoSelect) {
                     setActiveChat(autoSelect);
                 } else if (urlUserId) {
-                    const initRes = await fetch(`https://localhost:7124/api/messages/initiate-order-chat/${urlOrderId}`, {
+                    const initRes = await fetch(`https://cylosocials.co.za/api/messages/initiate-order-chat/${urlOrderId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (initRes.ok) {
@@ -166,13 +166,13 @@ const Message = () => {
         if (activeChat?.orderId) {
             const fetchHistory = async () => {
                 try {
-                    const res = await fetch(`https://localhost:7124/api/messages/order/${activeChat.orderId}`, {
+                    const res = await fetch(`https://cylosocials.co.za/api/messages/order/${activeChat.orderId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
                     setMessages(Array.isArray(data) ? data : []);
                     
-                    await fetch(`https://localhost:7124/api/messages/read/${activeChat.orderId}`, {
+                    await fetch(`https://cylosocials.co.za/api/messages/read/${activeChat.orderId}`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });

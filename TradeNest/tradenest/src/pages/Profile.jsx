@@ -1,32 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
     Settings, 
     UserRoundPen, 
     X, 
-    Heart, 
-    MessageCircle, 
-    ShoppingBag, 
     ChevronUp, 
     ChevronDown, 
-    Share2,
     Bookmark,
     Grid,
-    User,
     Bell,
-    MapPin 
+    MapPin,
+    BadgeCheck,
+    ExternalLink
 } from 'lucide-react';
 import Navigation from "../components/Navigation";
 import "../styles/Profile.css";
 import "../styles/Follow.css";
 import ProductCard from "../components/ProductCard";
+import api from "../services/api";
 
 const Profile = () => {
     const [userPosts, setUserPosts] = useState([]);
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [profile, setProfile] = useState(null); 
-    const [selectedPostIndex, setSelectedPostIndex] = useState(null);
+    const [selectedPostId, setSelectedPostId] = useState(null); 
     const [activeTab, setActiveTab] = useState("listings");
     const [savedPosts, setSavedPosts] = useState([]);
     const [notificationsCount, setNotificationsCount] = useState(0);
@@ -39,14 +37,25 @@ const Profile = () => {
 
     const navigate = useNavigate();
     const { id } = useParams();
-    const backendUrl = "https://localhost:7124/uploads/";
     const loggedInUserId = localStorage.getItem("userId");
     const isOwnProfile = !id || id === loggedInUserId;
 
     const currentViewPosts = activeTab === "saved" ? savedPosts : userPosts;
 
+    // Extract the normalized inner post object safely
+    const getCleanPostData = useCallback((item) => {
+        if (!item) return null;
+        return activeTab === "saved" ? item.post : item;
+    }, [activeTab]);
+
+    // Find current active index and post objects dynamically
+    const currentPostIndex = currentViewPosts.findIndex(
+        item => getCleanPostData(item)?.id === selectedPostId
+    );
+    const cleanActivePost = getCleanPostData(currentViewPosts[currentPostIndex]);
+
+    // Migrated from fetch to Axios custom instance
     const fetchFollowData = async (type) => {
-        const token = localStorage.getItem("token");
         const targetUserId = id || loggedInUserId;
         
         setFollowModalTitle(type === "followers" ? "Followers" : "Following");
@@ -56,19 +65,61 @@ const Profile = () => {
 
         try {
             const endpoint = type === "followers" ? "followers" : "following";
-            const response = await fetch(`https://localhost:7124/api/follow/${endpoint}/${targetUserId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setFollowList(data);
-            }
+            const response = await api.get(`/api/follow/${endpoint}/${targetUserId}`);
+            setFollowList(response.data || []);
         } catch (error) {
             console.error(`Error fetching ${type}:`, error);
         } finally {
             setLoadingFollow(false);
         }
+    };
+
+    // Helper to deeply map and update fields inside arrays containing raw posts or bookmarked item objects
+    const updatePostInStateArrays = useCallback((postId, updatedFields) => {
+        const updater = (prevItems, isSavedTab) => 
+            prevItems.map(item => {
+                if (isSavedTab) {
+                    if (item.post?.id === postId) {
+                        return { ...item, post: { ...item.post, ...updatedFields } };
+                    }
+                } else {
+                    if (item.id === postId) {
+                        return { ...item, ...updatedFields };
+                    }
+                }
+                return item;
+            });
+
+        setUserPosts(prev => updater(prev, false));
+        setSavedPosts(prev => updater(prev, true));
+    }, []);
+
+    // Migrated from fetch to Axios custom instance
+    const handleItemSold = async (postId) => {
+        try {
+            const response = await api.post(`/api/posts/${postId}/sold`);
+            
+            if (response.status === 200 || response.status === 201) {
+                const data = response.data;
+                
+                setProfile(prev => {
+                    if (!prev) return null;
+                    return { 
+                        ...prev, 
+                        soldCount: data.newSoldCount !== undefined ? data.newSoldCount : (prev.soldCount || 0) + 1
+                    };
+                });
+
+                updatePostInStateArrays(postId, { isSold: true });
+            }
+        } catch (error) {
+            console.error("Error processing sales trigger:", error);
+        }
+    };
+
+    // Dynamic dynamic comment count updates from modal interactions
+    const handleUpdateCommentCount = (postId, newCount) => {
+        updatePostInStateArrays(postId, { commentCount: newCount });
     };
 
     const handleShare = async (title, text, url) => {
@@ -84,68 +135,96 @@ const Profile = () => {
         }
     };
 
-    useEffect(() => {
-        document.body.style.overflow = (selectedPostIndex !== null || showFollowModal) ? 'hidden' : 'unset';
-    }, [selectedPostIndex, showFollowModal]);
+    // Migrated from fetch to Axios custom instance
+    const fetchSavedPosts = useCallback(async () => {
+        setLoadingPosts(true);
+        try {
+            const response = await api.get("/api/bookmarks");
+            setSavedPosts(response.data || []);
+        } catch (error) {
+            console.error("Error fetching saved posts:", error);
+        } finally {
+            setLoadingPosts(false);
+        }
+    }, []);
 
+    // Tab Data Fetcher Sync
     useEffect(() => {
         if (activeTab === "saved" && isOwnProfile) {
             fetchSavedPosts();
         }
-    }, [activeTab]);
+    }, [activeTab, isOwnProfile, fetchSavedPosts]);
 
+    // Body Scroll-Lock Management
+    useEffect(() => {
+        const shouldLock = selectedPostId !== null || showFollowModal;
+        document.body.style.overflow = shouldLock ? 'hidden' : 'unset';
+        
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [selectedPostId, showFollowModal]);
+
+    // Primary Core Profile Data Loader Sync
     useEffect(() => {
         const fetchProfileData = async () => {
-            const token = localStorage.getItem("token");
             const targetUserId = id || loggedInUserId;
 
-            if (!targetUserId || targetUserId === "undefined") return;
+            if (!targetUserId || targetUserId === "undefined" || targetUserId === "null") return;
+
+            setUserPosts([]);
+            setSavedPosts([]);
+            setLoadingPosts(true);
 
             try {
+                // 1. Fetch Notification Badges if it's the user's own profile
                 if (isOwnProfile) {
-                    fetch(`https://localhost:7124/api/notifications/unread-counts/${targetUserId}`)
-                        .then(res => res.ok ? res.json() : null)
-                        .then(data => {
-                            if (data) setNotificationsCount(data.notificationsCount || 0);
+                    api.get(`/api/notifications/unread-counts/${targetUserId}`)
+                        .then(response => {
+                            const data = response.data;
+                            setNotificationsCount(data.notificationsCount || 0);
                         })
-                        .catch(err => console.error("Error fetching initial badge counts:", err));
+                        .catch(err => console.error("Error fetching badge counts:", err));
                 }
 
-                const profileResponse = await fetch(`https://localhost:7124/api/profile/${targetUserId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                // 2. Fetch Profile Details securely using your global Axios api client
+                const profileResponse = await api.get(`/api/profile/${targetUserId}`);
+                const profileData = profileResponse.data;
 
-                if (profileResponse.status === 404 && isOwnProfile) {
+                if (profileData) {
+                    setProfile({
+                        ...profileData.profile,
+                        isVerified: profileData.profile?.user?.isVerified,
+                        email: profileData.profile?.user?.email,
+                        tradeSafeId: profileData.profile?.user?.tradeSafeRecipientId,
+                        followersCount: profileData.followersCount || 0,
+                        followingCount: profileData.followingCount || 0,
+                        soldCount: profileData.profile?.soldCount || 0,
+                        suburb: profileData.profile?.suburb || "",
+                        city: profileData.profile?.city || "",
+                        province: profileData.profile?.province || ""
+                    });
+                    
+                    if (profileData.isFollowing !== undefined) {
+                        setIsFollowing(profileData.isFollowing);
+                    }
+                }
+
+            } catch (error) {
+                if (error.response && error.response.status === 404 && isOwnProfile) {
                     navigate("/editProfile");
                     return;
                 }
+                console.error("Error fetching profile details:", error);
+            }
 
-                if (profileResponse.ok) {
-                    const data = await profileResponse.json();
-                    
-                    setProfile({
-                        ...data.profile,
-                        email: data.profile.user?.email,
-                        tradeSafeId: data.profile.user?.tradeSafeRecipientId,
-                        followersCount: data.followersCount || 0,
-                        followingCount: data.followingCount || 0,
-                        soldCount: data.profile.soldCount || 0, // Maps counter safely from database schema
-                        suburb: data.profile.suburb || "",
-                        city: data.profile.city || "",
-                        province: data.profile.province || ""
-                    });
-                    if (data.isFollowing !== undefined) setIsFollowing(data.isFollowing);
-                }
-
-                setLoadingPosts(true);
-                const postsResponse = await fetch(`https://localhost:7124/api/posts/user/${targetUserId}?pageNumber=1&pageSize=10`);
-
-                if (postsResponse.ok) {
-                    const postsData = await postsResponse.json();
-                    setUserPosts(postsData.data || []);
-                }
+            // 3. Separate Try/Catch for user posts
+            try {
+                const postsResponse = await api.get(`/api/posts/user/${targetUserId}?pageNumber=1&pageSize=10`);
+                const postsData = postsResponse.data;
+                setUserPosts(postsData.data || postsData.Data || []);
             } catch (error) {
-                console.error("Error fetching profile:", error);
+                console.error("Error fetching user posts:", error);
             } finally {
                 setLoadingPosts(false);
             }
@@ -154,33 +233,22 @@ const Profile = () => {
         fetchProfileData();
     }, [id, loggedInUserId, navigate, isOwnProfile]);
 
-    const fetchSavedPosts = async () => {
-        const token = localStorage.getItem("token");
-        setLoadingPosts(true);
-        try {
-            const response = await fetch(`https://localhost:7124/api/bookmarks`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setSavedPosts(data || []);
-            }
-        } catch (error) {
-            console.error("Error fetching saved posts:", error);
-        } finally {
-            setLoadingPosts(false);
-        }
-    };
-
+    // Migrated from fetch to Axios custom instance
     const toggleSave = async (postId) => {
-        const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`https://localhost:7124/api/bookmarks/${postId}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                if (activeTab === "saved") fetchSavedPosts();
+            const response = await api.post(`/api/bookmarks/${postId}`);
+            if (response.status === 200 || response.status === 201) {
+                if (activeTab === "saved") {
+                    if (selectedPostId === postId) {
+                        if (currentViewPosts.length > 1) {
+                            const nextIndex = currentPostIndex === currentViewPosts.length - 1 ? currentPostIndex - 1 : currentPostIndex + 1;
+                            setSelectedPostId(getCleanPostData(currentViewPosts[nextIndex])?.id);
+                        } else {
+                            setSelectedPostId(null);
+                        }
+                    }
+                    fetchSavedPosts();
+                }
             }
         } catch (error) {
             console.error("Save error:", error);
@@ -198,41 +266,37 @@ const Profile = () => {
         return () => window.removeEventListener("badgeCountsUpdated", handleCountsUpdate);
     }, []);
 
+    // Migrated from fetch to Axios custom instance
     const handleFollow = async () => {
-        const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`https://localhost:7124/api/follow/${id}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'UserId': loggedInUserId
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setIsFollowing(data.isFollowing);
-                setProfile(prev => ({
-                    ...prev,
-                    followersCount: data.isFollowing ? (prev.followersCount || 0) + 1 : (prev.followersCount || 0) - 1
-                }));
-            }
+            const response = await api.post(`/api/follow/${id}`);
+            const data = response.data;
+            setIsFollowing(data.isFollowing);
+            setProfile(prev => ({
+                ...prev,
+                followersCount: data.isFollowing ? (prev.followersCount || 0) + 1 : (prev.followersCount || 0) - 1
+            }));
         } catch (error) {
             console.error("Follow failed:", error);
         }
     };
 
+    // Migrated from fetch to Axios custom instance
     const handleDelete = async (postId) => {
         if (!window.confirm("Are you sure you want to delete this listing?")) return;
-        const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`https://localhost:7124/api/posts/${postId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                setUserPosts(userPosts.filter(post => post.id !== postId));
-                setSelectedPostIndex(null);
+            const response = await api.delete(`/api/posts/${postId}`);
+            if (response.status === 200 || response.status === 204) {
+                if (selectedPostId === postId) {
+                    if (currentViewPosts.length > 1) {
+                        const nextIndex = currentPostIndex === currentViewPosts.length - 1 ? currentPostIndex - 1 : currentPostIndex + 1;
+                        setSelectedPostId(getCleanPostData(currentViewPosts[nextIndex])?.id);
+                    } else {
+                        setSelectedPostId(null);
+                    }
+                }
+                setUserPosts(prev => prev.filter(post => post.id !== postId));
+                setSavedPosts(prev => prev.filter(post => post.post?.id !== postId));
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -240,20 +304,20 @@ const Profile = () => {
     };
 
     const isVideo = (url) => url?.match(/\.(mp4|webm|ogg|mov)$/i);
-    const getMediaUrl = (url) => url?.startsWith("http") ? url : `${backendUrl}${url}`;
+    const getMediaUrl = (url) => url?.startsWith("http") ? url : `${api.defaults.baseURL}/uploads/${url}`;
 
     if (!profile && !loadingPosts) return <div className="loading">Profile not found. 😕</div>;
     if (!profile) return <div className="loading">Loading Profile... ⏳</div>;
 
     return (
         <div className="profile-layout">
-            <Navigation />
+            <Navigation/>
             <div className="profile-page">
                 <div className="profile-container">
                     <div className="profile-header">
                         {isOwnProfile && (
-                            <div className="mobile-bell-anchor" onClick={() => navigate("/activity")} style={{ position: 'relative' }}>
-                                <Bell size={24} />
+                            <div className="mobile-bell-anchor" onClick={() => navigate("/activity")} style={{ position: 'relative', cursor: 'pointer' }}>
+                                <Bell size={24}/>
                                 {notificationsCount > 0 && (
                                     <span className="sidebar-badge mobile-badge">{notificationsCount}</span>
                                 )}
@@ -266,14 +330,20 @@ const Profile = () => {
                             onError={(e) => { e.target.src = "https://picsum.photos/120"; }}
                         />
                         <div className="profile-info">
-                            <span className="userName">{profile?.name} {profile?.surName}</span>
+                            <div className="profile-author-row" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="userName">{profile?.name} {profile?.surName}</span>
+                                {profile?.isVerified && (
+                                    <BadgeCheck className="verified-badge-icon" size={18} title="Verified Seller (12+ Sales)" style={{ color: '#007fff' }}/>
+                                )}
+                            </div>
+
                             <small className="userHandle">@{profile?.handleName || "user"}</small>
                             <small className="bio">{profile?.bio || "No bio yet."}</small>
 
                             <div className="profile-meta-info">
                                 {(profile?.suburb || profile?.city) && (
                                     <div className="profile-location-tag" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#666', fontSize: '13px', marginTop: '6px' }}>
-                                        <MapPin size={15} style={{ color: '#ff3b30' }} />
+                                        <MapPin size={15} style={{ color: '#ff3b30' }}/>
                                         <span>
                                             Based in <strong>
                                                 {profile.suburb ? `${profile.suburb}, ` : ""}{profile.city}
@@ -287,7 +357,7 @@ const Profile = () => {
                             <div className="profile-actions">
                                 {isOwnProfile ? (
                                     <button className="editBut" onClick={() => navigate("/editProfile")}>
-                                        Edit Profile <UserRoundPen size={16} />
+                                        Edit Profile <UserRoundPen size={16}/>
                                     </button>
                                 ) : (
                                     <button className={isFollowing ? "followingBut" : "followBut"} onClick={handleFollow}>
@@ -297,15 +367,16 @@ const Profile = () => {
                                 {isOwnProfile && (
                                     <>
                                         <button 
-                                            className="shareBut"
+                                            className="profile-action-btn"
                                             onClick={() => handleShare(
                                                 `Check out ${profile?.name} on Cylo`, 
                                                 `View ${profile?.name}'s listings and shop securely.`, 
                                                 window.location.href
-                                            )}>Share Profile</button>
+                                            )}>Share <ExternalLink size={16} style={{ marginLeft: '6px' }}/>
+                                        </button>
 
-                                        <button className="accountBtn" onClick={() => navigate("/settings")}>
-                                            Settings <Settings size={16} />
+                                        <button className="profile-action-btn" onClick={() => navigate("/settings")}>
+                                            Settings <Settings size={16} style={{ marginLeft: '6px' }}/>
                                         </button>
                                     </>
                                 )}
@@ -340,13 +411,13 @@ const Profile = () => {
                                 className={`tab-btn ${activeTab === "listings" ? "active" : ""}`}
                                 onClick={() => setActiveTab("listings")}
                             >
-                                <Grid size={16} /> Listings
+                                <Grid size={16}/> Listings
                             </button>
                             <button 
                                 className={`tab-btn ${activeTab === "saved" ? "active" : ""}`}
                                 onClick={() => setActiveTab("saved")}
                             >
-                                <Bookmark size={16} /> Saved
+                                <Bookmark size={16}/> Saved
                             </button>
                         </div>
                     )}
@@ -357,10 +428,14 @@ const Profile = () => {
                         {loadingPosts ? (
                             <p className="empty-msg">Loading content...</p>
                         ) : currentViewPosts.length > 0 ? (
-                            currentViewPosts.map((post, index) => {
-                                const postData = activeTab === "saved" ? post.post : post;
+                            currentViewPosts.map((item) => {
+                                const postData = getCleanPostData(item);
+                                if (!postData) return null;
                                 return (
-                                    <div key={postData.id} className="card" onClick={() => setSelectedPostIndex(index)}>
+                                    <div key={postData.id} className={`card ${postData.isSold ? "sold-out-card" : ""}`} onClick={() => setSelectedPostId(postData.id)}>
+                                        {postData.isSold && (
+                                            <div className="sold-out-badge">SOLD</div>
+                                        )}
                                         {isVideo(postData.mediaUrl) ? (
                                             <video src={getMediaUrl(postData.mediaUrl)} className="listing-thumb" muted playsInline />
                                         ) : (
@@ -381,13 +456,14 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* --- FOLLOW MODAL --- */}
             {showFollowModal && (
                 <div className="follow-modal-overlay" onClick={() => setShowFollowModal(false)}>
                     <div className="follow-modal-content" onClick={e => e.stopPropagation()}>
                         <div className="follow-modal-header">
                             <h3>{followModalTitle}</h3>
-                            <button className="close-modal" onClick={() => setShowFollowModal(false)}><X size={20}/></button>
+                            <button className="close-modal" onClick={() => setShowFollowModal(false)}>
+                                <X size={20}/>
+                            </button>
                         </div>
                         <div className="follow-modal-body">
                             {loadingFollow ? (
@@ -416,42 +492,43 @@ const Profile = () => {
                 </div>
             )}
 
-            {/* --- TIKTOK STYLE VIEWER --- */}
-            {selectedPostIndex !== null && currentViewPosts[selectedPostIndex] && (
-                <div className="profile-modal-overlay" onClick={() => setSelectedPostIndex(null)}>
+            {selectedPostId !== null && cleanActivePost && (
+                <div className="profile-modal-overlay" onClick={() => setSelectedPostId(null)}>
                     <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close-btn" onClick={() => setSelectedPostIndex(null)}>✕</button>
-                        {(() => {
-                            const post = currentViewPosts[selectedPostIndex];
-                            return (
-                                <div className="modal-inner-layout">
-                                    <ProductCard post={post} />
-                                    <div className="tt-nav">
-                                        {selectedPostIndex > 0 && (
-                                            <button 
-                                                className="nav-arrow up"
-                                                onClick={() => setSelectedPostIndex(selectedPostIndex - 1)}
-                                            >
-                                                <ChevronUp size={40}/>
-                                            </button>
-                                        )}
-                                        {selectedPostIndex < currentViewPosts.length - 1 && (
-                                            <button 
-                                                className="nav-arrow down"
-                                                onClick={() => setSelectedPostIndex(selectedPostIndex + 1)}
-                                            >
-                                                <ChevronDown size={40}/>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })()}
+                        <button className="modal-close-btn" onClick={() => setSelectedPostId(null)}>✕</button>
+                        <div className="modal-inner-layout">
+                            <ProductCard 
+                                post={cleanActivePost} 
+                                isProfileView={true} 
+                                onItemSold={handleItemSold} 
+                                onToggleSave={toggleSave} 
+                                onDelete={handleDelete}
+                                onCommentCountChange={handleUpdateCommentCount}
+                            />
+                            <div className="tt-nav">
+                                {currentPostIndex > 0 && (
+                                    <button 
+                                        className="nav-arrow up"
+                                        onClick={() => setSelectedPostId(getCleanPostData(currentViewPosts[currentPostIndex - 1])?.id)}
+                                    >
+                                        <ChevronUp size={40}/>
+                                    </button>
+                                )}
+                                {currentPostIndex < currentViewPosts.length - 1 && (
+                                    <button 
+                                        className="nav-arrow down"
+                                        onClick={() => setSelectedPostId(getCleanPostData(currentViewPosts[currentPostIndex + 1])?.id)}
+                                    >
+                                        <ChevronDown size={40}/>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
     );
-}
+};
 
 export default Profile;

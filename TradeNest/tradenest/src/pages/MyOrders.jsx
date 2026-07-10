@@ -3,10 +3,11 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare, AlertTriangle, Check, User, Tag, Loader2, CreditCard, Trash2, XCircle, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'; 
 import '../styles/MyOrders.css'; 
+import Navigation from '../components/Navigation';
 
 // Split base targets to cleanly respect our separated controller layout
-const ORDERS_API_URL = 'https://localhost:7124/api/orders';
-const PAYMENTS_API_URL = 'https://localhost:7124/api/payments';
+const ORDERS_API_URL = 'https://cylosocials.co.za/api/orders';
+const PAYMENTS_API_URL = 'https://cylosocials.co.za/api/payments';
 
 const getStatusClass = (status) => {
     const s = status?.toUpperCase();
@@ -272,6 +273,7 @@ const MyOrders = () => {
 
     return (
         <div className="dashboard-container">
+            <Navigation />
             {/* Native Modern CSS Toast Feedback Element Container */}
             {toast.show && (
                 <div className={`modern-app-toast global-toast-${toast.type}`}>

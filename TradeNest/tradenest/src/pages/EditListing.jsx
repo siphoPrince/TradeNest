@@ -20,7 +20,7 @@ const EditListing = () => {
 
     useEffect(() => {
         const fetchPost = async () => {
-            const response = await fetch(`https://localhost:7124/api/posts/${id}`);
+            const response = await fetch(`https://cylosocials.co.za/api/posts/${id}`);
             if (response.ok) {
                 const data = await response.json();
                 setFormData({
@@ -30,7 +30,7 @@ const EditListing = () => {
                     categoryId: data.categoryId || "1"
                 });
                 // Shows existing image from your server
-                setPreviewUrl(`https://localhost:7124/uploads/${data.mediaUrl}`);
+                setPreviewUrl(`https://cylosocials.co.za/uploads/${data.mediaUrl}`);
                 setLoading(false);
             }
         };
@@ -62,7 +62,7 @@ const EditListing = () => {
         }
 
         try {
-            const response = await fetch(`https://localhost:7124/api/posts/${id}`, {
+            const response = await fetch(`https://cylosocials.co.za/api/posts/${id}`, {
                 method: 'PUT',
                 headers: {
                     // DO NOT set 'Content-Type': 'application/json' here! 

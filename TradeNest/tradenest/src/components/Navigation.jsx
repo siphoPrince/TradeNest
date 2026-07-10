@@ -8,45 +8,48 @@ import {
     Upload, 
     UserPen, 
     Utensils, 
-    Bell // Imported for the activity notifications
+    Bell 
 } from "lucide-react";
 import SearchBar from "./SearchBar";
+// Clean global Axios configuration instance
+import api from "../services/api";
 
 const Navigation = () => {
-    const loggedInUserId = localStorage.getItem("userId");
-    
-    // State to hold our badge count numbers
     const [counts, setCounts] = useState({
         notificationsCount: 0,
         messagesCount: 0
     });
 
     const fetchBadgeCounts = async () => {
-        if (!loggedInUserId || loggedInUserId === "undefined") return;
-        
         try {
-            const response = await fetch(`https://localhost:7124/api/notifications/unread-counts/${loggedInUserId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setCounts(data);
-            }
+            // Secure call: Targets your clean secure route, token handles user context!
+            const response = await api.get("/api/notifications/unread-counts");
+            
+            const data = response.data;
+            
+            setCounts({
+                notificationsCount: data.notificationsCount || 0,
+                messagesCount: data.messagesCount || 0
+            });
+
+            // Let other mounted layout components know counts updated
+            window.dispatchEvent(new CustomEvent("badgeCountsUpdated", { detail: data }));
+            
         } catch (error) {
             console.error("Error fetching badge counts:", error);
         }
     };
 
     useEffect(() => {
-        // Run immediately on layout mount
         fetchBadgeCounts();
 
-        // Check for updates automatically every 15 seconds to keep counts fresh
+        // 15 seconds polling interval loop
         const interval = setInterval(fetchBadgeCounts, 15000);
         return () => clearInterval(interval);
-    }, [loggedInUserId]);
+    }, []);
 
     return (
         <nav className="sidebar">
-
             <h1 className="logo">CYLO</h1>
 
             <SearchBar />
@@ -84,7 +87,6 @@ const Navigation = () => {
                     <span className="coming-soon">Soon</span>
                 </div>
             </div>
-
         </nav>
     );
 }

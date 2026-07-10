@@ -202,14 +202,51 @@ label {
     background-color: var(--color-border);
 }
 
-/* Mobile Adjustments */
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES (NAVBAR OFFSET)
+   ========================================================================== */
+
 @media (max-width: 768px) {
+    .edit-profile-wrapper {
+        padding: 20px 16px;
+        
+        /* 🔥 THE FIX: Inject safety clearance at the bottom. 
+          70px (for your nav bar height) + 40px comfortable breathing room = 110px
+        */
+        padding-bottom: 110px !important; 
+        
+        /* Ensures min-height accounts for the container's internal padding correctly */
+        box-sizing: border-box; 
+    }
+
     .edit-hero {
         flex-direction: column;
         align-items: center;
         text-align: center;
-    }
-    .edit-profile-wrapper {
+        gap: 20px;
         padding: 20px;
+    }
+
+    .main-fields {
+        width: 100%;
+    }
+
+    .name-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* Stack buttons nicely on mobile screens */
+    .footer-actions {
+        flex-direction: column-reverse; /* Puts 'Save' on top, 'Cancel' underneath */
+        gap: 10px;
+        margin-top: 15px;
+        margin-bottom: 20px; /* Extra spacing padding separation */
+    }
+
+    .save-btn, .cancel-btn {
+        width: 100%; /* Full width touch targets for mobile thumbs */
+        padding: 14px; /* Slightly taller for easier mobile tapping */
+        text-align: center;
     }
 }

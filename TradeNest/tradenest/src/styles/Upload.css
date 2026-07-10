@@ -12,6 +12,10 @@
   flex: 1;
   padding: 40px;
   overflow-y: auto;
+  
+  /* 💡 FIX FOR DESKTOP: Smoothly pushes the upload page right 
+     so the fixed 260px sidebar doesn't sit on top of the content */
+  margin-left: 260px; 
 }
 
 .upload-container {
@@ -278,26 +282,8 @@
 }
 
 /* =============================================================
-   RESPONSIVE FIXES
+   TAGS ELEMENT STYLE RULES
    ============================================================= */
-
-@media (max-width: 768px) {
-  .upload-page {
-    padding: 20px 16px;
-  }
-  
-  .upload-options {
-    grid-template-columns: 1fr;
-  }
-  
-  .video-preview-main {
-    aspect-ratio: 16 / 9; /* Wider for mobile preview */
-  }
-
-  .upload-layout > nav {
-    display: none; /* Hide sidebar on mobile if you use a bottom nav */
-  }
-}
 
 .tag-input-wrapper {
   border: 1px solid #ddd;
@@ -340,6 +326,33 @@
   outline: none;
 }
 
+/* =============================================================
+   RESPONSIVE FIXES
+   ============================================================= */
+
+@media (max-width: 768px) {
+  .upload-page {
+    /* 💡 REMOVE DESKTOP LEFT OFFSET ON MOBILE CHASSIS SCREENS */
+    margin-left: 0; 
+    
+    /* 💡 CRITICAL BUFFER FIX: Added 110px bottom space so your 
+       Publish Listing button scrolls safely clear of the mobile menu */
+    padding: 20px 16px 110px 16px; 
+  }
+  
+  .upload-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .video-preview-main {
+    aspect-ratio: 16 / 9; /* Wider for mobile preview */
+  }
+
+  /* 💡 FIX: Force the nav bar to display so your mobile row layout takes over! */
+  .upload-layout > nav {
+    display: flex !important; 
+  }
+}
 
 /* ==========================================================================
    LIVE VIEWFINDER CAMERA MODAL (Cylo Native Recording System)
@@ -352,8 +365,8 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(10, 10, 12, 0.98); /* Deep translucent onyx matching modern premium UI templates */
-    z-index: 9999; /* Forces viewport positioning above navigation layouts */
+    background: rgba(10, 10, 12, 0.98); 
+    z-index: 10000; /* 💡 INCREASED: Ensures viewfinder blocks out your mobile nav bar completely */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -381,7 +394,7 @@
 .live-camera-feed {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Uniformly crops hardware bounds to fill full window frame */
+    object-fit: cover; 
     background: #000000;
 }
 
@@ -477,7 +490,7 @@
 }
 
 .record-trigger-btn.stop {
-    background: #ff4d4f; /* Global emergency accent red */
+    background: #ff4d4f; 
     color: #ffffff;
     animation: capturePulse 2s infinite;
 }

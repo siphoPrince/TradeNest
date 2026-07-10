@@ -2,15 +2,16 @@ import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
 import { Camera, Upload as UploadIcon, X, Radio, Square } from "lucide-react"; 
-import axios from "axios";
+import api from "../services/api"; // 1. CHANGED: Import your custom api wrapper instead of raw axios
+import axios from "axios"; // Keep this ONLY for direct binary streaming to Cloudflare R2
 import Navigation from "../components/Navigation";
 import "../styles/Upload.css";
 
 const Upload = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null); 
-  const videoPreviewRef = useRef(null); // Added for in-app camera viewfinder feed
-  const mediaRecorderRef = useRef(null); // Track runtime recording instances
+  const videoPreviewRef = useRef(null); 
+  const mediaRecorderRef = useRef(null); 
   
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
@@ -29,7 +30,7 @@ const Upload = () => {
   const [uploadStatus, setUploadStatus] = useState(""); 
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Live Recording Control Engine States
+  // Live Recording States
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
@@ -51,6 +52,8 @@ const Upload = () => {
   };
 
   const handleUpload = async () => {
+    // Note: Token interceptor handles this automatically inside api.js, 
+    // but keeping verification check alive to prevent unnecessary execution loops
     const token = localStorage.getItem("token");
     if (!token) return alert("Please log in first!");
 
@@ -61,53 +64,67 @@ const Upload = () => {
         return;
     }
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("quantity", quantity);
-    formData.append("categoryId", categoryId);
-    formData.append("file", files[0]); 
-    formData.append("latitude", 0);    
-    formData.append("longitude", 0);
-    formData.append("tags", tags.join(","));   
-
+    const videoFile = files[0];
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStatus("Preparing your post...");
+    setUploadStatus("Opening high-speed upload channel... ⚡");
 
     try {
-      const response = await axios.post("https://localhost:7124/api/uploads/create-post", formData, {
+      const cleanFileName = `cylo-${Date.now()}-${videoFile.name?.replace(/[^a-zA-Z0-9.]/g, "") || "recorded.webm"}`;
+      
+      // STEP 1: Get presigned URL from backend using environment-aware 'api' instance
+      const tokenResponse = await api.post("/api/uploads/presigned-url", { 
+          filename: cleanFileName, 
+          contentType: videoFile.type || "video/webm" 
+      });
+
+      const { uploadUrl, publicAssetUrl } = tokenResponse.data;
+
+      // STEP 2: Stream raw bytes straight to Cloudflare R2
+      // Note: We use raw axios here because uploadUrl is a complete external Cloudflare address
+      setUploadStatus("Uploading directly to local edge network... 🚀");
+      
+      await axios.put(uploadUrl, videoFile, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+          "Content-Type": videoFile.type || "video/webm",
         },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          
-          if (percentCompleted < 100) {
-            setUploadProgress(percentCompleted);
-            setUploadStatus(`Uploading to Cylo... ${percentCompleted}%`);
-          } else {
-            setUploadProgress(95); 
-            setUploadStatus("Finalizing on Azure Cloud... ☁️");
-          }
+          setUploadProgress(percentCompleted);
+          setUploadStatus(`Streaming to Cylo CDN Edge... ${percentCompleted}%`);
         },
       });
 
-      if (response.status === 200) {
+      // STEP 3: Commit the metadata properties using environment-aware 'api' instance
+      setUploadStatus("Publishing your listing live... ✨");
+      
+      const postMetadata = {
+        title,
+        description,
+        price: parseFloat(price),
+        quantity: parseInt(quantity),
+        categoryId: parseInt(categoryId),
+        directMediaUrl: publicAssetUrl, 
+        latitude: 0,    
+        longitude: 0,
+        tags: tags.join(","),
+      };
+
+      const finalResponse = await api.post("/api/uploads/create-post", postMetadata);
+
+      if (finalResponse.status === 200 || finalResponse.status === 201) {
         setUploadProgress(100);
-        setUploadStatus("Post Created Successfully! 🚀");
+        setUploadStatus("Listing Published Successfully! 🚀");
         
         setTimeout(() => {
           setIsUploading(false);
           navigate("/dashboard");
-        }, 1500);
+        }, 1200);
       }
     } catch (err) {
-      console.error("Upload error details:", err);
+      console.error("Upload routing pipeline failure:", err);
       setIsUploading(false);
-      const backendError = err.response?.data?.message || "Something went wrong.";
+      const backendError = err.response?.data?.message || "Connection timeout. Please try again.";
       setErrorMessage(`Upload Failed: ${backendError}`);
     }
   };
@@ -133,22 +150,18 @@ const Upload = () => {
     setFiles([]);
   };
 
-  // =========================================
-  // INTEGRATED NATIVE IN-APP CAPTURE LOGIC
-  // =========================================
-
   const startCamera = async () => {
     setErrorMessage("");
     setIsCameraActive(true);
     setRecordedChunks([]);
 
-    // Strategy 1: Attempt to grab the back camera first
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment", 
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 720 }, 
+          height: { ideal: 1280 },
+          frameRate: { ideal: 30 }
         },
         audio: true
       });
@@ -158,28 +171,22 @@ const Upload = () => {
         videoPreviewRef.current.srcObject = stream;
       }
     } catch (err) {
-      // Strategy 2: If back camera is not found, fallback to ANY available camera (like your webcam)
       if (err.name === "NotFoundError" || err.name === "OverconstrainedError") {
-        console.log("Rear camera not found, falling back to default webcam...");
         try {
           const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: true, // Just get whatever camera is plugged in
+            video: true,
             audio: true
           });
-
           setCameraStream(fallbackStream);
           if (videoPreviewRef.current) {
             videoPreviewRef.current.srcObject = fallbackStream;
           }
         } catch (fallbackErr) {
-          console.error("Complete camera failure:", fallbackErr);
-          setErrorMessage("No functional camera device detected on this system.");
+          setErrorMessage("No functional video capture devices found on this hardware.");
           setIsCameraActive(false);
         }
       } else {
-        // Handle explicit user permission denials or blocks
-        console.error("Camera access error:", err);
-        setErrorMessage("Could not launch device viewfinder. Please check permissions or SSL config.");
+        setErrorMessage("Camera initialization rejected. Please verify site privacy permissions.");
         setIsCameraActive(false);
       }
     }
@@ -187,7 +194,6 @@ const Upload = () => {
 
   const startRecording = () => {
     if (!cameraStream) return;
-    
     setRecordedChunks([]);
     
     const options = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
@@ -203,7 +209,7 @@ const Upload = () => {
       }
     };
 
-    mediaRecorder.start(10); // Capture data stream chunks every 10ms
+    mediaRecorder.start(10); 
     setIsRecording(true);
   };
 
@@ -212,14 +218,13 @@ const Upload = () => {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       
-      // Delay processing slightly to guarantee the last async data blocks finish dropping into the buffer array
       setTimeout(() => {
         setRecordedChunks((chunks) => {
           if (chunks.length === 0) return chunks;
           
-          const videoBlob = new Blob(chunks, { type: "video/mp4" });
-          const generatedFile = new File([videoBlob], `cylo-recording-${Date.now()}.mp4`, {
-            type: "video/mp4",
+          const videoBlob = new Blob(chunks, { type: "video/webm" });
+          const generatedFile = new File([videoBlob], `cylo-recording-${Date.now()}.webm`, {
+            type: "video/webm",
           });
 
           setFiles([
@@ -228,7 +233,6 @@ const Upload = () => {
             })
           ]);
           
-          // Power down hardware tracks clean
           closeCameraViewport(cameraStream);
           return [];
         });
@@ -257,42 +261,31 @@ const Upload = () => {
             <div className="progress-bar-container">
               <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
             </div>
-            <p>{uploadProgress}% Uploaded</p>
+            <p>{uploadProgress}% Complete</p>
           </div>
         </div>
       )}
 
-      {/* =========================================
-          TIKTOK-STYLE LIVE CAMERA VIEW OVERLAY
-         ========================================= */}
       {isCameraActive && (
         <div className="camera-viewfinder-overlay">
           <div className="viewfinder-window">
-            <video 
-              ref={videoPreviewRef} 
-              autoPlay 
-              playsInline 
-              muted 
-              className="live-camera-feed"
-            />
-            
+            <video ref={videoPreviewRef} autoPlay playsInline muted className="live-camera-feed" />
             <div className="viewfinder-header">
-              <span className="live-badge">{isRecording ? "🔴 RECORDING" : "STANDBY"}</span>
+              <span className="live-badge">{isRecording ? "🔴 RECORDING" : "READY"}</span>
               <button className="close-viewfinder-btn" onClick={() => closeCameraViewport()}>
                 <X size={24} />
               </button>
             </div>
-
             <div className="viewfinder-controls">
               {!isRecording ? (
                 <button className="record-trigger-btn start" onClick={startRecording}>
                   <Radio size={28} />
-                  <span>Start Record</span>
+                  <span>Record</span>
                 </button>
               ) : (
                 <button className="record-trigger-btn stop" onClick={stopRecording}>
                   <Square size={28} />
-                  <span>Stop & Save</span>
+                  <span>Stop & Keep</span>
                 </button>
               )}
             </div>
@@ -314,17 +307,14 @@ const Upload = () => {
           <div className="upload-section">
             {files.length === 0 ? (
               <div className="upload-options">
-                {/* OPTION 1: DRAG & DROP / BROWSE */}
                 <div {...getRootProps()} className={`dropzone-mini ${isDragActive ? "active" : ""}`}>
                   <input {...getInputProps()} />
                   <UploadIcon size={32} />
                   <p>Upload Video</p>
                 </div>
-
-                {/* OPTION 2: LIVE CAMERA INTERACTION PORTAL */}
                 <div className="camera-zone" onClick={startCamera}>
                    <Camera size={32} />
-                   <p>Record Video</p>
+                   <p>Record Live</p>
                 </div>
               </div>
             ) : (
@@ -338,29 +328,27 @@ const Upload = () => {
           <div className="form-content">
             <div className="inputs">
               <label>Title</label>
-              <input type="text" value={title} onChange={(e)=> setTitle(e.target.value)} placeholder="e.g. iPhone 13 Pro - Great Condition" />
+              <input type="text" value={title} onChange={(e)=> setTitle(e.target.value)} placeholder="e.g. Vintage Leather Jacket" />
             </div>
 
             <div className="inputs">
               <label>Description</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Tell buyers more about the item..." rows="4" />
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your product conditions or features..." rows="4" />
             </div>
 
             <div className="price-qty-row">
                 <div className="inputs">
-                <label>Price (ZAR)</label>
-                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
+                  <label>Price (ZAR)</label>
+                  <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
                 </div>
-
                 <div className="inputs">
-                <label>Quantity</label>
-                <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                  <label>Quantity</label>
+                  <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                 </div>
             </div>
 
-            {/* Tag Section */}
             <div className="inputs">
-              <label>Tags (Press Enter to add)</label>
+              <label>Tags (Press Enter to separate)</label>
               <div className="tag-input-wrapper">
                 <div className="tags-display">
                   {tags.map((tag, index) => (
@@ -375,7 +363,7 @@ const Upload = () => {
                   value={tagInput} 
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleTagKeyDown}
-                  placeholder="e.g. sneakers, nike, fashion"
+                  placeholder="e.g. thrift, streetwear"
                 />
               </div>
             </div>
@@ -386,16 +374,11 @@ const Upload = () => {
                 <option value="1">Electronics</option>
                 <option value="2">Clothing</option>
                 <option value="3">Home</option>
-                <option value="4">Vehicles</option>
               </select>
             </div>
 
-            <button 
-              className="uploadBut" 
-              onClick={handleUpload}
-              disabled={isUploading}
-            >
-              {isUploading ? "Uploading..." : "Publish Listing"}
+            <button className="uploadBut" onClick={handleUpload} disabled={isUploading}>
+              {isUploading ? "Processing..." : "Publish Listing"}
             </button>
           </div>
         </div>

@@ -1,8 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Automatic HTTPS Redirection Script -->
+    <script>
+      if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+      }
+    </script>
+
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta property="og:title" content="Cylo - Secure Social Commerce" />
     <meta property="og:description" content="Redefining how you buy and sell socials." />
@@ -11,6 +18,7 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Vite needs to point to your local main script entry point -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

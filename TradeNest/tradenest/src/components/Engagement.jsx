@@ -10,15 +10,27 @@ const Engagement = ({
     onToggleComments, 
     IsLikedByCurrentUser, 
     LikeCount, 
-    CommentCount,
+    CommentCount, // Ensure this matches what the parent passes!
     initialIsBookmarked 
 }) => {
     const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked ?? false);
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Track comment count locally so changes up the tree sync dynamically
+    const [localCommentCount, setLocalCommentCount] = useState(CommentCount ?? 0);
 
     const saveScroll = () => {
         sessionStorage.setItem("feed-scroll", window.scrollY);
     };
+
+    // Keep the local count updated if the parent changes it (e.g., activeCommentsCount changes)
+    useEffect(() => {
+        setLocalCommentCount(CommentCount ?? 0);
+    }, [CommentCount]);
+
+    useEffect(() => {
+        setIsBookmarked(initialIsBookmarked ?? false);
+    }, [initialIsBookmarked]);
 
     const handleShare = async (e) => {
         e.preventDefault();
@@ -43,10 +55,6 @@ const Engagement = ({
         }
     };
 
-    useEffect(() => {
-    setIsBookmarked(initialIsBookmarked ?? false);
-}, [initialIsBookmarked]);
-
     const handleSave = async (e) => {
         e.preventDefault();
         if (isSaving) return;
@@ -58,12 +66,11 @@ const Engagement = ({
         }
 
         setIsSaving(true);
-        // Optimistic UI update
         const previousState = isBookmarked;
         setIsBookmarked(!previousState);
 
         try {
-            const response = await fetch(`https://localhost:7124/api/bookmarks/${postId}`, {
+            const response = await fetch(`https://cylosocials.co.za/api/bookmarks/${postId}`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -71,16 +78,14 @@ const Engagement = ({
                 }
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to save");
-            }
-            // If the API returns the new state, you can sync it here
+            if (!response.ok) throw new Error("Failed to save");
+            
             const data = await response.json();
             setIsBookmarked(data.isBookmarked);
             
         } catch (err) {
             console.error("Save error:", err);
-            setIsBookmarked(previousState); // Revert on failure
+            setIsBookmarked(previousState);
         } finally {
             setIsSaving(false);
         }
@@ -106,7 +111,8 @@ const Engagement = ({
                 <button className="engagement-btn" onClick={(e) => { e.preventDefault(); onToggleComments(postId); }}>
                     <MessageCircleMore size={22} className="engagement-icon" />
                 </button>
-                <span className="count-label">{CommentCount}</span>
+                {/* Use local state to handle real-time rendering accurately */}
+                <span className="count-label">{localCommentCount}</span>
             </div>
 
             <div className="engagement-item">
@@ -129,7 +135,6 @@ const Engagement = ({
                         color={isBookmarked ? "var(--color-primary)" : "currentColor"}
                     />
                 </button>
-                
                 <span className="count-label">{isBookmarked ? 'Saved' : 'Save'}</span>
             </div>
         </div>

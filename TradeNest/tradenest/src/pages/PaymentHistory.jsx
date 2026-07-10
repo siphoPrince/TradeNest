@@ -9,7 +9,7 @@ const PaymentHistory = ({ userId, token }) => {
     const [error, setError] = useState(null);
 
     // Replace with your live Azure URL when you deploy
-    const API_BASE_URL = "https://localhost:7124/api/payments";
+    const API_BASE_URL = "https://cylosocials.co.za/api/payments";
 
     useEffect(() => {
         const fetchPayments = async () => {
