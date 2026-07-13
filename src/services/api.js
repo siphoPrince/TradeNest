@@ -8,7 +8,8 @@ const isProduction = typeof window !== 'undefined'
 // Clean, explicit base URL assignment
 const API_BASE_URL = isProduction 
     ? 'https://www.cylosocials.co.za'
-    : 'https://localhost:7124';
+    : 'http://localhost:5000';
+    
 
 const api = axios.create({
     baseURL: API_BASE_URL,
