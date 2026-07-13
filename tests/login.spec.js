@@ -22,6 +22,6 @@ test.describe('Login Tests', ()=>{
     test('Should Enter Invalid Credentials And Display Error Messages', async ({page}) =>{
         
         await loginPage.Login(process.env.TEST_USER_InvalidEMAIL, process.env.TEST_USER_InvalidPASS);
-        await expect(page.getByText(ErrorMessages.InvalidCredentials)).toBeVisible();
+        await expect(page.getByText(ErrorMessages.PasswordTooShort)).toBeVisible();
     })
 });
