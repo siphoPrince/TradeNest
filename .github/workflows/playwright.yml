@@ -49,7 +49,7 @@ jobs:
           ASPNETCORE_URLS: http://localhost:5000
         run: |
           cd backend
-          nohup dotnet run > backend.log 2>&1 &
+          nohup dotnet bin/Debug/net8.0/Cylo_Backend.dll > backend.log 2>&1 &
 
       # 6. Start Frontend App (in background)
       - name: Start Frontend
