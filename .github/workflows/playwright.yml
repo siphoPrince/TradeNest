@@ -1,24 +1,66 @@
-name: Automated Playwright Tests
+name: Automated Playwright E2E Tests
+
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-       - main
+    branches: [ main ]
+
 jobs:
-  playwright-tests:
+  e2e-tests:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      # 1. Checkout Frontend / Test Repo
+      - name: Checkout Frontend
+        uses: actions/checkout@v4
         with:
-          node-version: '24'
-      - name: Install dependencies
-        run: npm install
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        run: npx playwright test ./tests/login.spec.js
+          path: frontend
+
+      # 2. Checkout Backend Repo
+      - name: Checkout Backend
+        uses: actions/checkout@v4
+        with:
+          repository: siphoPrince/cylo_backend
+          path: backend
+
+      # 3. Setup Runtimes
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # 4. Install Dependencies
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+          npx playwright install --with-deps
+
+      # 5. Start Backend API (in background)
+      - name: Start C# Backend
+        run: |
+          cd backend
+          dotnet run &
+
+      # 6. Start Frontend App (in background)
+      - name: Start Frontend
+        run: |
+          cd frontend
+          npm run dev &
+
+      # 7. Wait for both servers to accept connections
+      - name: Wait for localhost ports
+        run: |
+          npx wait-on http://localhost:5000 http://localhost:51817
+
+      # 8. Run Playwright Tests
+      - name: Execute Playwright Tests
+        run: |
+          cd frontend
+          npx playwright test ./tests/login.spec.js
