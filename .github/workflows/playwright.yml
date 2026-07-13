@@ -46,7 +46,7 @@ jobs:
       - name: Start C# Backend
         run: |
           cd backend
-          dotnet run &
+          nohup dotnet run --no-build > backend.log 2>&1 &
 
       # 6. Start Frontend App (in background)
       - name: Start Frontend
