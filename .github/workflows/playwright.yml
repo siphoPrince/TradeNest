@@ -68,3 +68,11 @@ jobs:
         run: |
           cd frontend
           npx playwright test ./tests/login.spec.js
+
+      # 9. DEBUG STEP: Output logs if ANY prior step fails
+      - name: Output Backend Crash Log
+        if: failure()
+        run: |
+          echo "================ C# BACKEND LOGS ================"
+          cat backend/backend.log || true
+          echo "================================================="
