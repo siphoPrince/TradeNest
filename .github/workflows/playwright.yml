@@ -44,6 +44,9 @@ jobs:
 
       # 5. Start Backend API (in background)
       - name: Start C# Backend
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5000
         run: |
           cd backend
           nohup dotnet run > backend.log 2>&1 &
@@ -52,12 +55,13 @@ jobs:
       - name: Start Frontend
         run: |
           cd frontend
-          npm run dev &
+          npm run build
+          nohup npm run preview -- --port 51817 > frontend.log 2>&1 &
 
       # 7. Wait for both servers to accept connections
       - name: Wait for localhost ports
         run: |
-          npx wait-on http://localhost:5000 http://localhost:51817
+          npx wait-on http://localhost:5000 http://localhost:51817 --timeout 60000
 
       # 8. Run Playwright Tests
       - name: Execute Playwright Tests
