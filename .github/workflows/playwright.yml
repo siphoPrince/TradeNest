@@ -42,34 +42,49 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      # 5. Start Backend API (in background)
+      # 5. Spin up SQL Server Container
+      - name: Start SQL Server
+        run: |
+          docker run -d --name mssql \
+            -e "ACCEPT_EULA=Y" \
+            -e "MSSQL_SA_PASSWORD=YourPassword123!" \
+            -p 1433:1433 \
+            mcr.microsoft.com/mssql/server:2022-latest
+          
+          # Give MSSQL 15 seconds to finish initialization
+          sleep 15
+
+      # 6. Start Backend API (in background)
       - name: Start C# Backend
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ASPNETCORE_URLS: http://localhost:5000
+          # Override Windows Auth with SQL Auth for Linux Runner
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=UsersDb;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;Encrypt=False;"
         run: |
           cd backend
           dotnet build
           nohup dotnet run --no-build --no-launch-profile > backend.log 2>&1 &
-      # 6. Start Frontend App (in background)
+
+      # 7. Start Frontend App (in background)
       - name: Start Frontend
         run: |
           cd frontend
           npm run build
           nohup npm run preview -- --port 51817 > frontend.log 2>&1 &
 
-      # 7. Wait for both servers to accept connections
+      # 8. Wait for both servers to accept connections
       - name: Wait for localhost ports
         run: |
           npx wait-on http://localhost:5000 http://localhost:51817 --timeout 60000
 
-      # 8. Run Playwright Tests
+      # 9. Run Playwright Tests
       - name: Execute Playwright Tests
         run: |
           cd frontend
           npx playwright test ./tests/login.spec.js
 
-      # 9. DEBUG STEP: Output logs if ANY prior step fails
+      # 10. Output logs if ANY prior step fails
       - name: Output Backend Crash Log
         if: failure()
         run: |
