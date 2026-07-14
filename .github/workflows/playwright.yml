@@ -42,7 +42,7 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      # 5. Spin up SQL Server Container & Pre-create Database
+      # 5. Spin up SQL Server Container & Pre-create Clean Database
       - name: Start SQL Server
         run: |
           docker run -d --name mssql \
@@ -54,10 +54,10 @@ jobs:
           # Give MSSQL 15 seconds to complete engine startup
           sleep 15
 
-          # Pre-create UsersDb so EF Core doesn't throw Error 4060 on startup
+          # Ensure a completely fresh UsersDb is created
           docker exec mssql /opt/mssql-tools18/bin/sqlcmd \
             -S localhost -U sa -P "YourPassword123!" -C \
-            -Q "IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'UsersDb') CREATE DATABASE UsersDb;"
+            -Q "IF EXISTS (SELECT * FROM sys.databases WHERE name = 'UsersDb') DROP DATABASE UsersDb; CREATE DATABASE UsersDb;"
 
       # 6. Start Backend API (in background)
       - name: Start C# Backend
@@ -80,7 +80,7 @@ jobs:
       # 8. Wait for both servers to accept connections
       - name: Wait for localhost ports
         run: |
-          npx wait-on http://localhost:5000 http://localhost:51817 --timeout 60000
+          npx wait-on http://localhost:5000 http://localhost:51817 --delay 2000 --interval 1000 --timeout 120000
 
       # 9. Run Playwright Tests
       - name: Execute Playwright Tests
