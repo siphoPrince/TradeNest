@@ -20,7 +20,7 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/siphoPrince/TradeNest/
+   git clone https://github.com/siphoPrince/TradeNest.git
    cd tests
    npm install
    npx playwright install
