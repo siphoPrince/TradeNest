@@ -26,10 +26,28 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
    npx playwright install
 
 ### Environment Setup
-Create a .env file in the root directory (use .env.example as a template) and populate it with your test configurations:
-```bash
+
+1. **Create a .env file in the root directory (use .env.example as a template) and populate it with your test configurations:**
+   ```bash
    BASE_URL=http://localhost:3000
    TEST_USER_ValidEMAIL=your_valid_test_email@example.com
    TEST_USER_ValidPASS=your_secure_password
    TEST_USER_InvalidEMAIL=invalid@example.com
    TEST_USER_InvalidPASS=short
+
+### RUNNING THE TESTS
+
+**You can execute the test suite in several modes depending on your workflow:**
+
+   ```bash
+   1. Run all tests in headless mode (Command Line):
+      npm run test
+
+   2. Run tests in interactive UI Mode (Highly Recommended for Debugging):
+      npm run test:ui
+
+   3. View HTML Test Reports:
+      npx playwright show-report
+
+
+
