@@ -1,16 +1,53 @@
-# React + Vite
+# Cylo - Secure Social Commerce Marketplace
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cylo is a modern, security-focused social commerce marketplace application designed to protect buyers and sellers from fraud and scams. By blending the interactive element of social selling with robust transactional security, Cylo ensures that physical handovers and digital transactions are 100% reliable.
 
-Currently, two official plugins are available:
+The project is hosted in this repository alongside its automated testing suite, showcasing clean full-stack architecture and comprehensive quality assurance.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Core Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🛡️ Specialized Face-to-Face Escrow
+Traditional online marketplaces carry massive risks of scams during physical meetups. Cylo eliminates this with a customized, physical escrow structure:
+* **TradeSafe Escrow Integration:** Funds are securely held in escrow within our C# backend logic upon purchase, preventing payment default or immediate seller fraud.
+* **The Handshake Workflow:** 
+  1. Buyer and seller arrange to meet up.
+  2. During the physical handover, the seller initiates the handover step inside the application.
+  3. Once the buyer physically inspects and receives the item, they confirm receipt in-app.
+  4. Funds are instantly released from the escrow hold to the seller.
 
-## Expanding the ESLint configuration
+### Responsive Social Commerce Interface
+* A dynamic, highly polished mobile-responsive UI designed to facilitate social discoveries, communication, and simple product listings.
+* Direct messaging and coordination built natively into the commerce experience.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Technical Stack & Architecture
+
+The application is built utilizing enterprise-grade, modern web development patterns:
+
+* **Frontend:** React, TailwindCSS, and highly responsive mobile-first UI components.
+* **Backend:** Node.js, C#, and ASP.NET Core controllers managing secure transaction logic, webhooks, and state changes.
+* **Database & ORM:** SQL Server managed with Entity Framework, utilizing clean production schema migrations.
+* **Integrations:** Direct API and webhook integrations with TradeSafe escrow facilities.
+* **E2E Automation:** A robust end-to-end testing suite written in Playwright using the Page Object Model (POM) pattern, automated using GitHub Actions.
+
+---
+
+## Project Structure
+
+```text
+├── tests/                  # Playwright E2E Test Automation Suite
+│   ├── pages/              # Page Object Model (POM) classes (e.g., LoginPage.js)
+│   ├── fixtures/           # Static test data, expected messages, and system paths
+│   └── tests/              # E2E spec files (e.g., login.spec.js)
+├── [backend/frontend/etc]  # Core Cylo Application Code
+```
+
+---
+
+## 🚀 Future Roadmap
+* **Advanced Geolocation Matchmaking:** Helping buyers and sellers find secure local exchange zones.
+* **Expanded Payment Channels:** Rolling out additional regional payment processing layers tailored for South African merchants.
+* **Automated Regression Pipelines:** Continual expansion of the Playwright E2E suite to cover every core escrow transaction branch.
