@@ -37,8 +37,7 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 ### RUNNING THE TESTS
 
-**You can execute the test suite in several modes depending on your workflow:**
-
+1. **You can execute the test suite in several modes depending on your workflow:**
    ```bash
    1. Run all tests in headless mode (Command Line):
       npm run test
@@ -50,4 +49,7 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
       npx playwright show-report
 
 
-
+### PROJECT STRUCTURE HIGHLIGHTS
+* pages/: Contains the Page Object classes ( LoginPage.js). These class files encapsulate page-specific selectors and interactions, making tests highly reusable and easy to maintain.
+* fixtures/: Houses static test data, system paths, and expected error messages to avoid hardcoding strings directly inside test files.
+* tests/: Contains the actual test specifications (e.g., login.spec.js) organized by feature domains.
