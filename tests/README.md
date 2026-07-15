@@ -2,7 +2,7 @@
 
 This repository houses the automated End-to-End (E2E) test suite for the **Cylo** web application. Built using **Playwright** and **JavaScript**, the suite is designed to ensure the reliability, security, and smooth execution of critical user flows, starting with authentication.
 
-## 🛠️ Tech Stack & Architecture
+## Tech Stack & Architecture
 
 - **Test Runner:** Playwright
 - **Design Pattern:** Page Object Model (POM) for clean separation of test logic and page-specific selectors/actions.
@@ -20,5 +20,5 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repository-url>
-   cd <repository-folder-name>
+   git clone https://github.com/siphoPrince/TradeNest/
+   cd tests
