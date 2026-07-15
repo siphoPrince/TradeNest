@@ -8,7 +8,7 @@ The project is hosted in this repository alongside its automated testing suite, 
 
 ## Core Features
 
-### 🛡️ Specialized Face-to-Face Escrow
+### Specialized Face-to-Face Escrow
 Traditional online marketplaces carry massive risks of scams during physical meetups. Cylo eliminates this with a customized, physical escrow structure:
 * **TradeSafe Escrow Integration:** Funds are securely held in escrow within our C# backend logic upon purchase, preventing payment default or immediate seller fraud.
 * **The Handshake Workflow:** 
@@ -47,7 +47,7 @@ The application is built utilizing enterprise-grade, modern web development patt
 
 ---
 
-## 🚀 Future Roadmap
+## Future Roadmap
 * **Advanced Geolocation Matchmaking:** Helping buyers and sellers find secure local exchange zones.
 * **Expanded Payment Channels:** Rolling out additional regional payment processing layers tailored for South African merchants.
 * **Automated Regression Pipelines:** Continual expansion of the Playwright E2E suite to cover every core escrow transaction branch.
